@@ -4,41 +4,16 @@
   "packages": {
     "node": "22"
   },
-  "steps": {
-    "install": {
-      "commands": [
-        { "type": "copy", "paths": ["package.json", "pnpm-lock.yaml"] },
-        { "type": "exec", "command": "pnpm install --frozen-lockfile" }
-      ]
-    },
-    "build": {
-      "inputs": [{ "step": "install" }],
-      "commands": [
-        { "type": "copy", "paths": ["."] },
-        { "type": "exec", "command": "pnpm build" }
-      ],
-      "variables": {
-        "NODE_ENV": "production"
-      }
-    }
-  },
   "caches": {
     "pnpm": {
       "path": "/root/.local/share/pnpm/store/v3"
     }
   },
   "deploy": {
-    "inputs": [
-      {
-        "step": "build",
-        "include": [".next", "node_modules", "public", "package.json", "prisma"]
-      }
-    ],
     "startCommand": "pnpm start",
     "variables": {
       "NODE_ENV": "production"
-    },
-    "paths": ["/app/node_modules/.bin"]
+    }
   },
   "secrets": ["DATABASE_URL", "AUTH_SECRET", "NEXTAUTH_URL"]
 }
