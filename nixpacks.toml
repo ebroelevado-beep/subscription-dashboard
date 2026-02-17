@@ -1,0 +1,15 @@
+# ── Nixpacks / Dokploy Build Configuration ──
+# Ensures the exact versions of Node and pnpm match the local dev environment.
+
+[phases.setup]
+nixPkgs  = ["nodejs_22"]
+cmds     = ["npm i -g corepack@latest && corepack enable && corepack prepare pnpm@10.28.0 --activate"]
+
+[phases.install]
+cmds = ["pnpm install --frozen-lockfile"]
+
+[phases.build]
+cmds = ["pnpm build"]
+
+[start]
+cmd = "pnpm start"

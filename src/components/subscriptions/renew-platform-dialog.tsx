@@ -1,0 +1,130 @@
+"use client";
+
+import { useState } from "react";
+import { useRenewPlatform } from "@/hooks/use-renewals";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { addMonths, format } from "date-fns";
+
+interface RenewPlatformDialogProps {
+  subscription: {
+    id: string;
+    label: string;
+    activeUntil: string;
+    plan: { cost: number; name: string; platform: { name: string } };
+  } | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+export function RenewPlatformDialog({
+  subscription,
+  open,
+  onOpenChange,
+}: RenewPlatformDialogProps) {
+  const renewMut = useRenewPlatform();
+  const [amount, setAmount] = useState(0);
+  const [notes, setNotes] = useState("");
+
+  const currentExpiry = subscription
+    ? new Date(subscription.activeUntil)
+    : new Date();
+  const newExpiry = addMonths(currentExpiry, 1);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!subscription) return;
+    renewMut.mutate(
+      {
+        subscriptionId: subscription.id,
+        amountPaid: amount,
+        notes: notes || null,
+      },
+      {
+        onSuccess: () => {
+          onOpenChange(false);
+        },
+      }
+    );
+  };
+
+  const handleOpenChange = (isOpen: boolean) => {
+    if (isOpen && subscription) {
+      setAmount(Number(subscription.plan.cost));
+      setNotes("");
+    }
+    onOpenChange(isOpen);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>
+            Platform Renewal — {subscription?.plan.platform.name}
+          </DialogTitle>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Log the payment for <strong>{subscription?.label}</strong> (
+            {subscription?.plan.name}).
+          </p>
+
+          <div className="space-y-2">
+            <Label htmlFor="platformAmount">Amount Paid (€)</Label>
+            <Input
+              id="platformAmount"
+              type="number"
+              step="0.01"
+              min={0}
+              value={amount}
+              onChange={(e) => setAmount(Number(e.target.value))}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="platformNotes">Notes (optional)</Label>
+            <Input
+              id="platformNotes"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="e.g. Charged to Visa ****1234"
+            />
+          </div>
+
+          {/* Preview */}
+          <div className="rounded-lg border bg-muted/50 p-3 space-y-1 text-sm">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Current expiry</span>
+              <span>{format(currentExpiry, "dd/MM/yyyy")}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">New expiry</span>
+              <span className="font-semibold text-green-600 dark:text-green-400">
+                {format(newExpiry, "dd/MM/yyyy")}
+              </span>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={renewMut.isPending}>
+              {renewMut.isPending ? "Recording…" : "Record Payment"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}

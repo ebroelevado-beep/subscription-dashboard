@@ -1,0 +1,254 @@
+"use client";
+
+import { useState, useMemo } from "react";
+import { useClients } from "@/hooks/use-clients";
+import { useCreateSeat } from "@/hooks/use-seats";
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Search, UserPlus, Eye, EyeOff } from "lucide-react";
+import { addMonths, format } from "date-fns";
+
+interface AddSeatDialogProps {
+  subscriptionId: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+export function AddSeatDialog({ subscriptionId, open, onOpenChange }: AddSeatDialogProps) {
+  const createSeat = useCreateSeat();
+  const { data: clients } = useClients();
+
+  // Form state
+  const [search, setSearch] = useState("");
+  const [selectedClientId, setSelectedClientId] = useState("");
+  const [customPrice, setCustomPrice] = useState("");
+  const [durationMonths, setDurationMonths] = useState("1");
+  const [serviceUser, setServiceUser] = useState("");
+  const [servicePassword, setServicePassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+
+  // Search filter
+  const filteredClients = useMemo(() => {
+    if (!clients) return [];
+    if (!search.trim()) return clients;
+    const q = search.toLowerCase();
+    return clients.filter(
+      (c) =>
+        c.name.toLowerCase().includes(q) ||
+        (c.phone && c.phone.toLowerCase().includes(q))
+    );
+  }, [clients, search]);
+
+  const selectedClient = clients?.find((c) => c.id === selectedClientId);
+
+  // Date preview
+  const months = parseInt(durationMonths) || 0;
+  const previewDate = months > 0
+    ? format(addMonths(new Date(), months), "dd/MM/yyyy")
+    : null;
+
+  const resetForm = () => {
+    setSearch("");
+    setSelectedClientId("");
+    setCustomPrice("");
+    setDurationMonths("1");
+    setServiceUser("");
+    setServicePassword("");
+    setShowPassword(false);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedClientId || !customPrice || months < 1) return;
+
+    await createSeat.mutateAsync({
+      clientId: selectedClientId,
+      subscriptionId,
+      customPrice: parseFloat(customPrice),
+      durationMonths: months,
+      serviceUser: serviceUser || null,
+      servicePassword: servicePassword || null,
+    });
+    resetForm();
+    onOpenChange(false);
+  };
+
+  const handleOpenChange = (isOpen: boolean) => {
+    if (!isOpen) resetForm();
+    onOpenChange(isOpen);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <UserPlus className="size-5" />
+            Assign Client
+          </DialogTitle>
+          <DialogDescription>
+            Search for a client and assign them to an available seat.
+          </DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Client Search */}
+          <div className="space-y-2">
+            <Label>Client</Label>
+            <div className="relative">
+              <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by name or phone…"
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setSelectedClientId("");
+                }}
+                className="pl-9"
+              />
+            </div>
+
+            {/* Client list */}
+            {!selectedClientId && (
+              <div className="max-h-36 overflow-y-auto rounded-md border">
+                {filteredClients.length === 0 ? (
+                  <p className="px-3 py-2 text-sm text-muted-foreground">
+                    {search ? "No clients found" : "Type to search…"}
+                  </p>
+                ) : (
+                  filteredClients.map((c) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      className="flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-accent transition-colors"
+                      onClick={() => {
+                        setSelectedClientId(c.id);
+                        setSearch(c.name);
+                      }}
+                    >
+                      <span className="font-medium">{c.name}</span>
+                      {c.phone && (
+                        <span className="text-xs text-muted-foreground">{c.phone}</span>
+                      )}
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
+
+            {/* Selected client badge */}
+            {selectedClient && (
+              <div className="flex items-center gap-2 rounded-md bg-accent/50 px-3 py-1.5 text-sm">
+                <span className="font-medium">{selectedClient.name}</span>
+                {selectedClient.phone && (
+                  <span className="text-xs text-muted-foreground">({selectedClient.phone})</span>
+                )}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="ml-auto h-6 px-2 text-xs"
+                  onClick={() => {
+                    setSelectedClientId("");
+                    setSearch("");
+                  }}
+                >
+                  Change
+                </Button>
+              </div>
+            )}
+          </div>
+
+          {/* Price + Duration */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="seat-price">Price (€/month)</Label>
+              <Input
+                id="seat-price"
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="0.00"
+                value={customPrice}
+                onChange={(e) => setCustomPrice(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="seat-duration">Duration (months)</Label>
+              <Input
+                id="seat-duration"
+                type="number"
+                min="1"
+                value={durationMonths}
+                onChange={(e) => setDurationMonths(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+
+          {previewDate && (
+            <p className="text-xs text-muted-foreground">
+              Active until: <span className="font-medium text-foreground">{previewDate}</span>
+            </p>
+          )}
+
+          {/* Service Credentials */}
+          <fieldset className="space-y-3 rounded-md border p-3">
+            <legend className="px-1 text-xs font-medium text-muted-foreground">
+              Service Credentials (optional)
+            </legend>
+            <div className="space-y-2">
+              <Label htmlFor="seat-user">Username / Email</Label>
+              <Input
+                id="seat-user"
+                placeholder="e.g. john@example.com"
+                value={serviceUser}
+                onChange={(e) => setServiceUser(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="seat-pass">Password</Label>
+              <div className="relative">
+                <Input
+                  id="seat-pass"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  value={servicePassword}
+                  onChange={(e) => setServicePassword(e.target.value)}
+                  className="pr-10"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-1 top-1 size-7"
+                  onClick={() => setShowPassword(!showPassword)}
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                </Button>
+              </div>
+            </div>
+          </fieldset>
+
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={createSeat.isPending || !selectedClientId || !customPrice}
+            >
+              {createSeat.isPending ? "Assigning…" : "Assign Seat"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}

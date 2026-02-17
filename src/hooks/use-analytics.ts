@@ -1,0 +1,181 @@
+"use client";
+
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
+import { fetchApi } from "@/lib/fetch-api";
+import { queryKeys } from "@/lib/query-keys";
+
+// ── Types ──
+
+export interface AnalyticsSummary {
+  totalRevenue: number;
+  totalCost: number;
+  netMargin: number;
+  arpu: number;
+  onTimeRate: number;
+  totalPayments: number;
+  onTimeCount: number;
+  lateCount: number;
+  uniqueClientCount: number;
+}
+
+export interface HistoryRow {
+  id: string;
+  type: "income" | "cost";
+  amount: number;
+  paidOn: string;
+  periodStart: string;
+  periodEnd: string;
+  platform: string;
+  plan: string;
+  subscriptionLabel: string;
+  subscriptionId: string;
+  clientName: string | null;
+  notes: string | null;
+}
+
+export interface HistoryResponse {
+  rows: HistoryRow[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+export interface TrendDataPoint {
+  period: string;
+  revenue: number;
+  cost: number;
+}
+
+export type TrendScale = "monthly" | "weekly" | "daily";
+
+export interface ClientAnalytics {
+  clientId: string;
+  clientName: string;
+  totalPaid: number;
+  renewalCount: number;
+  weight: number;
+}
+
+export interface ClientsResponse {
+  clients: ClientAnalytics[];
+  totalRevenue: number;
+}
+
+export interface BreakEvenEntry {
+  subscriptionId: string;
+  label: string;
+  platform: string;
+  plan: string;
+  revenue: number;
+  cost: number;
+  net: number;
+  profitable: boolean;
+  activeSeats: number;
+}
+
+export interface DisciplineFilters {
+  planId?: string;
+  subscriptionId?: string;
+  clientId?: string;
+}
+
+export interface DisciplineData {
+  totalPayments: number;
+  onTimeCount: number;
+  lateCount: number;
+  onTimeRate: number;
+  avgDaysLate: number;
+}
+
+// ── Shared config — analytics data changes rarely ──
+
+const ANALYTICS_STALE = 5 * 60 * 1000; // 5 minutes
+
+// ── Hooks ──
+
+export function useAnalyticsSummary() {
+  return useQuery<AnalyticsSummary>({
+    queryKey: queryKeys.analyticsSummary,
+    queryFn: () => fetchApi<AnalyticsSummary>("/api/analytics/summary"),
+    staleTime: ANALYTICS_STALE,
+  });
+}
+
+export interface HistoryFilters {
+  page?: number;
+  pageSize?: number;
+  type?: "income" | "cost" | "all";
+  platformId?: string;
+  planId?: string;
+  subscriptionId?: string;
+  clientId?: string;
+  dateFrom?: string;
+  dateTo?: string;
+}
+
+export function useAnalyticsHistory(filters: HistoryFilters = {}) {
+  const params = new URLSearchParams();
+  if (filters.page) params.set("page", String(filters.page));
+  if (filters.pageSize) params.set("pageSize", String(filters.pageSize));
+  if (filters.type && filters.type !== "all") params.set("type", filters.type);
+  if (filters.platformId) params.set("platformId", filters.platformId);
+  if (filters.planId) params.set("planId", filters.planId);
+  if (filters.subscriptionId) params.set("subscriptionId", filters.subscriptionId);
+  if (filters.clientId) params.set("clientId", filters.clientId);
+  if (filters.dateFrom) params.set("dateFrom", filters.dateFrom);
+  if (filters.dateTo) params.set("dateTo", filters.dateTo);
+
+  return useQuery<HistoryResponse>({
+    queryKey: queryKeys.analyticsHistory(filters),
+    queryFn: () =>
+      fetchApi<HistoryResponse>(`/api/analytics/history?${params.toString()}`),
+    placeholderData: keepPreviousData,
+    staleTime: ANALYTICS_STALE,
+  });
+}
+
+export function useAnalyticsTrends(scale: TrendScale = "monthly") {
+  return useQuery<TrendDataPoint[]>({
+    queryKey: queryKeys.analyticsTrends(scale),
+    queryFn: () =>
+      fetchApi<TrendDataPoint[]>(`/api/analytics/trends?scale=${scale}`),
+    placeholderData: keepPreviousData,
+    staleTime: ANALYTICS_STALE,
+  });
+}
+
+export function useAnalyticsClients() {
+  return useQuery<ClientsResponse>({
+    queryKey: queryKeys.analyticsClients,
+    queryFn: () => fetchApi<ClientsResponse>("/api/analytics/clients"),
+    staleTime: ANALYTICS_STALE,
+  });
+}
+
+export function useAnalyticsBreakEven() {
+  return useQuery<BreakEvenEntry[]>({
+    queryKey: queryKeys.analyticsBreakEven,
+    queryFn: () => fetchApi<BreakEvenEntry[]>("/api/analytics/break-even"),
+    staleTime: ANALYTICS_STALE,
+  });
+}
+
+export function useDiscipline(filters: DisciplineFilters = {}) {
+  const params = new URLSearchParams();
+  if (filters.planId) params.set("planId", filters.planId);
+  if (filters.subscriptionId) params.set("subscriptionId", filters.subscriptionId);
+  if (filters.clientId) params.set("clientId", filters.clientId);
+
+  const qs = params.toString();
+
+  return useQuery<DisciplineData>({
+    queryKey: queryKeys.analyticsDiscipline(filters),
+    queryFn: () =>
+      fetchApi<DisciplineData>(
+        `/api/analytics/discipline${qs ? `?${qs}` : ""}`
+      ),
+    placeholderData: keepPreviousData,
+    staleTime: ANALYTICS_STALE,
+  });
+}

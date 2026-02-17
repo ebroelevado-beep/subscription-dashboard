@@ -1,0 +1,244 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ──────────────────────────────────────────
+// NextAuth Models
+// ──────────────────────────────────────────
+
+model User {
+  id            String    @id @default(uuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime? @map("email_verified")
+  password      String // hashed
+  image         String?
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  accounts      Account[]
+  sessions      Session[]
+  
+  // User's data
+  platforms     Platform[]
+  plans         Plan[]
+  subscriptions Subscription[]
+  clients       Client[]
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(uuid())
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ──────────────────────────────────────────
+// Enums
+// ──────────────────────────────────────────
+
+enum SubscriptionStatus {
+  active
+  paused
+  cancelled
+}
+
+enum ClientSubscriptionStatus {
+  active
+  paused
+  cancelled
+}
+
+// ──────────────────────────────────────────
+// Platform — The base service (Netflix, Spotify…)
+// ──────────────────────────────────────────
+
+model Platform {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  name      String   @db.VarChar(100)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plans Plan[]
+
+  @@unique([userId, name])
+  @@index([userId])
+  @@map("platforms")
+}
+
+// ──────────────────────────────────────────
+// Plan — The template (my cost + max seats)
+// ──────────────────────────────────────────
+
+model Plan {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  platformId String   @map("platform_id")
+  name       String   @db.VarChar(100)
+  cost       Decimal  @db.Decimal(10, 2) // What I pay per month
+  maxSeats   Int?     @map("max_seats") // NULL = unlimited
+  isActive   Boolean  @default(true) @map("is_active")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  platform      Platform       @relation(fields: [platformId], references: [id], onDelete: Cascade)
+  subscriptions Subscription[]
+
+  @@index([userId])
+  @@map("plans")
+}
+
+// ──────────────────────────────────────────
+// Subscription — The live group (instance of a Plan)
+// ──────────────────────────────────────────
+
+model Subscription {
+  id          String             @id @default(uuid())
+  userId      String             @map("user_id")
+  planId      String             @map("plan_id")
+  label       String             @db.VarChar(100)
+  startDate   DateTime           @map("start_date") @db.Date
+  activeUntil DateTime           @map("active_until") @db.Date
+  status      SubscriptionStatus @default(active)
+  createdAt   DateTime           @default(now()) @map("created_at")
+
+  user                User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan                Plan                 @relation(fields: [planId], references: [id], onDelete: Cascade)
+  clientSubscriptions ClientSubscription[]
+  platformRenewals    PlatformRenewal[]
+
+  @@index([userId])
+  @@map("subscriptions")
+}
+
+// ──────────────────────────────────────────
+// Client — The end user
+// ──────────────────────────────────────────
+
+model Client {
+  id              String   @id @default(uuid())
+  userId          String   @map("user_id")
+  name            String   @db.VarChar(150)
+  phone           String?  @db.VarChar(30)
+  notes           String?  @db.Text
+  serviceUser     String?  @map("service_user") @db.VarChar(100)
+  servicePassword String?  @map("service_password") @db.VarChar(100)
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  user                User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clientSubscriptions ClientSubscription[]
+
+  @@index([userId])
+  @@map("clients")
+}
+
+// ──────────────────────────────────────────
+// ClientSubscription — The seat (pivot)
+// custom_price = what the client pays ME (independent of plan cost)
+// ──────────────────────────────────────────
+
+model ClientSubscription {
+  id             String                   @id @default(uuid())
+  clientId       String                   @map("client_id")
+  subscriptionId String                   @map("subscription_id")
+  customPrice    Decimal                  @map("custom_price") @db.Decimal(10, 2)
+  activeUntil    DateTime                 @map("active_until") @db.Date
+  joinedAt       DateTime                 @map("joined_at") @db.Date
+  leftAt         DateTime?                @map("left_at") @db.Date
+  status         ClientSubscriptionStatus @default(active)
+  remainingDays  Int?                     @map("remaining_days")
+
+  client       Client       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  renewalLogs  RenewalLog[]
+
+  @@unique([clientId, subscriptionId])
+  @@index([clientId])
+  @@index([subscriptionId])
+  @@index([status])
+  @@map("client_subscriptions")
+}
+
+// ──────────────────────────────────────────
+// RenewalLog — Append-only historical record
+// NEVER update or delete rows in this table.
+// ──────────────────────────────────────────
+
+model RenewalLog {
+  id                   String   @id @default(uuid())
+  clientSubscriptionId String   @map("client_subscription_id")
+  amountPaid           Decimal  @map("amount_paid") @db.Decimal(10, 2)
+  expectedAmount       Decimal  @map("expected_amount") @db.Decimal(10, 2)
+  periodStart          DateTime @map("period_start") @db.Date
+  periodEnd            DateTime @map("period_end") @db.Date
+  paidOn               DateTime @map("paid_on") @db.Date
+  dueOn                DateTime @map("due_on") @db.Date
+  monthsRenewed        Int      @default(1) @map("months_renewed")
+  notes                String?  @db.Text
+  createdAt            DateTime @default(now()) @map("created_at")
+
+  clientSubscription ClientSubscription @relation(fields: [clientSubscriptionId], references: [id], onDelete: Cascade)
+
+  @@index([clientSubscriptionId])
+  @@index([paidOn])
+  @@map("renewal_logs")
+}
+
+// ──────────────────────────────────────────
+// PlatformRenewal — When I pay the platform
+// ──────────────────────────────────────────
+
+model PlatformRenewal {
+  id             String   @id @default(uuid())
+  subscriptionId String   @map("subscription_id")
+  amountPaid     Decimal  @map("amount_paid") @db.Decimal(10, 2)
+  periodStart    DateTime @map("period_start") @db.Date
+  periodEnd      DateTime @map("period_end") @db.Date
+  paidOn         DateTime @map("paid_on") @db.Date
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@index([subscriptionId])
+  @@index([paidOn])
+  @@map("platform_renewals")
+}

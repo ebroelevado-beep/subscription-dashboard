@@ -1,0 +1,114 @@
+"use client";
+
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { fetchApi } from "@/lib/fetch-api";
+import { queryKeys } from "@/lib/query-keys";
+
+export function useCreateSeat() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: {
+      clientId: string;
+      subscriptionId: string;
+      customPrice: number;
+      durationMonths: number;
+      serviceUser?: string | null;
+      servicePassword?: string | null;
+    }) =>
+      fetchApi("/api/client-subscriptions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.allSubscriptions });
+      qc.invalidateQueries({ queryKey: queryKeys.clients });
+      qc.invalidateQueries({ queryKey: queryKeys.dashboardStats });
+      toast.success("Seat assigned");
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+}
+
+export function useUpdateSeat() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: {
+      id: string;
+      customPrice?: number;
+      status?: "active" | "paused" | "cancelled";
+      durationMonths?: number;
+    }) => {
+      const { id, ...body } = data;
+      return fetchApi(`/api/client-subscriptions/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.allSubscriptions });
+      qc.invalidateQueries({ queryKey: queryKeys.clients });
+      qc.invalidateQueries({ queryKey: queryKeys.dashboardStats });
+      toast.success("Seat updated");
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+}
+
+export function usePauseSeat() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (seatId: string) =>
+      fetchApi(`/api/client-subscriptions/${seatId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "paused" }),
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.allSubscriptions });
+      qc.invalidateQueries({ queryKey: queryKeys.dashboardStats });
+      toast.success("Seat paused");
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+}
+
+export function useResumeSeat() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (seatId: string) =>
+      fetchApi(`/api/client-subscriptions/${seatId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "active" }),
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.allSubscriptions });
+      qc.invalidateQueries({ queryKey: queryKeys.clients });
+      qc.invalidateQueries({ queryKey: queryKeys.dashboardStats });
+      toast.success("Seat reactivated — remaining paid days restored");
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+}
+
+export function useCancelSeat() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (seatId: string) =>
+      fetchApi(`/api/client-subscriptions/${seatId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "cancelled" }),
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.allSubscriptions });
+      qc.invalidateQueries({ queryKey: queryKeys.clients });
+      qc.invalidateQueries({ queryKey: queryKeys.dashboardStats });
+      toast.success("Seat cancelled");
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+}
