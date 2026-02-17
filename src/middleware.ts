@@ -21,8 +21,11 @@ export default auth((req) => {
     }
   }
 
-  // Redirect logged-in users away from login/signup
-  if ((pathname === "/login" || pathname === "/signup") && isLoggedIn) {
+  // Redirect logged-in users away from login/signup/landing
+  if (
+    (pathname === "/" || pathname === "/login" || pathname === "/signup") &&
+    isLoggedIn
+  ) {
     return NextResponse.redirect(new URL("/dashboard", req.url));
   }
 
@@ -30,5 +33,5 @@ export default auth((req) => {
 });
 
 export const config = {
-  matcher: ["/api/:path*", "/dashboard/:path*", "/login", "/signup"],
+  matcher: ["/", "/api/:path*", "/dashboard/:path*", "/login", "/signup"],
 };

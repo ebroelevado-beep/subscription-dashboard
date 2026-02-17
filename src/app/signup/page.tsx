@@ -13,6 +13,7 @@ import { signupSchema, type SignupInput } from "@/lib/validations/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Logo } from "@/components/logo";
 import {
   Card,
   CardContent,
@@ -63,7 +64,7 @@ export default function SignupPage() {
         return;
       }
 
-      toast.success("Account created! Welcome to SubLedger 🎉");
+      toast.success("Account created! Welcome to Pearfect 🎉");
       router.push("/dashboard");
       router.refresh();
     } catch {
@@ -78,17 +79,15 @@ export default function SignupPage() {
       <div className="w-full max-w-md space-y-6">
         {/* Logo */}
         <div className="flex flex-col items-center gap-2">
-          <div className="flex items-center justify-center size-12 rounded-xl bg-primary text-primary-foreground font-bold text-lg shadow-lg shadow-primary/25">
-            SL
-          </div>
-          <h1 className="text-xl font-semibold tracking-tight">SubLedger</h1>
+          <Logo size={44} className="text-primary" />
+          <h1 className="text-xl font-semibold tracking-tight">Pearfect S.L.</h1>
         </div>
 
         <Card className="shadow-xl shadow-black/5">
           <CardHeader className="text-center">
             <CardTitle className="text-xl">Create an account</CardTitle>
             <CardDescription>
-              Set up your SubLedger to start tracking subscriptions
+              Set up your account to start managing subscriptions
             </CardDescription>
           </CardHeader>
 

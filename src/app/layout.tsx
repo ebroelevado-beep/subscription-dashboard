@@ -9,9 +9,16 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "SubLedger — Subscription Manager",
+  title: "Pearfect S.L. — Professional Subscription Management",
   description:
-    "Track platforms, plans, subscriptions, and client renewals in one place.",
+    "Manage platforms, plans, seats, and client renewals from a single dashboard. Track profitability automatically.",
+  metadataBase: new URL("https://sub.peramato.dev"),
+  openGraph: {
+    title: "Pearfect S.L. — Professional Subscription Management",
+    description:
+      "Manage platforms, plans, seats, and client renewals from a single dashboard.",
+    type: "website",
+  },
 };
 
 export default function RootLayout({

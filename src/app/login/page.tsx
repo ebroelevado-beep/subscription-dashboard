@@ -13,6 +13,7 @@ import { loginSchema, type LoginInput } from "@/lib/validations/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Logo } from "@/components/logo";
 import {
   Card,
   CardContent,
@@ -63,17 +64,15 @@ export default function LoginPage() {
       <div className="w-full max-w-md space-y-6">
         {/* Logo */}
         <div className="flex flex-col items-center gap-2">
-          <div className="flex items-center justify-center size-12 rounded-xl bg-primary text-primary-foreground font-bold text-lg shadow-lg shadow-primary/25">
-            SL
-          </div>
-          <h1 className="text-xl font-semibold tracking-tight">SubLedger</h1>
+          <Logo size={44} className="text-primary" />
+          <h1 className="text-xl font-semibold tracking-tight">Pearfect S.L.</h1>
         </div>
 
         <Card className="shadow-xl shadow-black/5">
           <CardHeader className="text-center">
             <CardTitle className="text-xl">Sign in</CardTitle>
             <CardDescription>
-              Enter your credentials to access your ledger
+              Enter your credentials to access your dashboard
             </CardDescription>
           </CardHeader>
 
