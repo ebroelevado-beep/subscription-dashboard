@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Pencil, Trash2, Eye, CreditCard } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
+import { useTranslations } from "next-intl";
 
 interface SubscriptionsTableProps {
   subscriptions: Subscription[];
@@ -35,6 +36,8 @@ const statusVariant: Record<string, "default" | "secondary" | "destructive"> = {
 export function SubscriptionsTable({ subscriptions, isLoading }: SubscriptionsTableProps) {
   const [editSub, setEditSub] = useState<Subscription | null>(null);
   const [deleteSub, setDeleteSub] = useState<Subscription | null>(null);
+  const t = useTranslations("subscriptions");
+  const tc = useTranslations("common");
 
   if (isLoading) {
     return (
@@ -42,13 +45,12 @@ export function SubscriptionsTable({ subscriptions, isLoading }: SubscriptionsTa
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Label</TableHead>
-              <TableHead>Platform → Plan</TableHead>
-              <TableHead className="text-center">Occupancy</TableHead>
-              <TableHead className="text-center">Status</TableHead>
-              <TableHead>Active Until</TableHead>
-              <TableHead className="text-right">Revenue</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>{t("label")}</TableHead>
+              <TableHead>{tc("platform")} → {tc("plan")}</TableHead>
+              <TableHead className="text-center">{t("seats")}</TableHead>
+              <TableHead className="text-center">{tc("status")}</TableHead>
+              <TableHead>{t("nextRenewal")}</TableHead>
+              <TableHead className="text-right">{tc("actions")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -59,12 +61,6 @@ export function SubscriptionsTable({ subscriptions, isLoading }: SubscriptionsTa
                 <TableCell className="text-center"><Skeleton className="h-5 w-12 mx-auto rounded-full" /></TableCell>
                 <TableCell className="text-center"><Skeleton className="h-5 w-14 mx-auto rounded-full" /></TableCell>
                 <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                <TableCell className="text-right">
-                  <div className="space-y-1">
-                    <Skeleton className="h-4 w-16 ml-auto" />
-                    <Skeleton className="h-3 w-12 ml-auto" />
-                  </div>
-                </TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-1">
                     <Skeleton className="size-8 rounded-md" />
@@ -85,8 +81,8 @@ export function SubscriptionsTable({ subscriptions, isLoading }: SubscriptionsTa
       <div className="rounded-lg border border-dashed">
         <EmptyState
           icon={CreditCard}
-          title="No subscriptions yet"
-          description="Create your first subscription from an existing plan."
+          title={t("emptyTitle")}
+          description={t("emptyDescription")}
         />
       </div>
     );
@@ -98,13 +94,12 @@ export function SubscriptionsTable({ subscriptions, isLoading }: SubscriptionsTa
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Label</TableHead>
-              <TableHead>Platform → Plan</TableHead>
-              <TableHead className="text-center">Occupancy</TableHead>
-              <TableHead className="text-center">Status</TableHead>
-              <TableHead>Active Until</TableHead>
-              <TableHead className="text-right">Revenue</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>{t("label")}</TableHead>
+              <TableHead>{tc("platform")} → {tc("plan")}</TableHead>
+              <TableHead className="text-center">{t("seats")}</TableHead>
+              <TableHead className="text-center">{tc("status")}</TableHead>
+              <TableHead>{t("nextRenewal")}</TableHead>
+              <TableHead className="text-right">{tc("actions")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -128,59 +123,27 @@ export function SubscriptionsTable({ subscriptions, isLoading }: SubscriptionsTa
                           </Badge>
                         </TooltipTrigger>
                         <TooltipContent>
-                          {isFull ? "Subscription is full" : `${occupied} of ${max ?? "unlimited"} seats occupied`}
+                          {max != null
+                            ? t("availableSeats", { available: max - occupied, total: max })
+                            : t("unlimitedSeats")}
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
                   </TableCell>
                   <TableCell className="text-center">
                     <Badge variant={statusVariant[sub.status] ?? "secondary"}>
-                      {sub.status}
+                      {tc(sub.status as "active" | "paused" | "cancelled")}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {formatDate(sub.activeUntil)}
                   </TableCell>
                   <TableCell className="text-right">
-                    {(() => {
-                      const revenue = sub.clientSubscriptions.reduce(
-                        (sum, s) => sum + Number(s.customPrice),
-                        0
-                      );
-                      const cost = Number(sub.plan.cost);
-                      const profit = revenue - cost;
-                      return (
-                        <div className="text-right">
-                          <span className="font-mono text-sm">
-                            {new Intl.NumberFormat("es-ES", {
-                              style: "currency",
-                              currency: "EUR",
-                            }).format(revenue)}
-                          </span>
-                          <br />
-                          <span
-                            className={`text-xs ${
-                              profit >= 0
-                                ? "text-green-600 dark:text-green-400"
-                                : "text-red-600 dark:text-red-400"
-                            }`}
-                          >
-                            {profit >= 0 ? "+" : ""}
-                            {new Intl.NumberFormat("es-ES", {
-                              style: "currency",
-                              currency: "EUR",
-                            }).format(profit)}
-                          </span>
-                        </div>
-                      );
-                    })()}
-                  </TableCell>
-                  <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
                       <Button variant="ghost" size="icon" className="size-8" asChild>
                         <Link href={`/dashboard/subscriptions/${sub.id}`}>
                           <Eye className="size-3.5" />
-                          <span className="sr-only">View</span>
+                          <span className="sr-only">{tc("edit")}</span>
                         </Link>
                       </Button>
                       <Button
@@ -190,7 +153,7 @@ export function SubscriptionsTable({ subscriptions, isLoading }: SubscriptionsTa
                         onClick={() => setEditSub(sub)}
                       >
                         <Pencil className="size-3.5" />
-                        <span className="sr-only">Edit</span>
+                        <span className="sr-only">{tc("edit")}</span>
                       </Button>
                       <Button
                         variant="ghost"
@@ -199,7 +162,7 @@ export function SubscriptionsTable({ subscriptions, isLoading }: SubscriptionsTa
                         onClick={() => setDeleteSub(sub)}
                       >
                         <Trash2 className="size-3.5" />
-                        <span className="sr-only">Delete</span>
+                        <span className="sr-only">{tc("delete")}</span>
                       </Button>
                     </div>
                   </TableCell>

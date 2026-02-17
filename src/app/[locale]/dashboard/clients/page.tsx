@@ -7,11 +7,14 @@ import { ClientFormDialog } from "@/components/clients/client-form-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Search } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 export default function ClientsPage() {
   const { data: clients, isLoading } = useClients();
   const [createOpen, setCreateOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const t = useTranslations("clients");
+  const tc = useTranslations("common");
 
   const filtered = useMemo(() => {
     if (!clients) return [];
@@ -29,15 +32,15 @@ export default function ClientsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight lg:text-3xl">
-            Clients
+            {t("title")}
           </h1>
           <p className="text-muted-foreground mt-1">
-            Manage the people who use your shared subscriptions.
+            {t("description")}
           </p>
         </div>
         <Button onClick={() => setCreateOpen(true)}>
           <Plus className="size-4" />
-          Add Client
+          {t("addClient")}
         </Button>
       </div>
 
@@ -45,7 +48,7 @@ export default function ClientsPage() {
       <div className="relative max-w-sm">
         <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
-          placeholder="Search by name or phone…"
+          placeholder={tc("searchByNameOrPhone")}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="pl-9"
@@ -56,12 +59,12 @@ export default function ClientsPage() {
 
       {search && filtered.length === 0 && clients && clients.length > 0 && (
         <p className="text-center text-sm text-muted-foreground">
-          No clients match &quot;{search}&quot;.{" "}
+          {tc("noMatchSearch", { query: search })}{" "}
           <button
             className="underline hover:text-foreground"
             onClick={() => setSearch("")}
           >
-            Clear search
+            {tc("clearSearch")}
           </button>
         </p>
       )}

@@ -6,10 +6,12 @@ import { PlatformsTable } from "@/components/platforms/platforms-table";
 import { PlatformFormDialog } from "@/components/platforms/platform-form-dialog";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 export default function PlatformsPage() {
   const { data: platforms, isLoading } = usePlatforms();
   const [createOpen, setCreateOpen] = useState(false);
+  const t = useTranslations("platforms");
 
   return (
     <div className="space-y-6">
@@ -17,15 +19,15 @@ export default function PlatformsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight lg:text-3xl">
-            Platforms
+            {t("title")}
           </h1>
           <p className="text-muted-foreground mt-1">
-            Manage the services you subscribe to.
+            {t("description")}
           </p>
         </div>
         <Button onClick={() => setCreateOpen(true)}>
           <Plus className="size-4" />
-          Add Platform
+          {t("addPlatform")}
         </Button>
       </div>
 

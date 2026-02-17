@@ -33,85 +33,94 @@ import {
   Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTranslations } from "next-intl";
 
 const columnHelper = createColumnHelper<HistoryRow>();
 
-const columns = [
-  columnHelper.accessor("paidOn", {
-    header: "Date",
-    cell: (info) => (
-      <span className="font-medium tabular-nums">{info.getValue()}</span>
-    ),
-  }),
-  columnHelper.accessor("type", {
-    header: "Type",
-    cell: (info) => {
-      const type = info.getValue();
-      return (
+function useHistoryColumns() {
+  const t = useTranslations("history");
+
+  return [
+    columnHelper.accessor("paidOn", {
+      header: t("date"),
+      cell: (info) => (
+        <span className="font-medium tabular-nums">{info.getValue()}</span>
+      ),
+    }),
+    columnHelper.accessor("type", {
+      header: t("type"),
+      cell: (info) => {
+        const type = info.getValue();
+        return (
+          <span
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold",
+              type === "income"
+                ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300"
+                : "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300"
+            )}
+          >
+            {type === "income" ? (
+              <ArrowUpCircle className="size-3" />
+            ) : (
+              <ArrowDownCircle className="size-3" />
+            )}
+            {type === "income" ? t("income") : t("expense")}
+          </span>
+        );
+      },
+    }),
+    columnHelper.accessor("amount", {
+      header: () => <span className="text-right block">{t("amount")}</span>,
+      cell: (info) => (
         <span
           className={cn(
-            "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold",
-            type === "income"
-              ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300"
-              : "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300"
+            "block text-right font-semibold tabular-nums",
+            info.row.original.type === "income"
+              ? "text-emerald-600 dark:text-emerald-400"
+              : "text-red-600 dark:text-red-400"
           )}
         >
-          {type === "income" ? (
-            <ArrowUpCircle className="size-3" />
-          ) : (
-            <ArrowDownCircle className="size-3" />
-          )}
-          {type === "income" ? "Income" : "Cost"}
+          {info.row.original.type === "income" ? "+" : "−"}€
+          {info.getValue().toFixed(2)}
         </span>
-      );
-    },
-  }),
-  columnHelper.accessor("amount", {
-    header: () => <span className="text-right block">Amount</span>,
-    cell: (info) => (
-      <span
-        className={cn(
-          "block text-right font-semibold tabular-nums",
-          info.row.original.type === "income"
-            ? "text-emerald-600 dark:text-emerald-400"
-            : "text-red-600 dark:text-red-400"
-        )}
-      >
-        {info.row.original.type === "income" ? "+" : "−"}€
-        {info.getValue().toFixed(2)}
-      </span>
-    ),
-  }),
-  columnHelper.accessor("platform", { header: "Platform" }),
-  columnHelper.accessor("plan", { header: "Plan" }),
-  columnHelper.accessor("subscriptionLabel", { header: "Subscription" }),
-  columnHelper.accessor("clientName", {
-    header: "Client",
-    cell: (info) => info.getValue() ?? "—",
-  }),
-  columnHelper.accessor("periodStart", {
-    header: "Period",
-    cell: (info) => (
-      <span className="tabular-nums text-muted-foreground text-xs">
-        {info.getValue()} → {info.row.original.periodEnd}
-      </span>
-    ),
-  }),
-  columnHelper.accessor("notes", {
-    header: "Notes",
-    cell: (info) => {
-      const val = info.getValue();
-      if (!val) return <span className="text-muted-foreground">—</span>;
-      return (
-        <span className="max-w-[200px] truncate block text-xs" title={val}>
-          {val}
+      ),
+    }),
+    columnHelper.accessor("platform", { header: t("platform") }),
+    columnHelper.accessor("plan", { header: t("plan") }),
+    columnHelper.accessor("subscriptionLabel", { header: t("subscription") }),
+    columnHelper.accessor("clientName", {
+      header: t("client"),
+      cell: (info) => info.getValue() ?? "—",
+    }),
+    columnHelper.accessor("periodStart", {
+      header: t("period"),
+      cell: (info) => (
+        <span className="tabular-nums text-muted-foreground text-xs">
+          {info.getValue()} → {info.row.original.periodEnd}
         </span>
-      );
-    },
-  }),
-];
+      ),
+    }),
+    columnHelper.accessor("notes", {
+      header: t("notes"),
+      cell: (info) => {
+        const val = info.getValue();
+        if (!val) return <span className="text-muted-foreground">—</span>;
+        return (
+          <span className="max-w-[200px] truncate block text-xs" title={val}>
+            {val}
+          </span>
+        );
+      },
+    }),
+  ];
+}
 
 export default function HistoryPage() {
+  const t = useTranslations("history");
+  const tc = useTranslations("common");
+  const columns = useHistoryColumns();
+
   const [filters, setFilters] = useState<HistoryFilters>({
     page: 1,
     pageSize: 20,
@@ -161,22 +170,22 @@ export default function HistoryPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight lg:text-3xl">
-            Pearfect Ledger
+            {t("title")}
           </h1>
           <p className="text-muted-foreground mt-1">
-            Complete transaction history — payments received and platform costs.
+            {t("description")}
           </p>
         </div>
         <Button variant="outline" onClick={handleExport} disabled={!data?.rows.length}>
           <Download className="size-4" />
-          Export CSV
+          {t("exportCsv")}
         </Button>
       </div>
 
       {/* Filters */}
       <div className="flex flex-wrap items-end gap-3 rounded-xl border bg-card p-4">
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground">Type</label>
+          <label className="text-xs font-medium text-muted-foreground">{t("type")}</label>
           <Select
             value={filters.type ?? "all"}
             onValueChange={(v) => updateFilter("type", v)}
@@ -185,24 +194,24 @@ export default function HistoryPage() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              <SelectItem value="income">Income</SelectItem>
-              <SelectItem value="cost">Cost</SelectItem>
+              <SelectItem value="all">{t("allTypes")}</SelectItem>
+              <SelectItem value="income">{t("income")}</SelectItem>
+              <SelectItem value="cost">{t("expense")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground">Platform</label>
+          <label className="text-xs font-medium text-muted-foreground">{t("platform")}</label>
           <Select
             value={filters.platformId ?? "all"}
             onValueChange={(v) => updateFilter("platformId", v === "all" ? "" : v)}
           >
             <SelectTrigger className="w-40">
-              <SelectValue placeholder="All" />
+              <SelectValue placeholder={tc("allPlatforms")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All platforms</SelectItem>
+              <SelectItem value="all">{tc("allPlatforms")}</SelectItem>
               {platforms?.map((p) => (
                 <SelectItem key={p.id} value={p.id}>
                   {p.name}
@@ -213,16 +222,16 @@ export default function HistoryPage() {
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground">Plan</label>
+          <label className="text-xs font-medium text-muted-foreground">{t("plan")}</label>
           <Select
             value={filters.planId ?? "all"}
             onValueChange={(v) => updateFilter("planId", v === "all" ? "" : v)}
           >
             <SelectTrigger className="w-40">
-              <SelectValue placeholder="All" />
+              <SelectValue placeholder={tc("allPlans")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All plans</SelectItem>
+              <SelectItem value="all">{tc("allPlans")}</SelectItem>
               {plans?.map((p) => (
                 <SelectItem key={p.id} value={p.id}>
                   {p.name}
@@ -233,7 +242,7 @@ export default function HistoryPage() {
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground">From</label>
+          <label className="text-xs font-medium text-muted-foreground">{t("date")}</label>
           <Input
             type="date"
             className="w-40"
@@ -243,7 +252,7 @@ export default function HistoryPage() {
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground">To</label>
+          <label className="text-xs font-medium text-muted-foreground">{t("to")}</label>
           <Input
             type="date"
             className="w-40"
@@ -260,7 +269,7 @@ export default function HistoryPage() {
               setFilters({ page: 1, pageSize: 20, type: "all" })
             }
           >
-            Clear filters
+            {tc("clearSearch")}
           </Button>
         )}
       </div>
@@ -301,7 +310,7 @@ export default function HistoryPage() {
                     colSpan={columns.length}
                     className="py-16 text-center text-muted-foreground"
                   >
-                    No transactions found.
+                    {t("noHistory")}
                   </td>
                 </tr>
               ) : (

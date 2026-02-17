@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { signIn } from "next-auth/react";
+import { Link } from "@/i18n/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -24,6 +25,8 @@ import {
 } from "@/components/ui/card";
 
 export default function SignupPage() {
+  const t = useTranslations("auth");
+  const tc = useTranslations("common");
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -85,20 +88,20 @@ export default function SignupPage() {
 
         <Card className="shadow-xl shadow-black/5">
           <CardHeader className="text-center">
-            <CardTitle className="text-xl">Create an account</CardTitle>
+            <CardTitle className="text-xl">{t("signupTitle")}</CardTitle>
             <CardDescription>
-              Set up your account to start managing subscriptions
+              {t("signupDescription")}
             </CardDescription>
           </CardHeader>
 
           <form onSubmit={handleSubmit(onSubmit)}>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Name</Label>
+                <Label htmlFor="name">{t("nameLabel")}</Label>
                 <Input
                   id="name"
                   type="text"
-                  placeholder="John Doe"
+                  placeholder={t("namePlaceholder")}
                   autoComplete="name"
                   {...register("name")}
                 />
@@ -108,11 +111,11 @@ export default function SignupPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t("emailLabel")}</Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="you@example.com"
+                  placeholder={t("emailPlaceholder")}
                   autoComplete="email"
                   {...register("email")}
                 />
@@ -122,11 +125,11 @@ export default function SignupPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">{t("passwordLabel")}</Label>
                 <Input
                   id="password"
                   type="password"
-                  placeholder="••••••••"
+                  placeholder={t("passwordPlaceholder")}
                   autoComplete="new-password"
                   {...register("password")}
                 />
@@ -141,15 +144,15 @@ export default function SignupPage() {
             <CardFooter className="flex flex-col gap-4">
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading && <Loader2 className="size-4 animate-spin" />}
-                Create account
+                {isLoading ? t("creatingAccount") : t("createAccount")}
               </Button>
               <p className="text-sm text-muted-foreground text-center">
-                Already have an account?{" "}
+                {t("hasAccount")}{" "}
                 <Link
                   href="/login"
                   className="font-medium text-primary hover:underline underline-offset-4"
                 >
-                  Sign in
+                  {tc("signIn")}
                 </Link>
               </p>
             </CardFooter>

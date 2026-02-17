@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { Link, usePathname } from "@/i18n/navigation";
+import { useTranslations } from "next-intl";
 import { signOut, useSession } from "next-auth/react";
 import {
   LayoutDashboard,
@@ -40,20 +40,22 @@ import {
 import { CommandPalette } from "@/components/command-palette";
 import { useEffect, useState, useCallback } from "react";
 import { usePrefetch } from "@/hooks/use-prefetch";
+import { Logo } from "@/components/logo";
+import { LanguageSwitcher } from "@/components/language-switcher";
 
 // ── Sidebar dimensions ──
 const SIDEBAR_EXPANDED = 260;
 const SIDEBAR_COLLAPSED = 68;
 
 const navItems = [
-  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Platforms", href: "/dashboard/platforms", icon: Layers },
-  { label: "Plans", href: "/dashboard/plans", icon: CreditCard },
-  { label: "Subscriptions", href: "/dashboard/subscriptions", icon: Repeat },
-  { label: "Clients", href: "/dashboard/clients", icon: Users },
-  { label: "History", href: "/dashboard/history", icon: ScrollText },
-  { label: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
-  { label: "Settings", href: "/dashboard/settings", icon: Settings },
+  { key: "dashboard" as const, href: "/dashboard", icon: LayoutDashboard },
+  { key: "platforms" as const, href: "/dashboard/platforms", icon: Layers },
+  { key: "plans" as const, href: "/dashboard/plans", icon: CreditCard },
+  { key: "subscriptions" as const, href: "/dashboard/subscriptions", icon: Repeat },
+  { key: "clients" as const, href: "/dashboard/clients", icon: Users },
+  { key: "history" as const, href: "/dashboard/history", icon: ScrollText },
+  { key: "analytics" as const, href: "/dashboard/analytics", icon: BarChart3 },
+  { key: "settings" as const, href: "/dashboard/settings", icon: Settings },
 ];
 
 // ── Cookie helpers ──
@@ -76,6 +78,7 @@ function NavLinks({
   collapsed: boolean;
   onNavigate?: () => void;
 }) {
+  const t = useTranslations("nav");
   const pathname = usePathname();
   const prefetch = usePrefetch();
 
@@ -116,7 +119,7 @@ function NavLinks({
                 collapsed ? "opacity-0 w-0 overflow-hidden" : "opacity-100"
               )}
             >
-              {item.label}
+              {t(item.key)}
             </span>
           </Link>
         );
@@ -126,7 +129,7 @@ function NavLinks({
           return (
             <Tooltip key={item.href}>
               <TooltipTrigger asChild>{link}</TooltipTrigger>
-              <TooltipContent side="right">{item.label}</TooltipContent>
+              <TooltipContent side="right">{t(item.key)}</TooltipContent>
             </Tooltip>
           );
         }
@@ -139,6 +142,7 @@ function NavLinks({
 
 // ── Mobile Nav Links (no collapse / tooltip needed) ──
 function MobileNavLinks({ onNavigate }: { onNavigate?: () => void }) {
+  const t = useTranslations("nav");
   const pathname = usePathname();
 
   return (
@@ -170,7 +174,7 @@ function MobileNavLinks({ onNavigate }: { onNavigate?: () => void }) {
                 isActive && "text-primary"
               )}
             />
-            {item.label}
+            {t(item.key)}
           </Link>
         );
       })}
@@ -180,6 +184,7 @@ function MobileNavLinks({ onNavigate }: { onNavigate?: () => void }) {
 
 // ── User Menu ──
 function UserMenu({ collapsed }: { collapsed: boolean }) {
+  const tc = useTranslations("common");
   const { data: session } = useSession();
   const user = session?.user;
 
@@ -215,7 +220,7 @@ function UserMenu({ collapsed }: { collapsed: boolean }) {
             )}
           >
             <span className="text-sm font-medium truncate max-w-[140px]">
-              {user?.name || "User"}
+              {user?.name || tc("userDefault")}
             </span>
             <span className="text-xs text-muted-foreground truncate max-w-[140px]">
               {user?.email}
@@ -228,14 +233,14 @@ function UserMenu({ collapsed }: { collapsed: boolean }) {
         align="start"
         className="w-56"
       >
-        <DropdownMenuLabel>My Account</DropdownMenuLabel>
+        <DropdownMenuLabel>{user?.name || tc("account")}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={() => signOut({ callbackUrl: "/login" })}
           className="text-destructive focus:text-destructive"
         >
           <LogOut className="size-4" />
-          Sign out
+          {tc("signOut")}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -250,7 +255,7 @@ function UserMenu({ collapsed }: { collapsed: boolean }) {
           <div>{menu}</div>
         </TooltipTrigger>
         <TooltipContent side="right">
-          {user?.name || "User"}
+          {user?.name || tc("userDefault")}
         </TooltipContent>
       </Tooltip>
     );
@@ -261,6 +266,7 @@ function UserMenu({ collapsed }: { collapsed: boolean }) {
 
 // Full-feature mobile user menu (always expanded look)
 function MobileUserMenu() {
+  const tc = useTranslations("common");
   const { data: session } = useSession();
   const user = session?.user;
 
@@ -285,7 +291,7 @@ function MobileUserMenu() {
           </Avatar>
           <div className="flex flex-col items-start text-left overflow-hidden">
             <span className="text-sm font-medium truncate max-w-[140px]">
-              {user?.name || "User"}
+              {user?.name || tc("userDefault")}
             </span>
             <span className="text-xs text-muted-foreground truncate max-w-[140px]">
               {user?.email}
@@ -294,14 +300,14 @@ function MobileUserMenu() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-56">
-        <DropdownMenuLabel>My Account</DropdownMenuLabel>
+        <DropdownMenuLabel>{tc("myAccount")}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={() => signOut({ callbackUrl: "/login" })}
           className="text-destructive focus:text-destructive"
         >
           <LogOut className="size-4" />
-          Sign out
+          {tc("signOut")}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -336,7 +342,7 @@ function ThemeToggle() {
       size="icon"
       onClick={toggle}
       className="size-8"
-      aria-label="Toggle theme"
+      aria-label="Toggle theme" // Could translate if vital, but sr-only English is usually fine for "Toggle theme"
     >
       {isDark ? <Sun className="size-4" /> : <Moon className="size-4" />}
     </Button>
@@ -353,6 +359,7 @@ export function DashboardShell({
 }) {
   const [collapsed, setCollapsed] = useState(defaultCollapsed);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const tc = useTranslations("common");
 
   // Sync cookie on mount (client may override SSR hint)
   useEffect(() => {
@@ -386,16 +393,14 @@ export function DashboardShell({
             collapsed && "justify-center px-0"
           )}
         >
-          <div className="flex items-center justify-center size-8 rounded-lg bg-gradient-to-br from-primary to-primary/70 text-primary-foreground font-bold text-sm shadow-sm shadow-primary/20 shrink-0">
-            SL
-          </div>
+          <Logo size={28} className="text-primary shrink-0" />
           <span
             className={cn(
               "text-lg font-semibold tracking-tight text-foreground transition-opacity duration-200 whitespace-nowrap",
               collapsed ? "opacity-0 w-0 overflow-hidden" : "opacity-100"
             )}
           >
-            SubLedger
+            Pearfect S.L.
           </span>
         </div>
 
@@ -422,7 +427,7 @@ export function DashboardShell({
                 size="icon"
                 className="size-8 shrink-0"
                 onClick={toggleCollapse}
-                aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+                aria-label={collapsed ? tc("expand") : tc("collapse")}
               >
                 {collapsed ? (
                   <PanelLeftOpen className="size-4" />
@@ -432,7 +437,7 @@ export function DashboardShell({
               </Button>
             </TooltipTrigger>
             <TooltipContent side="right">
-              {collapsed ? "Expand" : "Collapse"}
+              {collapsed ? tc("expand") : tc("collapse")}
             </TooltipContent>
           </Tooltip>
 
@@ -460,11 +465,9 @@ export function DashboardShell({
             </SheetTrigger>
             <SheetContent side="left" className="p-0 pt-10">
               <div className="flex items-center gap-2.5 px-5 pb-4">
-                <div className="flex items-center justify-center size-8 rounded-lg bg-gradient-to-br from-primary to-primary/70 text-primary-foreground font-bold text-sm shadow-sm shadow-primary/20">
-                  SL
-                </div>
+                <Logo size={28} className="text-primary" />
                 <span className="text-lg font-semibold tracking-tight">
-                  SubLedger
+                  Pearfect S.L.
                 </span>
               </div>
               <Separator />
@@ -481,6 +484,7 @@ export function DashboardShell({
           <div className="flex-1" />
 
           <CommandPalette />
+          <LanguageSwitcher />
           <ThemeToggle />
         </header>
 

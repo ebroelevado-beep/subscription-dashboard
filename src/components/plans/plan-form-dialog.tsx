@@ -31,11 +31,12 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { HelpCircle } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 const schema = z.object({
-  platformId: z.string().min(1, "Platform is required"),
-  name: z.string().min(1, "Name is required").max(100),
-  cost: z.coerce.number().min(0, "Cost must be ≥ 0"),
+  platformId: z.string().min(1, "validation.platformRequired"),
+  name: z.string().min(1, "validation.nameRequired").max(100),
+  cost: z.coerce.number().min(0, "validation.costMin"),
   maxSeats: z.union([
     z.coerce.number().int().positive(),
     z.literal("").transform(() => undefined),
@@ -68,6 +69,9 @@ export function PlanFormDialog({
   const createMutation = useCreatePlan();
   const updateMutation = useUpdatePlan();
   const isPending = createMutation.isPending || updateMutation.isPending;
+  const t = useTranslations("plans");
+  const tc = useTranslations("common");
+  const tv = useTranslations("validation");
 
   const {
     register,
@@ -123,24 +127,38 @@ export function PlanFormDialog({
     onOpenChange(false);
   };
 
+  const getErrorMessage = (msg?: string) => {
+    if (!msg) return undefined;
+    const parts = msg.split(".");
+    if (parts.length === 2 && parts[0] === "validation") {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return tv(parts[1] as any);
+      } catch {
+        return msg;
+      }
+    }
+    return msg;
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>
-            {mode === "create" ? "Add Plan" : "Edit Plan"}
+            {mode === "create" ? t("addTitle") : t("editTitle")}
           </DialogTitle>
           <DialogDescription>
             {mode === "create"
-              ? "Define a new plan template with pricing and seat limits."
-              : "Update this plan's details."}
+              ? t("addDescription")
+              : t("editDescription")}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {/* Platform */}
           <div className="space-y-2">
-            <Label>Platform</Label>
+            <Label>{tc("platform")}</Label>
             <Controller
               control={control}
               name="platformId"
@@ -150,7 +168,7 @@ export function PlanFormDialog({
                   onValueChange={field.onChange}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a platform…" />
+                    <SelectValue placeholder={t("selectPlatform")} />
                   </SelectTrigger>
                   <SelectContent>
                     {platforms?.map((p) => (
@@ -164,28 +182,28 @@ export function PlanFormDialog({
             />
             {errors.platformId && (
               <p className="text-sm text-destructive">
-                {errors.platformId.message}
+                {getErrorMessage(errors.platformId.message)}
               </p>
             )}
           </div>
 
           {/* Name */}
           <div className="space-y-2">
-            <Label htmlFor="plan-name">Name</Label>
+            <Label htmlFor="plan-name">{tc("name")}</Label>
             <Input
               id="plan-name"
-              placeholder="e.g. Premium, Family, Basic…"
+              placeholder={t("namePlaceholder")}
               {...register("name")}
             />
             {errors.name && (
-              <p className="text-sm text-destructive">{errors.name.message}</p>
+              <p className="text-sm text-destructive">{getErrorMessage(errors.name.message)}</p>
             )}
           </div>
 
           {/* Cost + Max Seats row */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="plan-cost">My Cost (€)</Label>
+              <Label htmlFor="plan-cost">{t("myCost")}</Label>
               <Input
                 id="plan-cost"
                 type="number"
@@ -196,20 +214,20 @@ export function PlanFormDialog({
               />
               {errors.cost && (
                 <p className="text-sm text-destructive">
-                  {errors.cost.message}
+                  {getErrorMessage(errors.cost.message)}
                 </p>
               )}
             </div>
 
             <div className="space-y-2">
               <div className="flex items-center gap-1">
-                <Label htmlFor="plan-seats">Max Seats</Label>
+                <Label htmlFor="plan-seats">{t("maxSeats")}</Label>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <HelpCircle className="size-3.5 text-muted-foreground" />
                   </TooltipTrigger>
                   <TooltipContent>
-                    Leave empty for unlimited seats
+                    {t("maxSeatsTooltip")}
                   </TooltipContent>
                 </Tooltip>
               </div>
@@ -226,9 +244,9 @@ export function PlanFormDialog({
           {/* Active toggle */}
           <div className="flex items-center justify-between rounded-lg border p-3">
             <div>
-              <Label className="text-sm font-medium">Active</Label>
+              <Label className="text-sm font-medium">{t("activeToggle")}</Label>
               <p className="text-xs text-muted-foreground">
-                Inactive plans won&apos;t appear in new subscriptions
+                {t("inactivePlansHint")}
               </p>
             </div>
             <Controller
@@ -249,14 +267,14 @@ export function PlanFormDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
             >
-              Cancel
+              {tc("cancel")}
             </Button>
             <Button type="submit" disabled={isPending}>
               {isPending
-                ? "Saving…"
+                ? tc("saving")
                 : mode === "create"
-                  ? "Create"
-                  : "Save changes"}
+                  ? tc("create")
+                  : tc("saveChanges")}
             </Button>
           </DialogFooter>
         </form>

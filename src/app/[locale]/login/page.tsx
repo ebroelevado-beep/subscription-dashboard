@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { signIn } from "next-auth/react";
+import { Link } from "@/i18n/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -24,6 +25,8 @@ import {
 } from "@/components/ui/card";
 
 export default function LoginPage() {
+  const t = useTranslations("auth");
+  const tc = useTranslations("common");
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -70,20 +73,20 @@ export default function LoginPage() {
 
         <Card className="shadow-xl shadow-black/5">
           <CardHeader className="text-center">
-            <CardTitle className="text-xl">Sign in</CardTitle>
+            <CardTitle className="text-xl">{t("loginTitle")}</CardTitle>
             <CardDescription>
-              Enter your credentials to access your dashboard
+              {t("loginDescription")}
             </CardDescription>
           </CardHeader>
 
           <form onSubmit={handleSubmit(onSubmit)}>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t("emailLabel")}</Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="you@example.com"
+                  placeholder={t("emailPlaceholder")}
                   autoComplete="email"
                   {...register("email")}
                 />
@@ -93,11 +96,11 @@ export default function LoginPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">{t("passwordLabel")}</Label>
                 <Input
                   id="password"
                   type="password"
-                  placeholder="••••••••"
+                  placeholder={t("passwordPlaceholder")}
                   autoComplete="current-password"
                   {...register("password")}
                 />
@@ -112,15 +115,15 @@ export default function LoginPage() {
             <CardFooter className="flex flex-col gap-4">
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading && <Loader2 className="size-4 animate-spin" />}
-                Sign in
+                {isLoading ? t("signingIn") : tc("signIn")}
               </Button>
               <p className="text-sm text-muted-foreground text-center">
-                Don&apos;t have an account?{" "}
+                {t("noAccount")}{" "}
                 <Link
                   href="/signup"
                   className="font-medium text-primary hover:underline underline-offset-4"
                 >
-                  Sign up
+                  {tc("signUp")}
                 </Link>
               </p>
             </CardFooter>

@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import { Providers } from "@/components/providers";
 import "./globals.css";
 
 const inter = Inter({
@@ -9,16 +8,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Pearfect S.L. — Professional Subscription Management",
-  description:
-    "Manage platforms, plans, seats, and client renewals from a single dashboard. Track profitability automatically.",
-  metadataBase: new URL("https://sub.peramato.dev"),
-  openGraph: {
-    title: "Pearfect S.L. — Professional Subscription Management",
-    description:
-      "Manage platforms, plans, seats, and client renewals from a single dashboard.",
-    type: "website",
-  },
+  title: "Pearfect S.L.",
+  description: "Professional Subscription Management",
 };
 
 export default function RootLayout({
@@ -27,9 +18,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html suppressHydrationWarning>
       <body className={`${inter.variable} antialiased`}>
-        <Providers>{children}</Providers>
+        {children}
       </body>
     </html>
   );

@@ -27,6 +27,7 @@ import {
   CalendarRange,
   Calendar,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 // ── Lazy-loaded chart components (Recharts ~350KB code-split) ──
 const RevenueChart = dynamic(
@@ -114,20 +115,23 @@ function KpiCard({
   );
 }
 
-// ── Time Scale Toggle ──
-const SCALE_OPTIONS: { value: TrendScale; label: string; icon: React.ElementType }[] = [
-  { value: "monthly", label: "Monthly", icon: CalendarRange },
-  { value: "weekly", label: "Weekly", icon: CalendarDays },
-  { value: "daily", label: "Daily", icon: Calendar },
-];
-
-const SCALE_DESCRIPTIONS: Record<TrendScale, string> = {
-  monthly: "Last 12 Months",
-  weekly: "Last 12 Weeks",
-  daily: "Last 30 Days",
-};
-
 export default function AnalyticsPage() {
+  const t = useTranslations("analytics");
+  const tc = useTranslations("common");
+
+  // ── Time Scale Toggle ──
+  const SCALE_OPTIONS: { value: TrendScale; label: string; icon: React.ElementType }[] = [
+    { value: "monthly", label: t("monthly"), icon: CalendarRange },
+    { value: "weekly", label: t("weekly"), icon: CalendarDays },
+    { value: "daily", label: t("daily"), icon: Calendar },
+  ];
+
+  const SCALE_DESCRIPTIONS: Record<TrendScale, string> = {
+    monthly: t("last12Months"),
+    weekly: t("last12Weeks"),
+    daily: t("last30Days"),
+  };
+
   // ── State ──
   const [trendScale, setTrendScale] = useState<TrendScale>("monthly");
   const [disciplineFilters, setDisciplineFilters] = useState<DisciplineFilters>({});
@@ -184,44 +188,42 @@ export default function AnalyticsPage() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold tracking-tight lg:text-3xl">
-          Business Intelligence
+          {t("title")}
         </h1>
         <p className="text-muted-foreground mt-1">
-          360° view of your financial performance and client behavior.
+          {t("description")}
         </p>
       </div>
 
       {/* KPI Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard
-          title="Total Revenue"
+          title={t("totalRevenue")}
           value={formatCurrency(summary?.totalRevenue ?? 0)}
-          subtitle={`${summary?.uniqueClientCount ?? 0} paying clients`}
+          subtitle={`${summary?.uniqueClientCount ?? 0} ${t("clientsLabel").toLowerCase()}`}
           icon={TrendingUp}
           color="emerald"
         />
         <KpiCard
-          title="Total COGS"
+          title={t("cogs")}
           value={formatCurrency(summary?.totalCost ?? 0)}
-          subtitle="Platform costs"
           icon={TrendingDown}
           color="red"
         />
         <KpiCard
-          title="Net Margin"
+          title={t("netMargin")}
           value={formatCurrency(summary?.netMargin ?? 0)}
           subtitle={
             summary && summary.totalRevenue > 0
-              ? `${((summary.netMargin / summary.totalRevenue) * 100).toFixed(1)}% margin`
+              ? `${((summary.netMargin / summary.totalRevenue) * 100).toFixed(1)}% ${t("grossMargin").toLowerCase()}`
               : undefined
           }
           icon={DollarSign}
           color={(summary?.netMargin ?? 0) >= 0 ? "blue" : "red"}
         />
         <KpiCard
-          title="ARPU"
+          title={t("arpu")}
           value={formatCurrency(summary?.arpu ?? 0)}
-          subtitle="Avg. revenue per user"
           icon={Users}
           color="amber"
         />
@@ -233,7 +235,7 @@ export default function AnalyticsPage() {
         <div className="lg:col-span-3 rounded-xl border bg-card p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-base font-semibold">
-              Revenue vs Cost — {SCALE_DESCRIPTIONS[trendScale]}
+              {t("revenueVsCost")} — {SCALE_DESCRIPTIONS[trendScale]}
             </h2>
             <div className="flex items-center rounded-lg border bg-muted/50 p-0.5">
               {SCALE_OPTIONS.map(({ value, label, icon: ScaleIcon }) => (
@@ -261,21 +263,21 @@ export default function AnalyticsPage() {
             <RevenueChart data={trends} />
           ) : (
             <p className="text-muted-foreground text-sm py-16 text-center">
-              No data available yet.
+              {t("noDataAvailable")}
             </p>
           )}
         </div>
 
-        {/* Client Weight Pie Chart — Clean version */}
+        {/* Client Weight Pie Chart */}
         <div className="lg:col-span-2 rounded-xl border bg-card p-5">
           <h2 className="text-base font-semibold mb-4">
-            Client Revenue Weight
+            {t("topClients")}
           </h2>
           {pieData.length > 0 ? (
             <ClientPieChart data={pieData} />
           ) : (
             <p className="text-muted-foreground text-sm py-16 text-center">
-              No client data available.
+              {t("noDataAvailable")}
             </p>
           )}
         </div>
@@ -285,7 +287,7 @@ export default function AnalyticsPage() {
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="rounded-xl border bg-card p-5">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-base font-semibold">Payment Discipline</h2>
+            <h2 className="text-base font-semibold">{t("discipline")}</h2>
             {hasDisciplineFilter && (
               <Button
                 variant="ghost"
@@ -293,7 +295,7 @@ export default function AnalyticsPage() {
                 onClick={() => setDisciplineFilters({})}
                 className="text-xs"
               >
-                Clear filters
+                {tc("clearSearch")}
               </Button>
             )}
           </div>
@@ -310,10 +312,10 @@ export default function AnalyticsPage() {
               }
             >
               <SelectTrigger className="w-36 h-8 text-xs">
-                <SelectValue placeholder="All plans" />
+                <SelectValue placeholder={tc("allPlans")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All plans</SelectItem>
+                <SelectItem value="all">{tc("allPlans")}</SelectItem>
                 {plans?.map((p) => (
                   <SelectItem key={p.id} value={p.id}>
                     {p.name}
@@ -332,10 +334,10 @@ export default function AnalyticsPage() {
               }
             >
               <SelectTrigger className="w-40 h-8 text-xs">
-                <SelectValue placeholder="All subscriptions" />
+                <SelectValue placeholder={tc("subscriptions")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All subscriptions</SelectItem>
+                <SelectItem value="all">{tc("subscriptions")}</SelectItem>
                 {subscriptions?.map((s) => (
                   <SelectItem key={s.id} value={s.id}>
                     {s.label}
@@ -354,10 +356,10 @@ export default function AnalyticsPage() {
               }
             >
               <SelectTrigger className="w-36 h-8 text-xs">
-                <SelectValue placeholder="All clients" />
+                <SelectValue placeholder={tc("clients")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All clients</SelectItem>
+                <SelectItem value="all">{tc("clients")}</SelectItem>
                 {clients?.map((c) => (
                   <SelectItem key={c.id} value={c.id}>
                     {c.name}
@@ -383,7 +385,7 @@ export default function AnalyticsPage() {
                       {formatPercent(discipline?.onTimeRate ?? 100)}
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      On-time ({discipline?.onTimeCount ?? 0})
+                      {t("onTimeRate")} ({discipline?.onTimeCount ?? 0})
                     </p>
                   </div>
                 </div>
@@ -397,7 +399,7 @@ export default function AnalyticsPage() {
                       {formatPercent(100 - (discipline?.onTimeRate ?? 100))}
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      Late ({discipline?.lateCount ?? 0})
+                      {t("latePayments")} ({discipline?.lateCount ?? 0})
                     </p>
                   </div>
                 </div>
@@ -416,7 +418,7 @@ export default function AnalyticsPage() {
                 <Clock className="size-4 text-muted-foreground" />
                 <div>
                   <p className="text-sm font-medium">
-                    Avg. Days Late:{" "}
+                    {t("avgDaysLate")}:{" "}
                     <span
                       className={cn(
                         "font-bold tabular-nums",
@@ -425,11 +427,8 @@ export default function AnalyticsPage() {
                           : "text-emerald-600 dark:text-emerald-400"
                       )}
                     >
-                      {discipline?.avgDaysLate ?? 0} days
+                      {discipline?.avgDaysLate ?? 0}
                     </span>
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {discipline?.totalPayments ?? 0} total payment{(discipline?.totalPayments ?? 0) !== 1 ? "s" : ""} analyzed
                   </p>
                 </div>
               </div>
@@ -440,7 +439,7 @@ export default function AnalyticsPage() {
         {/* LTV Top Clients */}
         <div className="rounded-xl border bg-card p-5">
           <h2 className="text-base font-semibold mb-4">
-            Customer Lifetime Value — Top 10
+            {t("topClients")} — Top 10
           </h2>
           {clientData && clientData.clients.length > 0 ? (
             <div className="space-y-2">
@@ -459,16 +458,13 @@ export default function AnalyticsPage() {
                     <span className="font-semibold text-sm tabular-nums">
                       {formatCurrency(c.totalPaid)}
                     </span>
-                    <span className="ml-2 text-xs text-muted-foreground">
-                      ({c.renewalCount} payments)
-                    </span>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
             <p className="text-muted-foreground text-sm py-8 text-center">
-              No client data available.
+              {t("noDataAvailable")}
             </p>
           )}
         </div>
@@ -477,7 +473,7 @@ export default function AnalyticsPage() {
       {/* Break-Even Analysis */}
       <div className="rounded-xl border bg-card p-5">
         <h2 className="text-base font-semibold mb-4">
-          Break-Even Analysis — Subscription Profitability
+          {t("breakEvenAnalysis")}
         </h2>
         {breakEven && breakEven.length > 0 ? (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -506,24 +502,24 @@ export default function AnalyticsPage() {
                         : "bg-red-200 text-red-800 dark:bg-red-900 dark:text-red-300"
                     )}
                   >
-                    {sub.profitable ? "Profitable" : "In the Red"}
+                    {sub.profitable ? "✓" : "✗"}
                   </span>
                 </div>
                 <div className="grid grid-cols-3 gap-2 text-center">
                   <div>
-                    <p className="text-xs text-muted-foreground">Revenue</p>
+                    <p className="text-xs text-muted-foreground">{t("revenueLabel")}</p>
                     <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 tabular-nums">
                       {formatCurrency(sub.revenue)}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">Cost</p>
+                    <p className="text-xs text-muted-foreground">{t("costLabel")}</p>
                     <p className="text-sm font-semibold text-red-600 dark:text-red-400 tabular-nums">
                       {formatCurrency(sub.cost)}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">Net</p>
+                    <p className="text-xs text-muted-foreground">{t("profitLabel")}</p>
                     <p
                       className={cn(
                         "text-sm font-bold tabular-nums",
@@ -536,15 +532,12 @@ export default function AnalyticsPage() {
                     </p>
                   </div>
                 </div>
-                <p className="mt-2 text-xs text-muted-foreground text-center">
-                  {sub.activeSeats} active seat{sub.activeSeats !== 1 ? "s" : ""}
-                </p>
               </div>
             ))}
           </div>
         ) : (
           <p className="text-muted-foreground text-sm py-8 text-center">
-            No subscription data available.
+            {t("noDataAvailable")}
           </p>
         )}
       </div>

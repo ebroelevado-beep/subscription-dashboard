@@ -36,12 +36,15 @@ import {
   useImportData,
   useDeleteAccount,
 } from "@/hooks/use-account";
+import { useTranslations } from "next-intl";
 
 // ── Profile Tab ──
 function ProfileTab() {
   const { data: session, update: updateSession } = useSession();
   const user = session?.user;
   const updateProfile = useUpdateProfile();
+  const t = useTranslations("settings");
+  const tc = useTranslations("common");
 
   const [name, setName] = useState(user?.name ?? "");
   const [image, setImage] = useState(user?.image ?? "");
@@ -54,7 +57,7 @@ function ProfileTab() {
       },
       {
         onSuccess: () => {
-          toast.success("Profile updated");
+          toast.success(t("profileUpdated"));
           updateSession({ name, image });
         },
         onError: (err) => toast.error(err.message),
@@ -67,18 +70,18 @@ function ProfileTab() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <User className="size-5" />
-          Profile
+          {t("profile")}
         </CardTitle>
         <CardDescription>
-          Update your display name and avatar URL.
+          {t("description")}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-2">
-          <Label htmlFor="name">Display Name</Label>
+          <Label htmlFor="name">{t("displayName")}</Label>
           <Input
             id="name"
-            placeholder="Your name"
+            placeholder={t("displayName")}
             value={name}
             onChange={(e) => setName(e.target.value)}
             maxLength={100}
@@ -86,17 +89,13 @@ function ProfileTab() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="image">Avatar URL</Label>
+          <Label htmlFor="email">{t("email")}</Label>
           <Input
-            id="image"
-            placeholder="https://example.com/avatar.jpg"
-            value={image}
-            onChange={(e) => setImage(e.target.value)}
-            type="url"
+            id="email"
+            value={user?.email ?? ""}
+            disabled
+            className="opacity-60"
           />
-          <p className="text-xs text-muted-foreground">
-            Paste a direct URL to an image. Leave empty to remove.
-          </p>
         </div>
 
         <Button
@@ -107,7 +106,7 @@ function ProfileTab() {
           {updateProfile.isPending && (
             <Loader2 className="size-4 animate-spin" />
           )}
-          Save Changes
+          {t("saveChanges")}
         </Button>
       </CardContent>
     </Card>
@@ -119,11 +118,12 @@ function DataTab() {
   const exportData = useExportData();
   const importData = useImportData();
   const fileRef = useRef<HTMLInputElement>(null);
+  const t = useTranslations("settings");
 
   const handleExport = () => {
     toast.promise(exportData.mutateAsync(), {
-      loading: "Preparing export…",
-      success: "Data exported successfully!",
+      loading: t("exporting"),
+      success: t("exportSuccess"),
       error: (err) => err.message,
     });
   };
@@ -141,8 +141,8 @@ function DataTab() {
       try {
         const json = JSON.parse(reader.result as string);
         toast.promise(importData.mutateAsync(json), {
-          loading: "Importing data…",
-          success: "Data imported successfully! Refresh to see changes.",
+          loading: t("importing"),
+          success: t("importSuccess"),
           error: (err) => err.message,
         });
       } catch {
@@ -160,20 +160,19 @@ function DataTab() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Download className="size-5" />
-          Data Portability
+          {t("data")}
         </CardTitle>
         <CardDescription>
-          Export all your data as JSON or import a previous backup.
+          {t("exportDescription")}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Export */}
         <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
           <div>
-            <h4 className="text-sm font-medium">Export My Data</h4>
+            <h4 className="text-sm font-medium">{t("exportData")}</h4>
             <p className="text-xs text-muted-foreground mt-1">
-              Downloads a JSON file with all your platforms, plans,
-              subscriptions, clients, and renewal history.
+              {t("exportDescription")}
             </p>
           </div>
           <Button
@@ -186,17 +185,16 @@ function DataTab() {
             ) : (
               <Download className="size-4" />
             )}
-            Export JSON
+            {t("exportData")}
           </Button>
         </div>
 
         {/* Import */}
         <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
           <div>
-            <h4 className="text-sm font-medium">Import Data from JSON</h4>
+            <h4 className="text-sm font-medium">{t("importData")}</h4>
             <p className="text-xs text-muted-foreground mt-1">
-              Import a SubLedger backup file. Data is added alongside your
-              existing records — nothing is overwritten.
+              {t("importDescription")}
             </p>
           </div>
           <input
@@ -216,7 +214,7 @@ function DataTab() {
             ) : (
               <Upload className="size-4" />
             )}
-            Import JSON
+            {t("importData")}
           </Button>
         </div>
       </CardContent>
@@ -229,6 +227,8 @@ function DangerZone() {
   const deleteAccount = useDeleteAccount();
   const [confirmText, setConfirmText] = useState("");
   const [open, setOpen] = useState(false);
+  const t = useTranslations("settings");
+  const tc = useTranslations("common");
 
   const confirmed = confirmText === "DELETE";
 
@@ -237,22 +237,20 @@ function DangerZone() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-destructive">
           <AlertTriangle className="size-5" />
-          Danger Zone
+          {t("danger")}
         </CardTitle>
         <CardDescription>
-          Irreversible actions. Proceed with extreme caution.
+          {t("deleteWarning")}
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 space-y-3">
           <div>
             <h4 className="text-sm font-medium text-destructive">
-              Delete My Account
+              {t("deleteAccount")}
             </h4>
             <p className="text-xs text-muted-foreground mt-1">
-              Permanently deletes your account and all associated data
-              (platforms, plans, subscriptions, clients, and all renewal
-              history). This action cannot be undone.
+              {t("deleteWarning")}
             </p>
           </div>
 
@@ -260,25 +258,21 @@ function DangerZone() {
             <AlertDialogTrigger asChild>
               <Button variant="destructive">
                 <Trash2 className="size-4" />
-                Delete Account
+                {t("deleteAccount")}
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>
-                  Are you absolutely sure?
+                  {t("confirmDelete")}
                 </AlertDialogTitle>
                 <AlertDialogDescription>
-                  This will permanently delete your account and all your
-                  data. We recommend exporting your data first.
-                  <br />
-                  <br />
-                  Type <strong>DELETE</strong> below to confirm.
+                  {t("deleteDescription")}
                 </AlertDialogDescription>
               </AlertDialogHeader>
 
               <Input
-                placeholder='Type "DELETE" to confirm'
+                placeholder={t("deleteConfirmPlaceholder")}
                 value={confirmText}
                 onChange={(e) => setConfirmText(e.target.value.toUpperCase())}
                 className="font-mono"
@@ -286,7 +280,7 @@ function DangerZone() {
 
               <AlertDialogFooter>
                 <AlertDialogCancel onClick={() => setConfirmText("")}>
-                  Cancel
+                  {tc("cancel")}
                 </AlertDialogCancel>
                 <AlertDialogAction
                   disabled={!confirmed || deleteAccount.isPending}
@@ -304,7 +298,7 @@ function DangerZone() {
                   {deleteAccount.isPending && (
                     <Loader2 className="size-4 animate-spin" />
                   )}
-                  Delete Permanently
+                  {tc("delete")}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
@@ -317,23 +311,25 @@ function DangerZone() {
 
 // ── Page ──
 export default function SettingsPage() {
+  const t = useTranslations("settings");
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
           <Settings className="size-6" />
-          Account Settings
+          {t("title")}
         </h1>
         <p className="text-muted-foreground mt-1">
-          Manage your profile, export your data, or delete your account.
+          {t("description")}
         </p>
       </div>
 
       <Tabs defaultValue="profile" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="profile">Profile</TabsTrigger>
-          <TabsTrigger value="data">Data</TabsTrigger>
-          <TabsTrigger value="danger">Danger Zone</TabsTrigger>
+          <TabsTrigger value="profile">{t("profile")}</TabsTrigger>
+          <TabsTrigger value="data">{t("data")}</TabsTrigger>
+          <TabsTrigger value="danger">{t("danger")}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile">

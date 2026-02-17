@@ -11,6 +11,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useTranslations } from "next-intl";
 
 interface DeletePlanDialogProps {
   plan: Plan | null;
@@ -23,6 +24,8 @@ export function DeletePlanDialog({
   open,
   onOpenChange,
 }: DeletePlanDialogProps) {
+  const t = useTranslations("plans");
+  const tc = useTranslations("common");
   const deleteMutation = useDeletePlan();
 
   const handleDelete = async () => {
@@ -36,21 +39,20 @@ export function DeletePlanDialog({
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>
-            Delete &quot;{plan?.name}&quot;?
+            {t("deleteTitle", { name: plan?.name ?? "" })}
           </AlertDialogTitle>
           <AlertDialogDescription>
-            This action cannot be undone. All subscriptions linked to this plan
-            will be permanently deleted.
+            {t("deleteDescription")}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>{tc("cancel")}</AlertDialogCancel>
           <AlertDialogAction
             onClick={handleDelete}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             disabled={deleteMutation.isPending}
           >
-            {deleteMutation.isPending ? "Deleting…" : "Delete"}
+            {deleteMutation.isPending ? tc("deleting") : tc("delete")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

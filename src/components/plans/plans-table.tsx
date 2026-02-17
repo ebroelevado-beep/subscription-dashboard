@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Pencil, Trash2, CreditCard } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
+import { useTranslations } from "next-intl";
 
 interface PlansTableProps {
   plans: Plan[];
@@ -26,6 +27,8 @@ interface PlansTableProps {
 export function PlansTable({ plans, isLoading }: PlansTableProps) {
   const [editPlan, setEditPlan] = useState<Plan | null>(null);
   const [deletePlan, setDeletePlan] = useState<Plan | null>(null);
+  const t = useTranslations("plans");
+  const tc = useTranslations("common");
 
   if (isLoading) {
     return (
@@ -33,12 +36,12 @@ export function PlansTable({ plans, isLoading }: PlansTableProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Platform</TableHead>
-              <TableHead className="text-right">My Cost</TableHead>
-              <TableHead className="text-center">Max Seats</TableHead>
-              <TableHead className="text-center">Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>{tc("name")}</TableHead>
+              <TableHead>{tc("platform")}</TableHead>
+              <TableHead className="text-right">{t("myCost")}</TableHead>
+              <TableHead className="text-center">{t("maxSeats")}</TableHead>
+              <TableHead className="text-center">{tc("status")}</TableHead>
+              <TableHead className="text-right">{tc("actions")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -68,8 +71,8 @@ export function PlansTable({ plans, isLoading }: PlansTableProps) {
       <div className="rounded-lg border border-dashed">
         <EmptyState
           icon={CreditCard}
-          title="No plans yet"
-          description="Create a plan to define pricing and seat limits for a platform."
+          title={t("emptyTitle")}
+          description={t("emptyDescription")}
         />
       </div>
     );
@@ -87,12 +90,12 @@ export function PlansTable({ plans, isLoading }: PlansTableProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Platform</TableHead>
-              <TableHead className="text-right">My Cost</TableHead>
-              <TableHead className="text-center">Max Seats</TableHead>
-              <TableHead className="text-center">Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>{tc("name")}</TableHead>
+              <TableHead>{tc("platform")}</TableHead>
+              <TableHead className="text-right">{t("myCost")}</TableHead>
+              <TableHead className="text-center">{t("maxSeats")}</TableHead>
+              <TableHead className="text-center">{tc("status")}</TableHead>
+              <TableHead className="text-right">{tc("actions")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -106,11 +109,11 @@ export function PlansTable({ plans, isLoading }: PlansTableProps) {
                   {formatCurrency(Number(plan.cost))}
                 </TableCell>
                 <TableCell className="text-center">
-                  {plan.maxSeats ?? "∞"}
+                  {plan.maxSeats ?? tc("unlimited")}
                 </TableCell>
                 <TableCell className="text-center">
                   <Badge variant={plan.isActive ? "default" : "secondary"}>
-                    {plan.isActive ? "Active" : "Inactive"}
+                    {plan.isActive ? tc("active") : tc("inactive")}
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right">
@@ -122,7 +125,7 @@ export function PlansTable({ plans, isLoading }: PlansTableProps) {
                       onClick={() => setEditPlan(plan)}
                     >
                       <Pencil className="size-3.5" />
-                      <span className="sr-only">Edit</span>
+                      <span className="sr-only">{tc("edit")}</span>
                     </Button>
                     <Button
                       variant="ghost"
@@ -131,7 +134,7 @@ export function PlansTable({ plans, isLoading }: PlansTableProps) {
                       onClick={() => setDeletePlan(plan)}
                     >
                       <Trash2 className="size-3.5" />
-                      <span className="sr-only">Delete</span>
+                      <span className="sr-only">{tc("delete")}</span>
                     </Button>
                   </div>
                 </TableCell>

@@ -6,6 +6,7 @@ import { Command } from "cmdk";
 import { useClients } from "@/hooks/use-clients";
 import { useSubscriptions } from "@/hooks/use-subscriptions";
 import { usePlatforms } from "@/hooks/use-platforms";
+import { useTranslations } from "next-intl";
 import {
   Users,
   Repeat,
@@ -18,18 +19,20 @@ import {
 } from "lucide-react";
 
 const staticPages = [
-  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Platforms", href: "/dashboard/platforms", icon: Layers },
-  { label: "Plans", href: "/dashboard/plans", icon: CreditCard },
-  { label: "Subscriptions", href: "/dashboard/subscriptions", icon: Repeat },
-  { label: "Clients", href: "/dashboard/clients", icon: Users },
-  { label: "History", href: "/dashboard/history", icon: ScrollText },
-  { label: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
+  { key: "dashboard" as const, href: "/dashboard", icon: LayoutDashboard },
+  { key: "platforms" as const, href: "/dashboard/platforms", icon: Layers },
+  { key: "plans" as const, href: "/dashboard/plans", icon: CreditCard },
+  { key: "subscriptions" as const, href: "/dashboard/subscriptions", icon: Repeat },
+  { key: "clients" as const, href: "/dashboard/clients", icon: Users },
+  { key: "history" as const, href: "/dashboard/history", icon: ScrollText },
+  { key: "analytics" as const, href: "/dashboard/analytics", icon: BarChart3 },
 ];
 
 export function CommandPalette() {
   const [open, setOpen] = useState(false);
   const router = useRouter();
+  const t = useTranslations("common");
+  const tn = useTranslations("nav");
 
   // Data for search
   const { data: clients } = useClients();
@@ -64,7 +67,7 @@ export function CommandPalette() {
         className="hidden sm:flex items-center gap-2 rounded-lg border bg-muted/50 px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
       >
         <Search className="size-3.5" />
-        <span>Search…</span>
+        <span>{t("searchPlaceholder")}</span>
         <kbd className="ml-2 hidden rounded border bg-background px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground sm:inline-block">
           ⌘K
         </kbd>
@@ -87,7 +90,7 @@ export function CommandPalette() {
             <div className="flex items-center border-b px-4">
               <Search className="size-4 text-muted-foreground shrink-0" />
               <Command.Input
-                placeholder="Search pages, clients, subscriptions…"
+                placeholder={t("searchPagesClientsSubscriptions")}
                 className="flex-1 bg-transparent px-3 py-3 text-sm outline-none placeholder:text-muted-foreground"
                 autoFocus
               />
@@ -95,27 +98,27 @@ export function CommandPalette() {
 
             <Command.List className="max-h-72 overflow-y-auto p-2">
               <Command.Empty className="py-8 text-center text-sm text-muted-foreground">
-                No results found.
+                {t("noResultsFound")}
               </Command.Empty>
 
               {/* Pages */}
-              <Command.Group heading="Pages" className="px-1 pb-1">
+              <Command.Group heading={t("pages")} className="px-1 pb-1">
                 {staticPages.map((page) => (
                   <Command.Item
                     key={page.href}
-                    value={`page ${page.label}`}
+                    value={`page ${tn(page.key)}`}
                     onSelect={() => navigate(page.href)}
                     className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm cursor-pointer transition-colors data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
                   >
                     <page.icon className="size-4 text-muted-foreground shrink-0" />
-                    {page.label}
+                    {tn(page.key)}
                   </Command.Item>
                 ))}
               </Command.Group>
 
               {/* Clients */}
               {clients && clients.length > 0 && (
-                <Command.Group heading="Clients" className="px-1 pb-1">
+                <Command.Group heading={t("clients")} className="px-1 pb-1">
                   {clients.slice(0, 8).map((client) => (
                     <Command.Item
                       key={client.id}
@@ -137,7 +140,7 @@ export function CommandPalette() {
 
               {/* Subscriptions */}
               {subscriptions && subscriptions.length > 0 && (
-                <Command.Group heading="Subscriptions" className="px-1 pb-1">
+                <Command.Group heading={t("subscriptions")} className="px-1 pb-1">
                   {subscriptions.slice(0, 6).map((sub) => (
                     <Command.Item
                       key={sub.id}
@@ -154,7 +157,7 @@ export function CommandPalette() {
 
               {/* Platforms */}
               {platforms && platforms.length > 0 && (
-                <Command.Group heading="Platforms" className="px-1 pb-1">
+                <Command.Group heading={t("platforms")} className="px-1 pb-1">
                   {platforms.slice(0, 6).map((p) => (
                     <Command.Item
                       key={p.id}
@@ -173,13 +176,13 @@ export function CommandPalette() {
             {/* Footer hint */}
             <div className="flex items-center justify-between border-t px-4 py-2">
               <p className="text-xs text-muted-foreground">
-                Navigate with ↑↓ · Select with ↵
+                {t("navigateHint")}
               </p>
               <button
                 onClick={() => setOpen(false)}
                 className="text-xs text-muted-foreground hover:text-foreground transition-colors"
               >
-                ESC to close
+                {t("escToClose")}
               </button>
             </div>
           </Command>

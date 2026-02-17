@@ -20,9 +20,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useTranslations } from "next-intl";
 
 const schema = z.object({
-  name: z.string().min(1, "Name is required").max(100),
+  name: z.string().min(1, "validation.nameRequired").max(100),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -40,6 +41,9 @@ export function PlatformFormDialog({
   open,
   onOpenChange,
 }: PlatformFormDialogProps) {
+  const t = useTranslations("platforms");
+  const tc = useTranslations("common");
+  const tv = useTranslations("validation");
   const createMutation = useCreatePlatform();
   const updateMutation = useUpdatePlatform();
   const isPending = createMutation.isPending || updateMutation.isPending;
@@ -70,31 +74,40 @@ export function PlatformFormDialog({
     onOpenChange(false);
   };
 
+  const getErrorMessage = (key?: string) => {
+    if (!key) return undefined;
+    const parts = key.split(".");
+    if (parts.length === 2 && parts[0] === "validation") {
+      return tv(parts[1] as "nameRequired" | "required");
+    }
+    return key;
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
-            {mode === "create" ? "Add Platform" : "Edit Platform"}
+            {mode === "create" ? t("addTitle") : t("editTitle")}
           </DialogTitle>
           <DialogDescription>
             {mode === "create"
-              ? "Enter the name of the service you subscribe to."
-              : "Update the platform name."}
+              ? t("addDescription")
+              : t("editDescription")}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="platform-name">Name</Label>
+            <Label htmlFor="platform-name">{tc("name")}</Label>
             <Input
               id="platform-name"
-              placeholder="e.g. Netflix, Spotify, Canva…"
+              placeholder={t("namePlaceholder")}
               autoFocus
               {...register("name")}
             />
             {errors.name && (
-              <p className="text-sm text-destructive">{errors.name.message}</p>
+              <p className="text-sm text-destructive">{getErrorMessage(errors.name.message)}</p>
             )}
           </div>
 
@@ -104,14 +117,14 @@ export function PlatformFormDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
             >
-              Cancel
+              {tc("cancel")}
             </Button>
             <Button type="submit" disabled={isPending}>
               {isPending
-                ? "Saving…"
+                ? tc("saving")
                 : mode === "create"
-                  ? "Create"
-                  : "Save changes"}
+                  ? tc("create")
+                  : tc("saveChanges")}
             </Button>
           </DialogFooter>
         </form>

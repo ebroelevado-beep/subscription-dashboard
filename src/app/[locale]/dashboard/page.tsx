@@ -19,6 +19,7 @@ import {
   DollarSign,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { useTranslations } from "next-intl";
 
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(amount);
@@ -67,13 +68,15 @@ function StatCard({
 
 export default function DashboardPage() {
   const { data: stats, isLoading } = useDashboardStats();
+  const t = useTranslations("dashboard");
+  const tc = useTranslations("common");
 
   if (isLoading) {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground">Business overview at a glance</p>
+          <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
+          <p className="text-muted-foreground">{t("subtitle")}</p>
         </div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {[...Array(8)].map((_, i) => (
@@ -96,7 +99,7 @@ export default function DashboardPage() {
   if (!stats) {
     return (
       <div className="py-12 text-center text-muted-foreground">
-        Failed to load dashboard data.
+        {t("failedToLoad")}
       </div>
     );
   }
@@ -108,42 +111,42 @@ export default function DashboardPage() {
     <div className="space-y-6">
       {/* Page Header */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">Business overview at a glance</p>
+        <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
+        <p className="text-muted-foreground">{t("subtitle")}</p>
       </div>
 
       {/* Stats Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <div className="animate-fade-in delay-1">
         <StatCard
-          title="Platforms"
+          title={t("platforms")}
           value={stats.platformCount}
           icon={LayoutGrid}
-          description={`${stats.activePlanCount} active plans`}
+          description={tc("activePlans", { count: stats.activePlanCount })}
         />
         </div>
         <div className="animate-fade-in delay-2">
         <StatCard
-          title="Clients"
+          title={t("clients")}
           value={stats.clientCount}
           icon={Users}
-          description={`${stats.activeSeatCount} active seats`}
+          description={tc("activeSeats", { count: stats.activeSeatCount })}
         />
         </div>
         <div className="animate-fade-in delay-3">
         <StatCard
-          title="Subscriptions"
+          title={t("subscriptions")}
           value={stats.activeSubscriptionCount}
           icon={Layers}
-          description="Active subscriptions"
+          description={t("activeSubscriptions")}
         />
         </div>
         <div className="animate-fade-in delay-4">
         <StatCard
-          title="Active Seats"
+          title={t("activeSeats")}
           value={stats.activeSeatCount}
           icon={CreditCard}
-          description="Across all subscriptions"
+          description={t("acrossAllSubscriptions")}
         />
         </div>
       </div>
@@ -151,27 +154,27 @@ export default function DashboardPage() {
       {/* Financial Summary */}
       <div className="grid gap-4 md:grid-cols-3">
         <StatCard
-          title="Monthly Revenue"
+          title={t("monthlyRevenue")}
           value={formatCurrency(stats.monthlyRevenue)}
           icon={TrendingUp}
           trend="up"
-          description="Total from active seats"
+          description={t("totalFromActiveSeats")}
         />
         <StatCard
-          title="Monthly Cost"
+          title={t("monthlyCost")}
           value={formatCurrency(stats.monthlyCost)}
           icon={CreditCard}
-          description="Total subscription costs"
+          description={t("totalSubscriptionCosts")}
         />
         <StatCard
-          title="Net Profit"
+          title={t("netProfit")}
           value={formatCurrency(profit)}
           icon={profit >= 0 ? TrendingUp : TrendingDown}
           trend={profitTrend}
           description={
             stats.monthlyRevenue > 0
-              ? `${((profit / stats.monthlyRevenue) * 100).toFixed(0)}% margin`
-              : "No revenue yet"
+              ? tc("margin", { percent: ((profit / stats.monthlyRevenue) * 100).toFixed(0) })
+              : tc("noRevenueYet")
           }
         />
       </div>
@@ -181,36 +184,36 @@ export default function DashboardPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <DollarSign className="size-5 text-emerald-500" />
-            Financial Health — This Month
+            {t("financialHealth")}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="rounded-lg border bg-muted/30 p-4">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Revenue</p>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{t("revenue")}</p>
               <p className="mt-1 text-2xl font-bold text-green-600 dark:text-green-400">
                 {formatCurrency(stats.thisMonthRevenue ?? 0)}
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                From client renewals
+                {t("fromClientRenewals")}
               </p>
             </div>
             <div className="rounded-lg border bg-muted/30 p-4">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Cost</p>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{t("cost")}</p>
               <p className="mt-1 text-2xl font-bold">
                 {formatCurrency(stats.thisMonthCost ?? 0)}
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                Platform renewals paid
+                {t("platformRenewalsPaid")}
               </p>
             </div>
             <div className="rounded-lg border bg-muted/30 p-4">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Net</p>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{t("net")}</p>
               <p className={`mt-1 text-2xl font-bold ${(stats.thisMonthProfit ?? 0) >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
                 {formatCurrency(stats.thisMonthProfit ?? 0)}
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                Actual cash flow
+                {t("actualCashFlow")}
               </p>
             </div>
           </div>
@@ -224,7 +227,7 @@ export default function DashboardPage() {
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <AlertTriangle className="size-5 text-red-500" />
-              Overdue Seats
+              {t("overdueSeats")}
             </CardTitle>
             {stats.overdueSeats.length > 0 && (
               <Badge variant="destructive">{stats.overdueSeats.length}</Badge>
@@ -233,9 +236,9 @@ export default function DashboardPage() {
           <CardContent>
             {stats.overdueSeats.length === 0 ? (
               <div className="py-6 text-center">
-                <p className="text-muted-foreground">🎉 No overdue seats!</p>
+                <p className="text-muted-foreground">{t("noOverdueSeats")}</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  All clients are up to date.
+                  {t("allClientsUpToDate")}
                 </p>
               </div>
             ) : (
@@ -255,7 +258,7 @@ export default function DashboardPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge variant="destructive" className="text-xs">
-                        {seat.daysOverdue}d overdue
+                        {tc("daysOverdue", { count: seat.daysOverdue })}
                       </Badge>
                       <Button asChild variant="ghost" size="icon" className="size-7">
                         <Link href={`/dashboard/subscriptions/${seat.subscriptionId}`}>
@@ -275,7 +278,7 @@ export default function DashboardPage() {
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <Clock className="size-5 text-yellow-500" />
-              Expiring Soon
+              {t("expiringSoon")}
             </CardTitle>
             {stats.expiringSoonSeats.length > 0 && (
               <Badge variant="secondary">{stats.expiringSoonSeats.length}</Badge>
@@ -285,7 +288,7 @@ export default function DashboardPage() {
             {stats.expiringSoonSeats.length === 0 ? (
               <div className="py-6 text-center">
                 <p className="text-muted-foreground">
-                  No seats expiring in the next 3 days.
+                  {t("noExpiringSoon")}
                 </p>
               </div>
             ) : (
@@ -306,8 +309,8 @@ export default function DashboardPage() {
                     <div className="flex items-center gap-2">
                       <Badge variant="secondary" className="text-xs">
                         {seat.daysLeft === 0
-                          ? "Today!"
-                          : `${seat.daysLeft}d left`}
+                          ? tc("today")
+                          : tc("daysLeft", { count: seat.daysLeft })}
                       </Badge>
                       <Button asChild variant="ghost" size="icon" className="size-7">
                         <Link href={`/dashboard/subscriptions/${seat.subscriptionId}`}>
@@ -326,25 +329,24 @@ export default function DashboardPage() {
       {/* Quick Links */}
       <Card>
         <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
+          <CardTitle>{t("quickActions")}</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-2">
           <Button asChild variant="outline" size="sm">
-            <Link href="/dashboard/platforms">Manage Platforms</Link>
+            <Link href="/dashboard/platforms">{t("managePlatforms")}</Link>
           </Button>
           <Button asChild variant="outline" size="sm">
-            <Link href="/dashboard/subscriptions">View Subscriptions</Link>
+            <Link href="/dashboard/subscriptions">{t("viewSubscriptions")}</Link>
           </Button>
           <Button asChild variant="outline" size="sm">
-            <Link href="/dashboard/clients">View Clients</Link>
+            <Link href="/dashboard/clients">{t("viewClients")}</Link>
           </Button>
         </CardContent>
       </Card>
 
       {/* Footer note */}
       <p className="text-xs text-muted-foreground text-center">
-        Data refreshes automatically every 60 seconds · Last fetch{" "}
-        {formatDistanceToNow(new Date(), { addSuffix: true })}
+        {tc("dataRefresh", { time: formatDistanceToNow(new Date(), { addSuffix: true }) })}
       </p>
     </div>
   );

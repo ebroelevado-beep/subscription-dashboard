@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Pencil, Trash2, Layers } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
+import { useTranslations } from "next-intl";
 
 interface PlatformsTableProps {
   platforms: Platform[];
@@ -27,6 +28,8 @@ interface PlatformsTableProps {
 export function PlatformsTable({ platforms, isLoading }: PlatformsTableProps) {
   const [editPlatform, setEditPlatform] = useState<Platform | null>(null);
   const [deletePlatform, setDeletePlatform] = useState<Platform | null>(null);
+  const t = useTranslations("platforms");
+  const tc = useTranslations("common");
 
   if (isLoading) {
     return (
@@ -34,10 +37,10 @@ export function PlatformsTable({ platforms, isLoading }: PlatformsTableProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead className="text-center">Plans</TableHead>
-              <TableHead>Created</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>{tc("name")}</TableHead>
+              <TableHead className="text-center">{t("plans")}</TableHead>
+              <TableHead>{tc("created")}</TableHead>
+              <TableHead className="text-right">{tc("actions")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -65,8 +68,8 @@ export function PlatformsTable({ platforms, isLoading }: PlatformsTableProps) {
       <div className="rounded-lg border border-dashed">
         <EmptyState
           icon={Layers}
-          title="No platforms yet"
-          description="Add your first platform (e.g. Netflix, Spotify) to start managing your subscriptions."
+          title={t("emptyTitle")}
+          description={t("emptyDescription")}
         />
       </div>
     );
@@ -78,10 +81,10 @@ export function PlatformsTable({ platforms, isLoading }: PlatformsTableProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead className="text-center">Plans</TableHead>
-              <TableHead>Created</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>{tc("name")}</TableHead>
+              <TableHead className="text-center">{t("plans")}</TableHead>
+              <TableHead>{tc("created")}</TableHead>
+              <TableHead className="text-right">{tc("actions")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -103,7 +106,7 @@ export function PlatformsTable({ platforms, isLoading }: PlatformsTableProps) {
                       onClick={() => setEditPlatform(p)}
                     >
                       <Pencil className="size-3.5" />
-                      <span className="sr-only">Edit</span>
+                      <span className="sr-only">{tc("edit")}</span>
                     </Button>
                     <Button
                       variant="ghost"
@@ -112,7 +115,7 @@ export function PlatformsTable({ platforms, isLoading }: PlatformsTableProps) {
                       onClick={() => setDeletePlatform(p)}
                     >
                       <Trash2 className="size-3.5" />
-                      <span className="sr-only">Delete</span>
+                      <span className="sr-only">{tc("delete")}</span>
                     </Button>
                   </div>
                 </TableCell>

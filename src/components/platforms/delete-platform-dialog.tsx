@@ -11,6 +11,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useTranslations } from "next-intl";
 
 interface DeletePlatformDialogProps {
   platform: Platform | null;
@@ -23,6 +24,8 @@ export function DeletePlatformDialog({
   open,
   onOpenChange,
 }: DeletePlatformDialogProps) {
+  const t = useTranslations("platforms");
+  const tc = useTranslations("common");
   const deleteMutation = useDeletePlatform();
 
   const handleDelete = async () => {
@@ -37,30 +40,28 @@ export function DeletePlatformDialog({
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete &quot;{platform?.name}&quot;?</AlertDialogTitle>
+          <AlertDialogTitle>{t("deleteTitle", { name: platform?.name ?? "" })}</AlertDialogTitle>
           <AlertDialogDescription>
-            This action cannot be undone. All plans and subscriptions linked to
-            this platform will be permanently deleted.
+            {t("deleteDescription")}
             {activePlans > 0 && (
               <>
                 <br />
                 <br />
                 <strong className="text-destructive">
-                  ⚠ This platform has {activePlans} active plan
-                  {activePlans > 1 ? "s" : ""}.
+                  {t("deleteActivePlans", { count: activePlans })}
                 </strong>
               </>
             )}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>{tc("cancel")}</AlertDialogCancel>
           <AlertDialogAction
             onClick={handleDelete}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             disabled={deleteMutation.isPending}
           >
-            {deleteMutation.isPending ? "Deleting…" : "Delete"}
+            {deleteMutation.isPending ? tc("deleting") : tc("delete")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

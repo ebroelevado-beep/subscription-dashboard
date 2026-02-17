@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Plus } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 export default function PlansPage() {
   const [platformFilter, setPlatformFilter] = useState<string | undefined>();
@@ -21,6 +22,8 @@ export default function PlansPage() {
 
   const { data: platforms } = usePlatforms();
   const { data: plans, isLoading } = usePlans(platformFilter);
+  const t = useTranslations("plans");
+  const tc = useTranslations("common");
 
   return (
     <div className="space-y-6">
@@ -28,22 +31,22 @@ export default function PlansPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight lg:text-3xl">
-            Plans
+            {t("title")}
           </h1>
           <p className="text-muted-foreground mt-1">
-            Manage plan templates linked to your platforms.
+            {t("description")}
           </p>
         </div>
         <Button onClick={() => setCreateOpen(true)}>
           <Plus className="size-4" />
-          Add Plan
+          {t("addPlan")}
         </Button>
       </div>
 
       {/* Filter */}
       <div className="flex items-center gap-3">
         <span className="text-sm text-muted-foreground whitespace-nowrap">
-          Filter by platform:
+          {tc("filterByPlatform")}
         </span>
         <Select
           value={platformFilter ?? "all"}
@@ -52,10 +55,10 @@ export default function PlansPage() {
           }
         >
           <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder="All platforms" />
+            <SelectValue placeholder={tc("allPlatforms")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All platforms</SelectItem>
+            <SelectItem value="all">{tc("allPlatforms")}</SelectItem>
             {platforms?.map((p) => (
               <SelectItem key={p.id} value={p.id}>
                 {p.name}
