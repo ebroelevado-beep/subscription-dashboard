@@ -4,16 +4,17 @@
   "packages": {
     "node": "22"
   },
+  "variables": {
+    "NODE_ENV": "production",
+    "NODE_OPTIONS": "--max-old-space-size=1024"
+  },
   "caches": {
     "pnpm": {
       "path": "/root/.local/share/pnpm/store/v3"
     }
   },
   "deploy": {
-    "startCommand": "pnpm start",
-    "variables": {
-      "NODE_ENV": "production"
-    }
+    "startCommand": "pnpm start"
   },
   "secrets": ["DATABASE_URL", "AUTH_SECRET", "NEXTAUTH_URL"]
 }
