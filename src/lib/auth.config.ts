@@ -4,6 +4,7 @@ import Google from "next-auth/providers/google";
 
 // Separate auth config that is edge-compatible (no Prisma/Node specifics)
 export const authConfig = {
+  trustHost: true,
   session: { strategy: "jwt" },
   pages: {
     signIn: "/login",
