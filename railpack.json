@@ -7,10 +7,10 @@
   "steps": {
     "build": {
       "commands": [
-        "ls -la",
-        "pnpm build",
-        "cp -r public .next/standalone/public",
-        "cp -r .next/static .next/standalone/.next/static"
+        { "src": ".", "dest": "." },
+        { "cmd": "pnpm build" },
+        { "cmd": "cp -r public .next/standalone/public" },
+        { "cmd": "cp -r .next/static .next/standalone/.next/static" }
       ],
       "variables": {
         "NODE_OPTIONS": "--max-old-space-size=4096"
