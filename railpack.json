@@ -6,17 +6,14 @@
   },
   "steps": {
     "build": {
+      "commands": [
+        "pnpm build",
+        "cp -r public .next/standalone/public",
+        "cp -r .next/static .next/standalone/.next/static"
+      ],
       "variables": {
         "NODE_OPTIONS": "--max-old-space-size=4096"
       }
-    }
-  },
-  "caches": {
-    "pnpm": {
-      "path": "/root/.local/share/pnpm/store/v3"
-    },
-    "next": {
-      "path": ".next/cache"
     }
   },
   "deploy": {
