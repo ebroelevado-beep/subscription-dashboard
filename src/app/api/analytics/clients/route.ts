@@ -16,7 +16,9 @@ export async function GET() {
     });
 
     // Fetch client names for the grouped results
-    const csIds = grouped.map((g) => g.clientSubscriptionId);
+    const csIds = grouped
+      .map((g) => g.clientSubscriptionId)
+      .filter((id): id is string => id !== null);
     const seats = await prisma.clientSubscription.findMany({
       where: { id: { in: csIds } },
       select: {
