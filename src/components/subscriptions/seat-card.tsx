@@ -79,7 +79,7 @@ interface SeatCardProps {
     activeUntil: string;
     joinedAt: string;
     leftAt: string | null;
-    status: "active" | "paused" | "cancelled";
+    status: "active" | "paused";
     client: {
       id: string;
       name: string;
@@ -104,8 +104,7 @@ export function SeatCard({ seat, onPause, onResume, onCancel, onRenew, onEdit }:
   const isPaused = seat.status === "paused";
   const isActive = seat.status === "active";
   
-  // Safety check for cancelled - treat as inactive/removed visually if it somehow leaks
-  if (seat.status === "cancelled") return null;
+
 
   const statusConfig = statusBadgeConfig[seat.status as "active" | "paused"];
 

@@ -25,7 +25,6 @@ function formatCurrency(amount: number) {
 const statusVariant: Record<string, "default" | "secondary" | "destructive"> = {
   active: "default",
   paused: "secondary",
-  cancelled: "destructive",
 };
 
 export default function ClientDetailPage() {

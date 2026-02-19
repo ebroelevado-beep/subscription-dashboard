@@ -332,8 +332,7 @@ export function ClientDetailSheet({ clientId, open, onOpenChange }: ClientDetail
                     const expiry = getExpiryInfo(cs.activeUntil);
                     const isPaused = cs.status === "paused";
                     
-                    // Safety check for removed status
-                    if (cs.status === "cancelled") return null;
+                    
 
                     return (
                       <div

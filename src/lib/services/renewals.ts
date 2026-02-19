@@ -36,11 +36,7 @@ export async function renewClientSubscription({
       where: { id: clientSubscriptionId },
     });
 
-    if (seat.status === "cancelled") {
-      throw new Error(
-        "Cannot renew a cancelled seat. Re-activate it first."
-      );
-    }
+    // Seats are now only active or paused (cancelled was removed from schema)
 
     const today = startOfDay(new Date());
     const currentExpiry = startOfDay(new Date(seat.activeUntil));
@@ -127,11 +123,7 @@ export async function renewBulkClientSubscriptions({
         where: { id: item.clientSubscriptionId },
       });
 
-      if (seat.status === "cancelled") {
-        throw new Error(
-          `Cannot renew cancelled seat ${item.clientSubscriptionId}. Re-activate it first.`
-        );
-      }
+      // Seats are now only active or paused (cancelled was removed from schema)
 
       const currentExpiry = startOfDay(new Date(seat.activeUntil));
       const customPrice = Number(seat.customPrice);
@@ -202,11 +194,7 @@ export async function renewPlatformSubscription({
       include: { plan: true },
     });
 
-    if (subscription.status === "cancelled") {
-      throw new Error(
-        "Cannot renew a cancelled subscription. Re-activate it first."
-      );
-    }
+    // Subscriptions are now only active or paused (cancelled was removed from schema)
 
     const today = startOfDay(new Date());
     const currentExpiry = startOfDay(new Date(subscription.activeUntil));

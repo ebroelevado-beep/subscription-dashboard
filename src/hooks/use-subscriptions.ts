@@ -11,7 +11,7 @@ export interface Subscription {
   label: string;
   startDate: string;
   activeUntil: string;
-  status: "active" | "paused" | "cancelled";
+  status: "active" | "paused";
   createdAt: string;
   plan: {
     id: string;
@@ -34,7 +34,7 @@ export interface SubscriptionDetail extends Omit<Subscription, "clientSubscripti
     activeUntil: string;
     joinedAt: string;
     leftAt: string | null;
-    status: "active" | "paused" | "cancelled";
+    status: "active" | "paused";
     client: { id: string; name: string; phone: string | null; serviceUser: string | null; servicePassword: string | null };
   }[];
   platformRenewals: {

@@ -38,7 +38,7 @@ const subscriptionImportSchema = z.object({
   label: z.string().min(1).max(100),
   startDate: z.string(),
   activeUntil: z.string(),
-  status: z.enum(["active", "paused", "cancelled"]).default("active"),
+  status: z.enum(["active", "paused"]).default("active"),
   createdAt: z.string().optional(),
 });
 
@@ -60,7 +60,7 @@ const clientSubscriptionImportSchema = z.object({
   activeUntil: z.string(),
   joinedAt: z.string(),
   leftAt: z.string().nullable().optional(),
-  status: z.enum(["active", "paused", "cancelled"]).default("active"),
+  status: z.enum(["active", "paused"]).default("active"),
   remainingDays: z.number().int().nullable().optional(),
 });
 

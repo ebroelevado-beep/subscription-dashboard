@@ -1,6 +1,6 @@
 "use client";
 
-import { useUpdateSeat } from "@/hooks/use-seats";
+import { useCancelSeat } from "@/hooks/use-seats";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -13,11 +13,11 @@ interface RemoveSeatDialogProps {
 }
 
 export function RemoveSeatDialog({ seatId, open, onOpenChange }: RemoveSeatDialogProps) {
-  const updateSeat = useUpdateSeat();
+  const cancelSeat = useCancelSeat();
 
   const handleRemove = async () => {
     if (!seatId) return;
-    await updateSeat.mutateAsync({ id: seatId, status: "cancelled" });
+    await cancelSeat.mutateAsync(seatId);
     onOpenChange(false);
   };
 
@@ -27,8 +27,8 @@ export function RemoveSeatDialog({ seatId, open, onOpenChange }: RemoveSeatDialo
         <AlertDialogHeader>
           <AlertDialogTitle>Remove this seat?</AlertDialogTitle>
           <AlertDialogDescription>
-            The client will be marked as cancelled on this subscription.
-            This action can be reversed later.
+            The seat will be permanently removed from this subscription.
+            Financial records will be preserved for analytics.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -36,9 +36,9 @@ export function RemoveSeatDialog({ seatId, open, onOpenChange }: RemoveSeatDialo
           <AlertDialogAction
             onClick={handleRemove}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            disabled={updateSeat.isPending}
+            disabled={cancelSeat.isPending}
           >
-            {updateSeat.isPending ? "Removing…" : "Remove Seat"}
+            {cancelSeat.isPending ? "Removing…" : "Remove Seat"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

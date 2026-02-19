@@ -18,7 +18,7 @@ interface EditSeatDialogProps {
     customPrice: number;
     joinedAt: string;
     activeUntil: string;
-    status: "active" | "paused" | "cancelled";
+    status: "active" | "paused";
     client: {
       serviceUser?: string | null;
       servicePassword?: string | null;

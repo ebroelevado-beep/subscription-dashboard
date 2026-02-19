@@ -31,7 +31,6 @@ function formatDate(date: string) {
 const statusVariant: Record<string, "default" | "secondary" | "destructive"> = {
   active: "default",
   paused: "secondary",
-  cancelled: "destructive",
 };
 
 export function SubscriptionsTable({ subscriptions, isLoading }: SubscriptionsTableProps) {
@@ -138,7 +137,7 @@ export function SubscriptionsTable({ subscriptions, isLoading }: SubscriptionsTa
                   </TableCell>
                   <TableCell className="text-center">
                     <Badge variant={statusVariant[sub.status] ?? "secondary"}>
-                      {tc(sub.status as "active" | "paused" | "cancelled")}
+                      {tc(sub.status as "active" | "paused")}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-muted-foreground">

@@ -29,7 +29,7 @@ const schema = z.object({
   label: z.string().min(1, "validation.labelRequired").max(100),
   startDate: z.string().min(1, "validation.startDateRequired"),
   durationMonths: z.coerce.number().int().positive("validation.atLeast1Month"),
-  status: z.enum(["active", "paused", "cancelled"]),
+  status: z.enum(["active", "paused"]),
   masterUsername: z.string().optional(),
   masterPassword: z.string().optional(),
   ownerId: z.string().optional(),
@@ -339,7 +339,7 @@ export function SubscriptionFormDialog({ mode, subscription, open, onOpenChange 
                     <SelectContent>
                       <SelectItem value="active">{tc("active")}</SelectItem>
                       <SelectItem value="paused">{tc("paused")}</SelectItem>
-                      <SelectItem value="cancelled">{tc("cancelled")}</SelectItem>
+
                     </SelectContent>
                   </Select>
                 )}

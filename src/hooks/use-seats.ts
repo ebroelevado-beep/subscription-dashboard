@@ -38,7 +38,7 @@ export function useUpdateSeat() {
     mutationFn: (data: {
       id: string;
       customPrice?: number;
-      status?: "active" | "paused" | "cancelled";
+      status?: "active" | "paused";
       durationMonths?: number;
       startDate?: string | Date;
       activeUntil?: string | Date;
