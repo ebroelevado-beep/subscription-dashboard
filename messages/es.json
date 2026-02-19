@@ -226,7 +226,7 @@
     "deleteDescription": "Esta acción no se puede deshacer. Todas las asignaciones de asiento de este cliente se eliminarán.",
     "deleteActiveSeats": "Este cliente tiene {count} asiento(s) activo(s).",
     "emptyTitle": "Aún no hay clientes",
-    "emptyDescription": "Añade tu primer cliente para empezar a asignarle asientos de suscripción.",
+    "emptyDescription": "Añade tu primer cliente para empezar a asignararle asientos de suscripción.",
     "phone": "Teléfono",
     "activeSeats": "Asientos Activos",
     "totalSpent": "Total Gastado",

@@ -228,7 +228,7 @@
     "addTitle": "添加客户",
     "editTitle": "编辑客户",
     "addDescription": "将新客户添加到您的系统。",
-    "editDescription": "更新此客户的详情。",
+    "editDescription": "更新此客户'的详情。",
     "nameLabel": "姓名",
     "namePlaceholder": "客户姓名",
     "phoneLabel": "电话 (WhatsApp)",
