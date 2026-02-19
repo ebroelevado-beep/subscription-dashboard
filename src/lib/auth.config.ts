@@ -15,9 +15,13 @@ export const authConfig = {
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
       allowDangerousEmailAccountLinking: true,
     }),
+    // We provide an empty list here or just dummy providers
+    // The actual authorization logic for Credentials will be added in auth.ts (Node.js)
     CredentialsProvider({}),
   ],
   callbacks: {
+    // Basic JWT/Session callbacks that don't need the DB
+
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;

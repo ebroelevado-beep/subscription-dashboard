@@ -259,7 +259,13 @@
     "showPhone": "显示电话",
     "hidePhone": "隐藏电话",
     "expiresOn": "到期：{date}",
-    "perMonth": "/月"
+    "perMonth": "/月",
+    "status": {
+      "paid": "已付",
+      "due": "待付",
+      "expired": "已过期",
+      "none": "无席位"
+    }
   },
   "history": {
     "title": "续约历史",

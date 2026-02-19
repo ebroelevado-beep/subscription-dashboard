@@ -162,6 +162,19 @@
     "namePlaceholder": "ej. Netflix, Spotify, Canva…",
     "deleteTitle": "¿Eliminar \"{name}\"?",
     "deleteDescription": "Esta acción no se puede deshacer. Todos los planes y suscripciones vinculadas a esta plataforma se eliminarán permanentemente.",
+    "deleteActivePlans": "⚠ Esta plataforma tiene {count} plan(es) activo(s).",
+    "emptyTitle": "No hay plataformas aún",
+    "emptyDescription": "Añade tu primera plataforma (ej. Netflix, Spotify) para empezar a gestionar tus suscripciones.",
+    "plans": "Planes"
+  },
+  "plans": {
+    "title": "Planes",
+    "description": "Gestiona plantillas de planes vinculadas a tus plataformas.",
+    "addPlan": "Añadir Plan",
+    "addTitle": "Añadir Plan",
+    "editTitle": "Editar Plan",
+    "addDescription": "Define una nueva plantilla de plan con precios y límites de asientos.",
+    "editDescription": "Actualiza los detalles de este plan.",
     "selectPlatform": "Selecciona una plataforma…",
     "namePlaceholder_plan": "ej. Premium, Familiar, Básico…",
     "myCost": "Mi Coste (€)",
@@ -246,7 +259,13 @@
     "showPhone": "Mostrar teléfono",
     "hidePhone": "Ocultar teléfono",
     "expiresOn": "Vence: {date}",
-    "perMonth": "/mes"
+    "perMonth": "/mes",
+    "status": {
+      "paid": "Pagado",
+      "due": "Por vencer",
+      "expired": "Vencido",
+      "none": "Sin asientos"
+    }
   },
   "history": {
     "title": "Historial de Renovaciones",

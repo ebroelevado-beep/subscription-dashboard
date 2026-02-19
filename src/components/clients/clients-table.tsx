@@ -14,6 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Pencil, Trash2, Users } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { differenceInDays, startOfDay } from "date-fns";
+import { useTranslations } from "next-intl";
 
 type ClientStatus = "paid" | "due" | "expired" | "none";
 
@@ -36,12 +37,12 @@ function getClientStatus(client: Client): ClientStatus {
   return "paid";
 }
 
-const statusConfig: Record<ClientStatus, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
-  paid: { label: "Paid", variant: "default" },
-  due: { label: "Due", variant: "secondary" },
-  expired: { label: "Expired", variant: "destructive" },
-  none: { label: "No seats", variant: "outline" },
-};
+const statusConfig = (t: any) => ({
+  paid: { label: t("status.paid"), variant: "default" as const },
+  due: { label: t("status.due"), variant: "secondary" as const },
+  expired: { label: t("status.expired"), variant: "destructive" as const },
+  none: { label: t("status.none"), variant: "outline" as const },
+});
 
 function getServicesSummary(client: Client): string {
   const active = client.clientSubscriptions.filter((cs) => cs.status === "active" || cs.status === "paused");
@@ -59,6 +60,9 @@ export function ClientsTable({ clients, isLoading }: ClientsTableProps) {
   const [editClient, setEditClient] = useState<Client | null>(null);
   const [deleteClient, setDeleteClient] = useState<Client | null>(null);
   const [sheetClientId, setSheetClientId] = useState<string | null>(null);
+  const t = useTranslations("clients");
+  const tc = useTranslations("common");
+  const config = statusConfig(t);
 
   if (isLoading) {
     return (
@@ -66,12 +70,12 @@ export function ClientsTable({ clients, isLoading }: ClientsTableProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Phone</TableHead>
-              <TableHead>Services</TableHead>
-              <TableHead className="text-center">Active Seats</TableHead>
-              <TableHead className="text-center">Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>{tc("name")}</TableHead>
+              <TableHead>{t("phone")}</TableHead>
+              <TableHead>{tc("platform")}</TableHead>
+              <TableHead className="text-center">{t("activeSeats")}</TableHead>
+              <TableHead className="text-center">{tc("status")}</TableHead>
+              <TableHead className="text-right">{tc("actions")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -101,8 +105,8 @@ export function ClientsTable({ clients, isLoading }: ClientsTableProps) {
       <div className="rounded-lg border border-dashed">
         <EmptyState
           icon={Users}
-          title="No clients yet"
-          description="Add your first client to start assigning seats."
+          title={t("emptyTitle")}
+          description={t("emptyDescription")}
         />
       </div>
     );
@@ -114,12 +118,12 @@ export function ClientsTable({ clients, isLoading }: ClientsTableProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Phone</TableHead>
-              <TableHead>Services</TableHead>
-              <TableHead className="text-center">Active Seats</TableHead>
-              <TableHead className="text-center">Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>{tc("name")}</TableHead>
+              <TableHead>{t("phone")}</TableHead>
+              <TableHead>{tc("platform")}</TableHead>
+              <TableHead className="text-center">{t("activeSeats")}</TableHead>
+              <TableHead className="text-center">{tc("status")}</TableHead>
+              <TableHead className="text-right">{tc("actions")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -128,7 +132,7 @@ export function ClientsTable({ clients, isLoading }: ClientsTableProps) {
                 (cs) => cs.status === "active"
               ).length;
               const status = getClientStatus(c);
-              const sc = statusConfig[status];
+              const sc = config[status];
               const services = getServicesSummary(c);
 
               return (
@@ -163,7 +167,7 @@ export function ClientsTable({ clients, isLoading }: ClientsTableProps) {
                         onClick={(e) => { e.stopPropagation(); setEditClient(c); }}
                       >
                         <Pencil className="size-3.5" />
-                        <span className="sr-only">Edit</span>
+                        <span className="sr-only">{tc("edit")}</span>
                       </Button>
                       <Button
                         variant="ghost"
@@ -172,7 +176,7 @@ export function ClientsTable({ clients, isLoading }: ClientsTableProps) {
                         onClick={(e) => { e.stopPropagation(); setDeleteClient(c); }}
                       >
                         <Trash2 className="size-3.5" />
-                        <span className="sr-only">Delete</span>
+                        <span className="sr-only">{tc("delete")}</span>
                       </Button>
                     </div>
                   </TableCell>

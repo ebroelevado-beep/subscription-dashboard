@@ -246,7 +246,13 @@
     "showPhone": "Show phone",
     "hidePhone": "Hide phone",
     "expiresOn": "Expires: {date}",
-    "perMonth": "/mo"
+    "perMonth": "/mo",
+    "status": {
+      "paid": "Paid",
+      "due": "Due",
+      "expired": "Expired",
+      "none": "No seats"
+    }
   },
   "history": {
     "title": "Renewal History",
@@ -304,10 +310,10 @@
   },
   "settings": {
     "title": "Settings",
-    "description": "Manage your account and application preferences.",
+    "description": "Manage your profile information and account settings.",
     "profile": "Profile",
     "profileImage": "Profile Image",
-    "profileImageDescription": "Your profile image will be displayed across the dashboard.",
+    "profileImageDescription": "Your profile picture will be shown across the dashboard.",
     "data": "Data",
     "danger": "Danger Zone",
     "displayName": "Display Name",
