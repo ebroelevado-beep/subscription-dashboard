@@ -37,6 +37,7 @@ export async function GET() {
     >();
 
     for (const g of grouped) {
+      if (!g.clientSubscriptionId) continue;
       const seat = seatMap.get(g.clientSubscriptionId);
       if (!seat) continue;
 
