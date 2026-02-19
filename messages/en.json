@@ -12,6 +12,7 @@
     "loading": "Loading…",
     "error": "Error",
     "success": "Success",
+    "orContinueWith": "Or continue with",
     "noResults": "No results found",
     "clearSearch": "Clear search",
     "allRightsReserved": "© {year} All rights reserved.",
@@ -316,8 +317,10 @@
   },
   "settings": {
     "title": "Settings",
-    "description": "Manage your account and app preferences.",
+    "description": "Manage your profile information and account settings.",
     "profile": "Profile",
+    "profileImage": "Profile Image",
+    "profileImageDescription": "Your profile picture will be shown across the dashboard.",
     "data": "Data",
     "danger": "Danger Zone",
     "displayName": "Display Name",
@@ -339,7 +342,7 @@
     "exporting": "Exporting…",
     "importing": "Importing…",
     "deleting": "Deleting…",
-    "typeDeleteToConfirm": "Type DELETE to confirm",
+    "typeDeleteToConfirm": "Type <word>{confirmWord}</word> to confirm",
     "deleteConfirmPlaceholder": "DELETE"
   },
   "validation": {
