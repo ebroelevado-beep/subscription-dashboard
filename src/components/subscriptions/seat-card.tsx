@@ -18,7 +18,7 @@ function formatCurrency(amount: number) {
 
 type ExpiryStatus = "ok" | "expiring" | "expired";
 
-function getExpiryStatus(activeUntil: string, t: (key: string, values?: any) => string): {
+function getExpiryStatus(activeUntil: string, t: (key: string, values?: Record<string, string | number>) => string): {
   status: ExpiryStatus;
   label: string;
   daysText: string;
@@ -115,19 +115,19 @@ export function SeatCard({ seat, onPause, onResume, onCancel, onRenew, onEdit }:
 
   return (
     <div
-      className={`flex flex-col gap-3 rounded-lg border border-l-4 p-4 transition-colors ${
+      className={`flex flex-col gap-3 rounded-lg border border-l-4 p-4 transition-colors overflow-hidden min-w-0 ${
         isPaused
           ? "border-l-amber-500 bg-muted/40 opacity-80"
           : `hover:bg-muted/50 ${expiryColors[expiry.status]}`
       }`}
     >
       {/* Header: Client name + status badge + actions */}
-      <div className="flex items-start justify-between">
-        <div className="flex items-center gap-2">
-          <div className="flex items-center justify-center size-8 rounded-full bg-muted">
+      <div className="flex items-start justify-between gap-1 min-w-0">
+        <div className="flex items-center gap-2 min-w-0 overflow-hidden flex-1">
+          <div className="flex items-center justify-center size-8 rounded-full bg-muted shrink-0">
             <UserCircle className="size-5 text-muted-foreground" />
           </div>
-          <div className="min-w-0">
+          <div className="min-w-0 overflow-hidden">
             <Link
               href={`/dashboard/clients/${seat.clientId}`}
               className="font-medium text-sm hover:underline truncate block"
@@ -135,11 +135,11 @@ export function SeatCard({ seat, onPause, onResume, onCancel, onRenew, onEdit }:
               {seat.client.name}
             </Link>
             {seat.client.phone && (
-              <p className="text-xs text-muted-foreground">{seat.client.phone}</p>
+              <p className="text-xs text-muted-foreground truncate">{seat.client.phone}</p>
             )}
           </div>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5 shrink-0">
           <Badge variant={statusConfig.variant} className="text-[10px] h-5">
             {tc(statusConfig.labelKey)}
           </Badge>
@@ -233,15 +233,15 @@ export function SeatCard({ seat, onPause, onResume, onCancel, onRenew, onEdit }:
       </div>
 
       {/* Expiry with color */}
-      <div className="flex items-center justify-between text-sm">
-        <span className="text-muted-foreground">
+      <div className="flex items-center justify-between gap-2 text-sm min-w-0">
+        <span className="text-muted-foreground shrink-0">
           {isPaused ? t("frozenUntil") : t("expires")}
         </span>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">
+        <div className="flex items-center gap-1.5 min-w-0 overflow-hidden">
+          <span className="text-xs text-muted-foreground truncate">
             {isPaused ? tc("paused") : expiry.daysText}
           </span>
-          <Badge variant={isPaused ? "secondary" : expiryBadgeVariant[expiry.status]} className="text-xs">
+          <Badge variant={isPaused ? "secondary" : expiryBadgeVariant[expiry.status]} className="text-xs shrink-0 whitespace-nowrap">
             {new Date(seat.activeUntil).toLocaleDateString("es-ES")}
           </Badge>
         </div>
@@ -249,7 +249,7 @@ export function SeatCard({ seat, onPause, onResume, onCancel, onRenew, onEdit }:
 
       {/* Credentials */}
       {hasCredentials && (
-        <div className="rounded border bg-muted/30 p-2 space-y-1.5">
+        <div className="rounded border bg-muted/30 p-2 space-y-1.5 overflow-hidden">
           {seat.client.serviceUser && (
             <div className="flex items-center justify-between text-xs gap-2 overflow-hidden">
               <span className="text-muted-foreground shrink-0">{t("serviceUser")}</span>
@@ -269,10 +269,10 @@ export function SeatCard({ seat, onPause, onResume, onCancel, onRenew, onEdit }:
             </div>
           )}
           {seat.client.servicePassword && (
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">{t("servicePassword")}</span>
-              <div className="flex items-center gap-1">
-                <code className="font-mono text-xs">
+            <div className="flex items-center justify-between text-xs gap-2 overflow-hidden">
+              <span className="text-muted-foreground shrink-0">{t("servicePassword")}</span>
+              <div className="flex items-center gap-1 min-w-0">
+                <code className="font-mono text-xs truncate">
                   {showPassword
                     ? seat.client.servicePassword
                     : "••••••••"}
