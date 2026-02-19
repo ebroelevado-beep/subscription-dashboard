@@ -7,7 +7,6 @@
   "steps": {
     "build": {
       "commands": [
-        "pnpm prisma migrate deploy",
         "pnpm build",
         "cp -r public .next/standalone/public",
         "cp -r .next/static .next/standalone/.next/static"
@@ -19,7 +18,7 @@
     }
   },
   "deploy": {
-    "startCommand": "node .next/standalone/server.js",
+    "startCommand": "pnpm prisma migrate deploy && node .next/standalone/server.js",
     "variables": {
       "NODE_ENV": "production",
       "HOSTNAME": "0.0.0.0",
