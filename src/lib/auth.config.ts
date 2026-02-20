@@ -25,6 +25,11 @@ declare module "next-auth/jwt" {
 }
 
 
+// Determine environment for secure prefixes
+const useSecureCookies = process.env.NODE_ENV === "production";
+const cookiePrefix = useSecureCookies ? "__Secure-" : "";
+const hostPrefix = useSecureCookies ? "__Host-" : "";
+
 // Separate auth config that is edge-compatible (no Prisma/Node specifics)
 export const authConfig = {
   trustHost: true,
@@ -32,9 +37,38 @@ export const authConfig = {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
+  cookies: {
+    sessionToken: {
+      name: `${cookiePrefix}authjs.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: useSecureCookies,
+      },
+    },
+    callbackUrl: {
+      name: `${cookiePrefix}authjs.callback-url`,
+      options: {
+        sameSite: "lax",
+        path: "/",
+        secure: useSecureCookies,
+      },
+    },
+    csrfToken: {
+      name: `${hostPrefix}authjs.csrf-token`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: useSecureCookies,
+      },
+    },
+  },
   pages: {
     signIn: "/login",
   },
+
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID,
