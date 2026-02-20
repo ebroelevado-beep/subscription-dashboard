@@ -105,7 +105,7 @@ export default function LandingPage() {
             ) : session?.user ? (
               <Button size="sm" asChild>
                 <Link href="/dashboard">
-                  {tc("dashboard")}
+                  {tc("dashboardShortcut")}
                   <ArrowRight className="ml-1 size-3.5" />
                 </Link>
               </Button>
@@ -183,7 +183,7 @@ export default function LandingPage() {
             ) : session?.user ? (
               <Button size="lg" asChild className="w-full sm:w-auto shadow-lg shadow-primary/20">
                 <Link href="/dashboard">
-                  {tc("dashboard")}
+                  {tc("dashboardShortcut")}
                   <ArrowRight className="ml-2 size-4" />
                 </Link>
               </Button>
@@ -327,7 +327,7 @@ export default function LandingPage() {
             ) : session?.user ? (
               <Button size="lg" asChild className="shadow-lg shadow-primary/20">
                 <Link href="/dashboard">
-                  {tc("dashboard")}
+                  {tc("dashboardShortcut")}
                   <ArrowRight className="ml-2 size-4" />
                 </Link>
               </Button>
