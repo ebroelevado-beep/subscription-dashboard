@@ -47,7 +47,7 @@ export function AddSeatDialog({ subscriptionId, open, onOpenChange }: AddSeatDia
   const selectedClient = clients?.find((c) => c.id === selectedClientId);
 
   // Date preview
-  const months = parseInt(durationMonths) || 0;
+  const months = Number(durationMonths) || 0;
   const previewDate = months > 0 && startDate
     ? format(addMonths(new Date(startDate), months), "dd/MM/yyyy")
     : null;

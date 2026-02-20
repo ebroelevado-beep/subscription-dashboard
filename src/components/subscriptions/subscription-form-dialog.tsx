@@ -90,8 +90,8 @@ export function SubscriptionFormDialog({ mode, subscription, open, onOpenChange 
   }, [selectedPlatformId, prevPlatformId, setValue]);
 
   // Compute preview date
-  const previewDate = selectedStartDate && selectedDuration > 0
-    ? format(addMonths(new Date(selectedStartDate), selectedDuration), "dd/MM/yyyy")
+  const previewDate = selectedStartDate && Number(selectedDuration) > 0
+    ? format(addMonths(new Date(selectedStartDate), Number(selectedDuration)), "dd/MM/yyyy")
     : null;
 
   // Capacity warning when changing plan in edit mode

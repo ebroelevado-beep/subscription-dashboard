@@ -32,7 +32,7 @@ export const createSubscriptionSchema = z.object({
   planId: z.string().uuid(),
   label: z.string().min(1).max(100),
   startDate: z.string().date().transform((val) => new Date(val)),
-  durationMonths: z.number().int().positive(),
+  durationMonths: z.coerce.number().int().positive(),
   status: z.enum(["active", "paused"]).optional().default("active"),
   masterUsername: z.string().max(100).nullable().optional(),
   masterPassword: z.string().max(100).nullable().optional(),
@@ -63,7 +63,7 @@ export const createClientSubscriptionSchema = z.object({
   clientId: z.string().uuid(),
   subscriptionId: z.string().uuid(),
   customPrice: z.number().min(0),
-  durationMonths: z.number().int().positive(),
+  durationMonths: z.coerce.number().int().positive(),
   serviceUser: z.string().max(100).nullable().optional(),
   servicePassword: z.string().max(100).nullable().optional(),
   startDate: z.string().date().transform((val) => new Date(val)).optional(),
@@ -83,7 +83,7 @@ export type CreateClientSubscriptionInput = z.infer<
 
 export const renewClientSubscriptionSchema = z.object({
   amountPaid: z.number().optional(), // defaults to custom_price; can be 0 for corrections
-  months: z.number().int().refine((v) => v !== 0, { message: "Months cannot be zero" }).optional().default(1),
+  months: z.coerce.number().int().refine((v) => v !== 0, { message: "Months cannot be zero" }).optional().default(1),
   notes: z.string().nullable().optional(),
 });
 
@@ -105,6 +105,7 @@ export const renewBulkClientSubscriptionsSchema = z.object({
     )
     .min(1, "Select at least one service to renew"),
   months: z
+    .coerce
     .number()
     .int()
     .min(1)
@@ -136,7 +137,7 @@ export type RenewPlatformSubscriptionInput = z.infer<
 export const updateSeatSchema = z.object({
   status: z.enum(["active", "paused"]).optional(),
   customPrice: z.number().min(0).optional(),
-  durationMonths: z.number().int().positive().optional(), // only for reactivation
+  durationMonths: z.coerce.number().int().positive().optional(), // only for reactivation
   startDate: z.string().date().transform((val) => new Date(val)).optional(),
   activeUntil: z.string().date().transform((val) => new Date(val)).optional(),
   serviceUser: z.string().max(100).nullable().optional(),

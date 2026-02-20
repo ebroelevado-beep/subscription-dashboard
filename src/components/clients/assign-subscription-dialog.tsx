@@ -57,7 +57,7 @@ export function AssignSubscriptionDialog({
   const selectedSub = subscriptions?.find((s) => s.id === selectedSubId);
 
   // Date preview
-  const months = parseInt(durationMonths) || 0;
+  const months = Number(durationMonths) || 0;
   const previewDate = months > 0 && startDate
     ? format(addMonths(new Date(startDate), months), "dd/MM/yyyy")
     : null;
