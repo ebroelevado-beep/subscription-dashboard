@@ -117,6 +117,7 @@ export async function GET() {
         id: s.id,
         clientId: s.client.id,
         clientName: s.client.name,
+        clientPhone: s.client.phone,
         customPrice: Number(s.customPrice),
         activeUntil: s.activeUntil,
         daysLeft: Math.ceil(

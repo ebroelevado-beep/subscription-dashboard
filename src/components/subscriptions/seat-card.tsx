@@ -57,10 +57,10 @@ const expiryColors: Record<ExpiryStatus, string> = {
   expired: "border-l-red-500",
 };
 
-const expiryBadgeVariant: Record<ExpiryStatus, "default" | "secondary" | "destructive"> = {
-  ok: "default",
-  expiring: "secondary",
-  expired: "destructive",
+const expiryBadgeVariant: Record<ExpiryStatus, string> = {
+  ok: "bg-muted/50 text-muted-foreground",
+  expiring: "bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20",
+  expired: "bg-red-500/10 text-red-500 hover:bg-red-500/20",
 };
 
 const statusBadgeConfig: Record<
@@ -239,10 +239,10 @@ export function SeatCard({ seat, onPause, onResume, onCancel, onRenew, onEdit }:
         </span>
         <div className="flex items-center gap-1.5 min-w-0 overflow-hidden">
           <span className="text-xs text-muted-foreground truncate">
-            {isPaused ? tc("paused") : expiry.daysText}
-          </span>
-          <Badge variant={isPaused ? "secondary" : expiryBadgeVariant[expiry.status]} className="text-xs shrink-0 whitespace-nowrap">
             {new Date(seat.activeUntil).toLocaleDateString("es-ES")}
+          </span>
+          <Badge variant={isPaused ? "secondary" : "outline"} className={`text-xs shrink-0 whitespace-nowrap border-0 ${isPaused ? "" : expiryBadgeVariant[expiry.status]}`}>
+            {isPaused ? tc("paused") : expiry.daysText}
           </Badge>
         </div>
       </div>

@@ -48,12 +48,17 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     const data = createSubscriptionSchema.partial().parse(body);
 
     const updateData: Record<string, unknown> = {};
-    if (data.label) updateData.label = data.label;
-    if (data.status) updateData.status = data.status;
-    if (data.startDate) updateData.startDate = data.startDate;
-    if (data.durationMonths && data.startDate) {
+    if (data.label !== undefined) updateData.label = data.label;
+    if (data.status !== undefined) updateData.status = data.status;
+    if (data.startDate !== undefined) updateData.startDate = data.startDate;
+    if (data.durationMonths !== undefined && data.startDate) {
       updateData.activeUntil = addMonths(data.startDate, data.durationMonths);
     }
+    
+    // Allow clearing these fields by checking against undefined (so null sets them to null)
+    if (data.masterUsername !== undefined) updateData.masterUsername = data.masterUsername;
+    if (data.masterPassword !== undefined) updateData.masterPassword = data.masterPassword;
+    if (data.ownerId !== undefined) updateData.ownerId = data.ownerId;
 
     // If planId is changing, enforce capacity check
     if (data.planId) {

@@ -20,6 +20,8 @@ import {
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useTranslations } from "next-intl";
+import { ClientDetailSheet } from "@/components/clients/client-detail-sheet";
+import { useState } from "react";
 
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(amount);
@@ -70,6 +72,7 @@ export default function DashboardPage() {
   const { data: stats, isLoading } = useDashboardStats();
   const t = useTranslations("dashboard");
   const tc = useTranslations("common");
+  const [sheetClientId, setSheetClientId] = useState<string | null>(null);
 
   if (isLoading) {
     return (
@@ -260,11 +263,12 @@ export default function DashboardPage() {
                       <Badge variant="destructive" className="text-xs">
                         {tc("daysOverdue", { count: seat.daysOverdue })}
                       </Badge>
-                      <Button asChild variant="ghost" size="icon" className="size-7">
-                        <Link href={`/dashboard/subscriptions/${seat.subscriptionId}`}>
-                          <ArrowRight className="size-3.5" />
-                        </Link>
-                      </Button>
+                      <button
+                        onClick={() => setSheetClientId(seat.clientId)}
+                        className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all cursor-pointer disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2 hover:bg-accent hover:text-accent-foreground size-8"
+                      >
+                        <ArrowRight className="size-3.5" />
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -312,11 +316,12 @@ export default function DashboardPage() {
                           ? tc("today")
                           : tc("daysLeft", { count: seat.daysLeft })}
                       </Badge>
-                      <Button asChild variant="ghost" size="icon" className="size-7">
-                        <Link href={`/dashboard/subscriptions/${seat.subscriptionId}`}>
-                          <ArrowRight className="size-3.5" />
-                        </Link>
-                      </Button>
+                      <button
+                        onClick={() => setSheetClientId(seat.clientId)}
+                        className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all cursor-pointer disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2 hover:bg-accent hover:text-accent-foreground size-8"
+                      >
+                        <ArrowRight className="size-3.5" />
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -351,6 +356,15 @@ export default function DashboardPage() {
       <p className="text-xs text-muted-foreground text-center">
         {tc("dataRefresh", { time: formatDistanceToNow(new Date(), { addSuffix: true }) })}
       </p>
+
+      {/* Global Modals for Dashboard Context */}
+      <ClientDetailSheet
+        clientId={sheetClientId}
+        open={!!sheetClientId}
+        onOpenChange={(open) => {
+          if (!open) setSheetClientId(null);
+        }}
+      />
     </div>
   );
 }

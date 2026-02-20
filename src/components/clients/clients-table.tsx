@@ -15,6 +15,8 @@ import { Pencil, Trash2, Users, Eye } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { differenceInDays, startOfDay } from "date-fns";
 import { useTranslations } from "next-intl";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import { useEffect } from "react";
 
 type ClientStatus = "paid" | "due" | "expired" | "none";
 
@@ -63,6 +65,23 @@ export function ClientsTable({ clients, isLoading }: ClientsTableProps) {
   const t = useTranslations("clients");
   const tc = useTranslations("common");
   const config = statusConfig(t);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  useEffect(() => {
+    const cid = searchParams.get("clientId");
+    if (cid && !isLoading && clients) {
+      const clientExists = clients.some(c => c.id === cid);
+      if (clientExists) {
+        setTimeout(() => setSheetClientId(cid), 0);
+        // Remove clientId from URL silently
+        const newParams = new URLSearchParams(searchParams.toString());
+        newParams.delete("clientId");
+        router.replace(`${pathname}${newParams.size > 0 ? '?' + newParams.toString() : ''}`);
+      }
+    }
+  }, [searchParams, clients, isLoading, pathname, router]);
 
   if (isLoading) {
     return (

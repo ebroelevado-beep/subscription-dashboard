@@ -22,6 +22,7 @@ export interface ExpiringSoonSeat {
   id: string;
   clientId: string;
   clientName: string;
+  clientPhone: string | null;
   customPrice: number;
   activeUntil: string;
   daysLeft: number;

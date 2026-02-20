@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useRouter } from "@/i18n/navigation";
 import type { Subscription } from "@/hooks/use-subscriptions";
 import { SubscriptionFormDialog } from "./subscription-form-dialog";
@@ -145,17 +144,26 @@ export function SubscriptionsTable({ subscriptions, isLoading }: SubscriptionsTa
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
-                      <Button variant="ghost" size="icon" className="size-8" asChild>
-                        <Link href={`/dashboard/subscriptions/${sub.id}`}>
-                          <Eye className="size-3.5" />
-                          <span className="sr-only">{tc("edit")}</span>
-                        </Link>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-8"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          router.push(`/dashboard/subscriptions/${sub.id}`);
+                        }}
+                      >
+                        <Eye className="size-3.5" />
+                        <span className="sr-only">{tc("view")}</span>
                       </Button>
                       <Button
                         variant="ghost"
                         size="icon"
                         className="size-8"
-                        onClick={() => setEditSub(sub)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditSub(sub);
+                        }}
                       >
                         <Pencil className="size-3.5" />
                         <span className="sr-only">{tc("edit")}</span>
@@ -164,7 +172,10 @@ export function SubscriptionsTable({ subscriptions, isLoading }: SubscriptionsTa
                         variant="ghost"
                         size="icon"
                         className="size-8 text-destructive hover:text-destructive"
-                        onClick={() => setDeleteSub(sub)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteSub(sub);
+                        }}
                       >
                         <Trash2 className="size-3.5" />
                         <span className="sr-only">{tc("delete")}</span>

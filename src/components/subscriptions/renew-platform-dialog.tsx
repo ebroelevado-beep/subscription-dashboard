@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { addMonths, format } from "date-fns";
+import { useTranslations } from "next-intl";
 
 interface RenewPlatformDialogProps {
   subscription: {
@@ -29,6 +30,8 @@ export function RenewPlatformDialog({
   const renewMut = useRenewPlatform();
   const [amount, setAmount] = useState(0);
   const [notes, setNotes] = useState("");
+  const t = useTranslations("subscriptions");
+  const tc = useTranslations("common");
 
   const currentExpiry = subscription
     ? new Date(subscription.activeUntil)
@@ -65,18 +68,20 @@ export function RenewPlatformDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
-            Platform Renewal — {subscription?.plan.platform.name}
+            {t("renewPlatformTitle", { name: subscription?.plan.platform.name ?? "" })}
           </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Log the payment for <strong>{subscription?.label}</strong> (
-            {subscription?.plan.name}).
+            {t("renewPlatformDescription", {
+              label: subscription?.label ?? "",
+              planName: subscription?.plan.name ?? "",
+            })}
           </p>
 
           <div className="space-y-2">
-            <Label htmlFor="platformAmount">Amount Paid (€)</Label>
+            <Label htmlFor="platformAmount">{tc("amountPaid")} (€)</Label>
             <Input
               id="platformAmount"
               type="number"
@@ -88,23 +93,25 @@ export function RenewPlatformDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="platformNotes">Notes (optional)</Label>
+            <Label htmlFor="platformNotes">
+              {tc("notes")} ({tc("optional")})
+            </Label>
             <Input
               id="platformNotes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="e.g. Charged to Visa ****1234"
+              placeholder={tc("notesPlaceholder")}
             />
           </div>
 
           {/* Preview */}
           <div className="rounded-lg border bg-muted/50 p-3 space-y-1 text-sm">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Current expiry</span>
+              <span className="text-muted-foreground">{tc("currentExpiry")}</span>
               <span>{format(currentExpiry, "dd/MM/yyyy")}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">New expiry</span>
+              <span className="text-muted-foreground">{tc("newExpiry")}</span>
               <span className="font-semibold text-green-600 dark:text-green-400">
                 {format(newExpiry, "dd/MM/yyyy")}
               </span>
@@ -117,10 +124,10 @@ export function RenewPlatformDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
             >
-              Cancel
+              {tc("cancel")}
             </Button>
             <Button type="submit" disabled={renewMut.isPending}>
-              {renewMut.isPending ? "Recording…" : "Record Payment"}
+              {renewMut.isPending ? tc("recording") : tc("recordPayment")}
             </Button>
           </DialogFooter>
         </form>

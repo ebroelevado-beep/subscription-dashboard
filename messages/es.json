@@ -87,7 +87,14 @@
     "platforms": "Plataformas",
     "account": "Cuenta",
     "userDefault": "Usuario",
-    "myAccount": "Mi Cuenta"
+    "profitLabel": "Beneficio",
+    "myAccount": "Mi Cuenta",
+    "expired": "Vencido",
+    "pause": "Pausar",
+    "resume": "Reanudar",
+    "recording": "Grabando…",
+    "recordPayment": "Registrar Pago",
+    "dashboard": "Panel"
   },
   "nav": {
     "dashboard": "Panel",
@@ -224,7 +231,7 @@
     "selectPlatform": "Selecciona una plataforma",
     "selectPlan": "Selecciona un plan",
     "selectPlatformFirst": "Selecciona primero una plataforma",
-    "startDate": "Fecha de Inicio",
+    "startDate": "Start Date",
     "durationMonths": "Duración (meses)",
     "activeUntil": "Activo hasta: {date}",
     "statusLabel": "Estado",
@@ -242,6 +249,8 @@
     "addSeat": "Añadir Asiento",
     "removeSeat": "Quitar Asiento",
     "renewPlatform": "Renovar Plataforma",
+    "renewPlatformTitle": "Renovación de Plataforma — {name}",
+    "renewPlatformDescription": "Registrar el pago de {label} ({planName}).",
     "availableSeats": "{available} de {total} asientos disponibles",
     "unlimitedSeats": "Asientos ilimitados",
     "editSeat": "Editar Asiento",
@@ -264,7 +273,8 @@
     "removeSeatAction": "Sí, quitar",
     "keepSeatAction": "Mantener asiento",
     "cancelling": "Cancelando…",
-    "noActiveSeats": "No hay asientos activos"
+    "noActiveSeats": "No hay asientos activos",
+    "renewSeat": "Renovar Asiento"
   },
   "clients": {
     "title": "Clientes",
@@ -403,13 +413,21 @@
     "importing": "Importando…",
     "deleting": "Eliminando…",
     "typeDeleteToConfirm": "Escribe <word>{confirmWord}</word> para confirmar",
-    "deleteConfirmPlaceholder": "ELIMINAR"
+    "deleteConfirmPlaceholder": "ELIMINAR",
+    "setPassword": "Establecer Contraseña",
+    "setPasswordDescription": "Establece una contraseña para iniciar sesión con tu email en lugar de Google. Asegúrate de que tenga al menos 6 caracteres.",
+    "newPassword": "Nueva Contraseña",
+    "savePassword": "Guardar Contraseña",
+    "passwordTooShort": "La contraseña debe tener al menos 6 caracteres",
+    "passwordSetSuccess": "¡Contraseña establecida con éxito! Ahora puedes iniciar sesión con tu email y contraseña.",
+    "appearance": "Apariencia",
+    "language": "Idioma",
+    "appearanceDescription": "Personaliza cómo se ve la aplicación para ti.",
+    "themeLabel": "Modo de Apariencia"
   },
   "validation": {
     "required": "Este campo es obligatorio",
     "nameRequired": "El nombre es obligatorio",
-    "platformRequired": "La plataforma es obligatoria",
-    "planRequired": "El plan es obligatorio",
     "labelRequired": "La etiqueta es obligatoria",
     "startDateRequired": "La fecha de inicio es obligatoria",
     "costMin": "El coste debe ser ≥ 0",

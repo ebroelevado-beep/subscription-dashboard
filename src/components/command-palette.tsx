@@ -17,6 +17,11 @@ import {
   CreditCard,
   ScrollText,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const staticPages = [
   { key: "dashboard" as const, href: "/dashboard", icon: LayoutDashboard },
@@ -73,18 +78,12 @@ export function CommandPalette() {
         </kbd>
       </button>
 
-      {/* Dialog overlay */}
-      {open && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center pt-[20vh]">
-          {/* Backdrop */}
-          <div
-            className="absolute inset-0 bg-background/60 backdrop-blur-sm animate-fade-in"
-            onClick={() => setOpen(false)}
-          />
-
-          {/* Command dialog */}
+      {/* Modal Dialog for Search */}
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="p-0 border-none bg-transparent shadow-none sm:max-w-xl">
+          <DialogTitle className="sr-only">{t("searchPlaceholder")}</DialogTitle>
           <Command
-            className="relative z-10 w-full max-w-lg rounded-xl border bg-popover shadow-2xl animate-scale-in"
+            className="relative w-full rounded-xl border bg-popover shadow-2xl animate-scale-in"
             loop
           >
             <div className="flex items-center border-b px-4">
@@ -96,7 +95,7 @@ export function CommandPalette() {
               />
             </div>
 
-            <Command.List className="max-h-72 overflow-y-auto p-2">
+            <Command.List className="max-h-96 overflow-y-auto p-2">
               <Command.Empty className="py-8 text-center text-sm text-muted-foreground">
                 {t("noResultsFound")}
               </Command.Empty>
@@ -178,16 +177,13 @@ export function CommandPalette() {
               <p className="text-xs text-muted-foreground">
                 {t("navigateHint")}
               </p>
-              <button
-                onClick={() => setOpen(false)}
-                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {t("escToClose")}
-              </button>
+              <kbd className="hidden rounded border bg-background px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground sm:inline-block">
+                ESC
+              </kbd>
             </div>
           </Command>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

@@ -11,10 +11,21 @@ import {
   AlertTriangle,
   Loader2,
   Settings,
+  Palette,
 } from "lucide-react";
+import { LanguageSwitcher } from "@/components/language-switcher";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { updatePasswordAction } from "@/actions/password";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -49,10 +60,61 @@ function ProfileTab() {
   const user = session?.user;
   const updateProfile = useUpdateProfile();
   const t = useTranslations("settings");
-  const tc = useTranslations("common");
 
   const [name, setName] = useState(user?.name ?? "");
   const [image, setImage] = useState(user?.image ?? "");
+  const hasPassword = user?.hasPassword;
+
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+
+  const handlePasswordSubmit = async () => {
+    if (!newPassword || newPassword.length < 6) {
+      toast.error(t("passwordTooShort", { fallback: "Password must be at least 6 characters" }));
+      return;
+    }
+
+    if (hasPassword && !currentPassword) {
+      toast.error(t("currentPasswordRequired", { fallback: "Current password is required" }));
+      return;
+    }
+    
+    setIsUpdatingPassword(true);
+    try {
+      const formData = new FormData();
+      if (hasPassword) formData.append("currentPassword", currentPassword);
+      formData.append("newPassword", newPassword);
+
+      // Using dynamic import of Server Action to avoid module issues if needed,
+      // but assuming it's imported at the top. Let's assume fetch/api or action.
+      // Wait, we need to import updatePasswordAction, I will add it top of file.
+      
+      const result = await updatePasswordAction(null, formData);
+      
+      if (!result.success) {
+        throw new Error(result.error || "Failed to update password");
+      }
+      
+      toast.success(
+        hasPassword
+          ? t("passwordUpdated", { fallback: "Password updated successfully!" })
+          : t("passwordSetSuccess", { fallback: "Password set! You can now log in with email." })
+      );
+      
+      setCurrentPassword("");
+      setNewPassword("");
+      
+      // Update session to reflect hasPassword
+      if (!hasPassword) {
+        updateSession({ user: { ...user, hasPassword: true } });
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "An error occurred");
+    } finally {
+      setIsUpdatingPassword(false);
+    }
+  };
 
   const handleSave = () => {
     updateProfile.mutate(
@@ -126,20 +188,108 @@ function ProfileTab() {
             id="email"
             value={user?.email ?? ""}
             disabled
-            className="opacity-60"
+            className="bg-muted/50 cursor-not-allowed"
           />
+          <p className="text-[0.8rem] text-muted-foreground">
+            {t("emailDescription")}
+          </p>
         </div>
 
-        <Button
-          onClick={handleSave}
-          disabled={updateProfile.isPending}
-          className="w-full sm:w-auto"
-        >
+        <div className="space-y-4 pt-4 border-t">
+          <div>
+            <h3 className="text-lg font-medium">
+              {hasPassword ? t("changePassword", { fallback: "Change Password" }) : t("setupPassword", { fallback: "Set up Password" })}
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              {hasPassword
+                ? t("changePasswordDescription", { fallback: "Update your current password." })
+                : t("setupPasswordDescription", { fallback: "Set a password to log in without Google." })}
+            </p>
+          </div>
+          
+          <div className="grid gap-4 sm:grid-cols-2">
+            {hasPassword && (
+              <div className="space-y-2">
+                <Label htmlFor="currentPassword">{t("currentPassword", { fallback: "Current Password" })}</Label>
+                <Input
+                  id="currentPassword"
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  placeholder="••••••••"
+                />
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label htmlFor="newPassword">{t("newPassword", { fallback: "New Password" })}</Label>
+              <Input
+                id="newPassword"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="••••••••"
+              />
+            </div>
+          </div>
+          <Button
+            variant="outline"
+            onClick={handlePasswordSubmit}
+            disabled={isUpdatingPassword || !newPassword || (hasPassword && !currentPassword)}
+          >
+            {isUpdatingPassword ? (
+              <Loader2 className="mr-2 size-4 animate-spin" />
+            ) : null}
+            {hasPassword ? t("updatePassword", { fallback: "Update Password" }) : t("setPassword", { fallback: "Set Password" })}
+          </Button>
+        </div>
+      </CardContent>
+      <CardFooter className="bg-muted/50 px-6 py-4 border-t flex justify-end">
+        <Button onClick={handleSave} disabled={updateProfile.isPending}>
           {updateProfile.isPending && (
-            <Loader2 className="size-4 animate-spin" />
+            <Loader2 className="mr-2 size-4 animate-spin" />
           )}
           {t("saveChanges")}
         </Button>
+      </CardFooter>
+    </Card>
+  );
+}
+
+// ── Appearance Tab ──
+function AppearanceTab() {
+  const t = useTranslations("settings");
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Palette className="size-5" />
+          {t("appearance")}
+        </CardTitle>
+        <CardDescription>
+          {t("appearanceDescription")}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="flex items-center justify-between rounded-lg border p-4">
+          <div className="space-y-0.5">
+            <h4 className="text-sm font-medium">{t("appearance")}</h4>
+            <p className="text-xs text-muted-foreground">
+              {t("appearanceDescription")}
+            </p>
+          </div>
+          <ThemeToggle />
+        </div>
+
+        <div className="flex items-center justify-between rounded-lg border p-4">
+          <div className="space-y-0.5">
+            <h4 className="text-sm font-medium">{t("language")}</h4>
+            <p className="text-xs text-muted-foreground">
+              {t("language")}
+            </p>
+          </div>
+          <LanguageSwitcher />
+        </div>
       </CardContent>
     </Card>
   );
@@ -370,12 +520,17 @@ export default function SettingsPage() {
       <Tabs defaultValue="profile" className="space-y-4">
         <TabsList>
           <TabsTrigger value="profile">{t("profile")}</TabsTrigger>
+          <TabsTrigger value="appearance">{t("appearance")}</TabsTrigger>
           <TabsTrigger value="data">{t("data")}</TabsTrigger>
           <TabsTrigger value="danger">{t("danger")}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile">
           <ProfileTab />
+        </TabsContent>
+
+        <TabsContent value="appearance">
+          <AppearanceTab />
         </TabsContent>
 
         <TabsContent value="data">

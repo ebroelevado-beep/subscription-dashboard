@@ -87,7 +87,14 @@
     "platforms": "平台",
     "account": "账户",
     "userDefault": "用户",
-    "myAccount": "我的账户"
+    "profitLabel": "利润",
+    "myAccount": "我的账户",
+    "expired": "已过期",
+    "pause": "暂停",
+    "resume": "恢复",
+    "recording": "录入中…",
+    "recordPayment": "录入付款",
+    "dashboard": "仪表板"
   },
   "nav": {
     "dashboard": "仪表板",
@@ -200,14 +207,14 @@
     "addDescription": "定义一个包含定价和席位限制的新计划模板。",
     "editDescription": "更新此计划的详情。",
     "selectPlatform": "选择平台…",
-    "namePlaceholder": "例如 高级版、家庭版、基础版…",
+    "namePlaceholder_plan": "例如 高级版、家庭版、基础版…",
     "myCost": "我的成本 (€)",
     "maxSeats": "最大席位数",
     "maxSeatsTooltip": "留空则为无限席位",
     "activeToggle": "启用",
     "inactivePlansHint": "停用的计划不会出现在新订阅中",
-    "deleteTitle": "删除\"{name}\"？",
-    "deleteDescription": "此操作无法撤销。与此计划关联的所有订阅将被永久删除。",
+    "deleteTitlePlan": "删除\"{name}\"？",
+    "deleteDescriptionPlan": "此操作无法撤销。与此计划关联的所有订阅将被永久删除。",
     "emptyTitle": "暂无计划",
     "emptyDescription": "创建一个计划来为平台定义定价和席位限制。"
   },
@@ -242,6 +249,8 @@
     "addSeat": "添加席位",
     "removeSeat": "移除席位",
     "renewPlatform": "续约平台",
+    "renewPlatformTitle": "平台续约 — {name}",
+    "renewPlatformDescription": "录入 {label} ({planName}) 的付款。",
     "availableSeats": "{total} 个席位中有 {available} 个可用",
     "unlimitedSeats": "无限席位",
     "editSeat": "编辑席位",
@@ -264,7 +273,8 @@
     "removeSeatAction": "是的，移除",
     "keepSeatAction": "保留席位",
     "cancelling": "正在取消…",
-    "noActiveSeats": "无活跃席位"
+    "noActiveSeats": "无活跃席位",
+    "renewSeat": "续约席位"
   },
   "clients": {
     "title": "客户",
@@ -403,7 +413,17 @@
     "importing": "导入中…",
     "deleting": "删除中…",
     "typeDeleteToConfirm": "输入 <word>{confirmWord}</word> 以确认",
-    "deleteConfirmPlaceholder": "删除"
+    "deleteConfirmPlaceholder": "删除",
+    "setPassword": "设置密码",
+    "setPasswordDescription": "设置密码后，您可以使用电子邮件而不是 Google 登录。请确保至少包含 6 个字符。",
+    "newPassword": "新密码",
+    "savePassword": "保存密码",
+    "passwordTooShort": "密码必须至少包含 6 个字符",
+    "passwordSetSuccess": "密码设置成功！您现在可以使用电子邮件和密码登录。",
+    "appearance": "外观",
+    "language": "语言",
+    "appearanceDescription": "自定义应用程序的外观。",
+    "themeLabel": "外观模式"
   },
   "validation": {
     "required": "此字段为必填项",

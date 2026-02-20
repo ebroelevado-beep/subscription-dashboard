@@ -15,6 +15,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/logo";
 import { Link } from "@/i18n/navigation";
+import { useSession } from "next-auth/react";
+import { LanguageSwitcher } from "@/components/language-switcher";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 /* ─── animation helpers ─── */
 const fadeUp = {
@@ -77,6 +80,7 @@ const trustKeys = [
 export default function LandingPage() {
   const t = useTranslations("landing");
   const tc = useTranslations("common");
+  const { data: session, status } = useSession();
 
   return (
     <div className="min-h-dvh bg-background text-foreground overflow-x-hidden">
@@ -90,15 +94,34 @@ export default function LandingPage() {
             </span>
           </Link>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/login">{tc("signIn")}</Link>
-            </Button>
-            <Button size="sm" asChild>
-              <Link href="/signup">
-                {tc("getStarted")}
-                <ArrowRight className="ml-1 size-3.5" />
-              </Link>
-            </Button>
+            <div className="hidden sm:flex items-center gap-2 mr-2 border-r pr-2 shadow-none border-border/50">
+               <LanguageSwitcher />
+               <ThemeToggle />
+            </div>
+            {status === "loading" ? (
+              <Button variant="ghost" size="sm" disabled>
+                ...
+              </Button>
+            ) : session?.user ? (
+              <Button size="sm" asChild>
+                <Link href="/dashboard">
+                  {tc("dashboard")}
+                  <ArrowRight className="ml-1 size-3.5" />
+                </Link>
+              </Button>
+            ) : (
+              <>
+                <Button variant="ghost" size="sm" asChild>
+                  <Link href="/login">{tc("signIn")}</Link>
+                </Button>
+                <Button size="sm" asChild>
+                  <Link href="/signup">
+                    {tc("getStarted")}
+                    <ArrowRight className="ml-1 size-3.5" />
+                  </Link>
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </nav>
@@ -153,15 +176,30 @@ export default function LandingPage() {
             variants={fadeUp}
             custom={3}
           >
-            <Button size="lg" asChild className="w-full sm:w-auto shadow-lg shadow-primary/20">
-              <Link href="/signup">
-                {tc("startForFree")}
-                <ArrowRight className="ml-2 size-4" />
-              </Link>
-            </Button>
-            <Button variant="outline" size="lg" asChild className="w-full sm:w-auto">
-              <Link href="/login">{tc("signIn")}</Link>
-            </Button>
+            {status === "loading" ? (
+               <Button size="lg" disabled className="w-full sm:w-auto shadow-lg shadow-primary/20">
+               ...
+             </Button>
+            ) : session?.user ? (
+              <Button size="lg" asChild className="w-full sm:w-auto shadow-lg shadow-primary/20">
+                <Link href="/dashboard">
+                  {tc("dashboard")}
+                  <ArrowRight className="ml-2 size-4" />
+                </Link>
+              </Button>
+            ) : (
+              <>
+                <Button size="lg" asChild className="w-full sm:w-auto shadow-lg shadow-primary/20">
+                  <Link href="/signup">
+                    {tc("startForFree")}
+                    <ArrowRight className="ml-2 size-4" />
+                  </Link>
+                </Button>
+                <Button variant="outline" size="lg" asChild className="w-full sm:w-auto">
+                  <Link href="/login">{tc("signIn")}</Link>
+                </Button>
+              </>
+            )}
           </motion.div>
         </div>
       </section>
@@ -282,12 +320,25 @@ export default function LandingPage() {
             variants={fadeUp}
             custom={2}
           >
-            <Button size="lg" asChild className="shadow-lg shadow-primary/20">
-              <Link href="/signup">
-                {tc("getStartedFree")}
-                <ArrowRight className="ml-2 size-4" />
-              </Link>
-            </Button>
+            {status === "loading" ? (
+             <Button size="lg" disabled className="shadow-lg shadow-primary/20">
+               ...
+             </Button>
+            ) : session?.user ? (
+              <Button size="lg" asChild className="shadow-lg shadow-primary/20">
+                <Link href="/dashboard">
+                  {tc("dashboard")}
+                  <ArrowRight className="ml-2 size-4" />
+                </Link>
+              </Button>
+            ) : (
+              <Button size="lg" asChild className="shadow-lg shadow-primary/20">
+                <Link href="/signup">
+                  {tc("getStartedFree")}
+                  <ArrowRight className="ml-2 size-4" />
+                </Link>
+              </Button>
+            )}
           </motion.div>
         </AnimatedSection>
       </section>

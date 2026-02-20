@@ -11,8 +11,6 @@ import {
   Repeat,
   Menu,
   LogOut,
-  Moon,
-  Sun,
   ScrollText,
   BarChart3,
   PanelLeftClose,
@@ -42,6 +40,7 @@ import { useEffect, useState, useCallback } from "react";
 import { usePrefetch } from "@/hooks/use-prefetch";
 import { Logo } from "@/components/logo";
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 // ── Sidebar dimensions ──
 const SIDEBAR_EXPANDED = 260;
@@ -239,7 +238,7 @@ function UserMenu({ collapsed }: { collapsed: boolean }) {
         <DropdownMenuLabel>{user?.name || tc("account")}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem
-          onClick={() => signOut({ callbackUrl: "/login" })}
+          onClick={() => signOut({ callbackUrl: "/" })}
           className="text-destructive focus:text-destructive"
         >
           <LogOut className="size-4" />
@@ -306,7 +305,7 @@ function MobileUserMenu() {
         <DropdownMenuLabel>{tc("myAccount")}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem
-          onClick={() => signOut({ callbackUrl: "/login" })}
+          onClick={() => signOut({ callbackUrl: "/" })}
           className="text-destructive focus:text-destructive"
         >
           <LogOut className="size-4" />
@@ -317,46 +316,6 @@ function MobileUserMenu() {
   );
 }
 
-// ── Theme Toggle ──
-function ThemeToggle() {
-  const [mounted, setMounted] = useState(false);
-  const [isDark, setIsDark] = useState(false);
-
-  // Initialize theme on mount
-  useEffect(() => {
-    setMounted(true);
-    const stored = localStorage.getItem("theme");
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const initialDark = stored === "dark" || (!stored && prefersDark);
-    setIsDark(initialDark);
-    document.documentElement.classList.toggle("dark", initialDark);
-  }, []);
-
-  // Sync theme when isDark changes
-  useEffect(() => {
-    if (!mounted) return;
-    document.documentElement.classList.toggle("dark", isDark);
-    localStorage.setItem("theme", isDark ? "dark" : "light");
-  }, [isDark, mounted]);
-
-  const toggle = () => setIsDark(!isDark);
-
-  if (!mounted) {
-    return <div className="size-8" />; // Placeholder to avoid layout shift
-  }
-
-  return (
-    <Button
-      variant="ghost"
-      size="icon"
-      onClick={toggle}
-      className="size-8"
-      aria-label="Toggle theme"
-    >
-      {isDark ? <Sun className="size-4" /> : <Moon className="size-4" />}
-    </Button>
-  );
-}
 
 // ── Shell ──
 export function DashboardShell({
@@ -367,8 +326,9 @@ export function DashboardShell({
   defaultCollapsed?: boolean;
 }) {
   const [collapsed, setCollapsed] = useState(defaultCollapsed);
-  const [sheetOpen, setSheetOpen] = useState(false);
+  const t = useTranslations("settings");
   const tc = useTranslations("common");
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   // Sync cookie on mount (client may override SSR hint)
   useEffect(() => {
@@ -486,6 +446,15 @@ export function DashboardShell({
               <Separator />
               <div className="p-3">
                 <MobileUserMenu />
+              </div>
+              <Separator />
+              <div className="flex items-center justify-between p-4">
+                <span className="text-sm font-medium">{tc("changeLanguage")}</span>
+                <LanguageSwitcher />
+              </div>
+              <div className="flex items-center justify-between p-4 pt-0">
+                <span className="text-sm font-medium">{t("themeLabel")}</span>
+                <ThemeToggle />
               </div>
             </SheetContent>
           </Sheet>

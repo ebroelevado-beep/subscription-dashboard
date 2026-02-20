@@ -87,7 +87,14 @@
     "platforms": "Platforms",
     "account": "Account",
     "userDefault": "User",
-    "myAccount": "My Account"
+    "profitLabel": "Profit",
+    "myAccount": "My Account",
+    "expired": "Expired",
+    "pause": "Pause",
+    "resume": "Resume",
+    "recording": "Recording…",
+    "recordPayment": "Record Payment",
+    "dashboard": "Dashboard"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -186,6 +193,19 @@
     "namePlaceholder": "e.g. Netflix, Spotify, Canva…",
     "deleteTitle": "Delete \"{name}\"?",
     "deleteDescription": "This action cannot be undone. All plans and subscriptions linked to this platform will be permanently removed.",
+    "emptyTitle": "No platforms yet",
+    "emptyDescription": "Add your first platform to start managing your subscriptions.",
+    "deleteActivePlans": "⚠ This platform has {count} active plan(s).",
+    "plans": "Plans"
+  },
+  "plans": {
+    "title": "Plans",
+    "description": "Manage plan templates linked to your platforms.",
+    "addPlan": "Add Plan",
+    "addTitle": "Add Plan",
+    "editTitle": "Edit Plan",
+    "addDescription": "Define a new plan template with pricing and seat limits.",
+    "editDescription": "Update this plan's details.",
     "selectPlatform": "Select a platform…",
     "namePlaceholder_plan": "e.g. Premium, Family, Basic…",
     "myCost": "My Cost (€)",
@@ -229,6 +249,8 @@
     "addSeat": "Add Seat",
     "removeSeat": "Remove Seat",
     "renewPlatform": "Renew Platform",
+    "renewPlatformTitle": "Platform Renewal — {name}",
+    "renewPlatformDescription": "Log the payment for {label} ({planName}).",
     "availableSeats": "{available} of {total} seats available",
     "unlimitedSeats": "Unlimited seats",
     "editSeat": "Edit Seat",
@@ -251,7 +273,8 @@
     "removeSeatAction": "Yes, remove",
     "keepSeatAction": "Keep seat",
     "cancelling": "Cancelling…",
-    "noActiveSeats": "No active seats"
+    "noActiveSeats": "No active seats",
+    "renewSeat": "Renew Seat"
   },
   "clients": {
     "title": "Clients",
@@ -390,7 +413,17 @@
     "importing": "Importing…",
     "deleting": "Deleting…",
     "typeDeleteToConfirm": "Type <word>{confirmWord}</word> to confirm",
-    "deleteConfirmPlaceholder": "DELETE"
+    "deleteConfirmPlaceholder": "DELETE",
+    "setPassword": "Set Password",
+    "setPasswordDescription": "Set a password to log in using your email address instead of Google. Make sure it's at least 6 characters.",
+    "newPassword": "New Password",
+    "savePassword": "Save Password",
+    "passwordTooShort": "Password must be at least 6 characters",
+    "passwordSetSuccess": "Password set successfully! You can now log in with email and password.",
+    "appearance": "Appearance",
+    "language": "Language",
+    "appearanceDescription": "Customize how the application looks to you.",
+    "themeLabel": "Appearance Mode"
   },
   "validation": {
     "required": "This field is required",

@@ -58,21 +58,25 @@ const nextAuth = NextAuth({
   ],
   callbacks: {
     ...authConfig.callbacks,
-    async jwt({ token, user, trigger }) {
+    async jwt({ token, user, trigger, account }) {
       if (user) {
         token.id = user.id;
         token.image = user.image;
+        if (account?.provider === "google") {
+          token.isOAuth = true;
+        }
       }
-      // Refresh image from DB when session is updated (e.g. after profile save)
-      // This part is Node-only because of Prisma
-      if (trigger === "update" && token.id) {
+      // On sign-in or session update, verify password existence
+      if (token.id && (!token.hasPassword || trigger === "update")) {
         const dbUser = await prisma.user.findUnique({
           where: { id: token.id as string },
-          select: { name: true, image: true },
+          select: { name: true, image: true, password: true, accounts: { select: { provider: true } } },
         });
         if (dbUser) {
           token.name = dbUser.name;
           token.image = dbUser.image;
+          token.hasPassword = !!dbUser.password;
+          token.isOAuth = dbUser.accounts.some(acc => acc.provider !== "credentials");
         }
       }
       return token;

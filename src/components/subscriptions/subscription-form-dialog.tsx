@@ -75,11 +75,16 @@ export function SubscriptionFormDialog({ mode, subscription, open, onOpenChange 
   // Fetch plans filtered by selected platform
   const { data: plans } = usePlans(selectedPlatformId || undefined);
 
-  // Reset planId when platform changes
+  // Reset planId when platform changes, but ONLY if it's an interactive change 
+  // (not the initial population from edit mode).
   const [prevPlatformId, setPrevPlatformId] = useState(selectedPlatformId);
   useEffect(() => {
     if (selectedPlatformId !== prevPlatformId) {
-      setValue("planId", "");
+      // Only wipe if there's actually a previous platform id (meaning it's an interactive change by user)
+      // or if it goes from something to empty.
+      if (prevPlatformId !== "") {
+        setValue("planId", "");
+      }
       setPrevPlatformId(selectedPlatformId);
     }
   }, [selectedPlatformId, prevPlatformId, setValue]);
@@ -111,17 +116,21 @@ export function SubscriptionFormDialog({ mode, subscription, open, onOpenChange 
         const platform = platforms?.find(p =>
           p.plans.some(pl => pl.id === subscription.planId)
         );
+        // Small delay to ensure platform matches and avoids getting reset
+        setTimeout(() => {
           reset({
-          platformId: platform?.id ?? "",
-          planId: subscription.planId,
-          label: subscription.label,
-          startDate: subscription.startDate.split("T")[0],
-          durationMonths: 1,
-          status: subscription.status,
-          masterUsername: subscription.masterUsername || "",
-          masterPassword: subscription.masterPassword || "",
-          ownerId: subscription.ownerId || "",
-        });
+            platformId: platform?.id ?? "",
+            planId: subscription.planId,
+            label: subscription.label,
+            startDate: subscription.startDate.split("T")[0],
+            durationMonths: 1,
+            status: subscription.status,
+            masterUsername: subscription.masterUsername || "",
+            masterPassword: subscription.masterPassword || "",
+            ownerId: subscription.ownerId || "none",
+          });
+          setPrevPlatformId(platform?.id ?? "");
+        }, 0);
       } else {
         reset({
           platformId: "", planId: "", label: "", startDate: today,
@@ -133,6 +142,10 @@ export function SubscriptionFormDialog({ mode, subscription, open, onOpenChange 
   }, [open, mode, subscription, reset, today, platforms]);
 
   const onSubmit = async (values: FormValues) => {
+    const parsedOwnerId = values.ownerId === "none" || !values.ownerId ? null : values.ownerId;
+    const parsedMasterUsername = !values.masterUsername ? null : values.masterUsername;
+    const parsedMasterPassword = !values.masterPassword ? null : values.masterPassword;
+
     if (mode === "edit" && subscription) {
       await updateMutation.mutateAsync({
         id: subscription.id,
@@ -141,9 +154,9 @@ export function SubscriptionFormDialog({ mode, subscription, open, onOpenChange 
         startDate: values.startDate,
         durationMonths: values.durationMonths,
         status: values.status,
-        masterUsername: values.masterUsername || null,
-        masterPassword: values.masterPassword || null,
-        ownerId: values.ownerId || null,
+        masterUsername: parsedMasterUsername,
+        masterPassword: parsedMasterPassword,
+        ownerId: parsedOwnerId,
       });
     } else {
       await createMutation.mutateAsync({
@@ -152,9 +165,9 @@ export function SubscriptionFormDialog({ mode, subscription, open, onOpenChange 
         startDate: values.startDate,
         durationMonths: values.durationMonths,
         status: values.status,
-        masterUsername: values.masterUsername || null,
-        masterPassword: values.masterPassword || null,
-        ownerId: values.ownerId || null,
+        masterUsername: parsedMasterUsername,
+        masterPassword: parsedMasterPassword,
+        ownerId: parsedOwnerId,
       });
     }
     onOpenChange(false);
@@ -299,7 +312,7 @@ export function SubscriptionFormDialog({ mode, subscription, open, onOpenChange 
                 render={({ field }) => (
                   <Select
                     value={field.value || ""}
-                    onValueChange={(val) => field.onChange(val === "none" ? "" : val)}
+                    onValueChange={(val) => field.onChange(val === "none" ? undefined : val)}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="No owner" />

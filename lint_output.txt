@@ -1,0 +1,65 @@
+
+> dashboard@0.1.0 lint /home/angel/Documentos/dashboard
+> eslint
+
+
+/home/angel/Documentos/dashboard/scripts/dump-railway.js
+  1:20  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  2:12  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+/home/angel/Documentos/dashboard/scripts/migrate-data.js
+   1:20  error    A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  81:14  warning  'e' is defined but never used            @typescript-eslint/no-unused-vars
+
+/home/angel/Documentos/dashboard/scripts/migrate-data.ts
+  75:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/angel/Documentos/dashboard/src/app/[locale]/dashboard/history/page.tsx
+  134:17  warning  Compilation Skipped: Use of incompatible library
+
+This API returns functions which cannot be memoized without leading to stale UI. To prevent this, by default React Compiler will skip memoizing this component/hook. However, you may see issues if values from this API are passed to other components/hooks that are memoized.
+
+/home/angel/Documentos/dashboard/src/app/[locale]/dashboard/history/page.tsx:134:17
+  132 |   const { data: plans } = usePlans();
+  133 |
+> 134 |   const table = useReactTable({
+      |                 ^^^^^^^^^^^^^ TanStack Table's `useReactTable()` API returns functions that cannot be memoized safely
+  135 |     data: data?.rows ?? [],
+  136 |     columns,
+  137 |     getCoreRowModel: getCoreRowModel(),  react-hooks/incompatible-library
+
+/home/angel/Documentos/dashboard/src/components/dashboard-shell.tsx
+  327:5  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/home/angel/Documentos/dashboard/src/components/dashboard-shell.tsx:327:5
+  325 |   // Initialize theme on mount
+  326 |   useEffect(() => {
+> 327 |     setMounted(true);
+      |     ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  328 |     const stored = localStorage.getItem("theme");
+  329 |     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  330 |     const initialDark = stored === "dark" || (!stored && prefersDark);  react-hooks/set-state-in-effect
+
+/home/angel/Documentos/dashboard/src/components/subscriptions/subscription-form-dialog.tsx
+  71:30  warning  Compilation Skipped: Use of incompatible library
+
+This API returns functions which cannot be memoized without leading to stale UI. To prevent this, by default React Compiler will skip memoizing this component/hook. However, you may see issues if values from this API are passed to other components/hooks that are memoized.
+
+/home/angel/Documentos/dashboard/src/components/subscriptions/subscription-form-dialog.tsx:71:30
+  69 |   });
+  70 |
+> 71 |   const selectedPlatformId = watch("platformId");
+     |                              ^^^^^ React Hook Form's `useForm()` API returns a `watch()` function which cannot be memoized safely.
+  72 |   const selectedStartDate = watch("startDate");
+  73 |   const selectedDuration = watch("durationMonths");
+  74 |  react-hooks/incompatible-library
+
+✖ 8 problems (5 errors, 3 warnings)
+
+ ELIFECYCLE  Command failed with exit code 1.

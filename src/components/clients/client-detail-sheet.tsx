@@ -50,49 +50,7 @@ const expiryBadge: Record<ExpiryStatus, "default" | "secondary" | "destructive">
   expired: "destructive",
 };
 
-// ── WhatsApp helpers ──
-
-type Lang = "es" | "en" | "zh";
-
-function buildWhatsAppUrl(
-  phone: string,
-  name: string,
-  seats: { customPrice: number; activeUntil: string; platformName: string }[],
-  lang: Lang,
-  t: (key: string, values?: Record<string, string | number>) => string
-): string {
-  const totalPrice = seats.reduce((s, x) => s + x.customPrice, 0);
-  const services = [...new Set(seats.map((s) => s.platformName))].join(", ");
-
-  // Use the closest deadline
-  const today = startOfDay(new Date());
-  const daysArr = seats.map((s) => differenceInDays(startOfDay(new Date(s.activeUntil)), today));
-  const minDays = Math.min(...daysArr);
-
-  let daysText: string;
-  if (minDays < 0) {
-    daysText = t("common.daysOverdue", { count: Math.abs(minDays) });
-  } else if (minDays === 0) {
-    daysText = t("common.today");
-  } else {
-    daysText = t("common.daysLeft", { count: minDays });
-  }
-
-  const priceStr = formatCurrency(totalPrice);
-
-  const msg = t("clients.whatsappTemplate", {
-    name,
-    daysText,
-    priceStr,
-    services,
-  });
-
-  // Clean phone: remove spaces, dashes, ensure starts with +
-  const cleanPhone = phone.replace(/[\s-()]/g, "");
-  return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`;
-}
-
-// ── Component ──
+import { buildWhatsAppUrl, type Lang } from "@/lib/whatsapp";
 
 interface ClientDetailSheetProps {
   clientId: string | null;
@@ -103,6 +61,7 @@ interface ClientDetailSheetProps {
 export function ClientDetailSheet({ clientId, open, onOpenChange }: ClientDetailSheetProps) {
   const t = useTranslations("clients");
   const tc = useTranslations("common");
+  const tNav = useTranslations("nav");
   const { data: client, isLoading } = useClient(clientId ?? undefined);
   const renewMut = useRenewClient();
   const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
@@ -402,7 +361,7 @@ export function ClientDetailSheet({ clientId, open, onOpenChange }: ClientDetail
                         {cs.renewalLogs.length > 0 && (
                           <div className="border-t pt-2 mt-1">
                             <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1">
-                              {tc("history", { ns: "nav" })}
+                              {tNav("history")}
                             </p>
                             {cs.renewalLogs.slice(0, 3).map((r) => (
                               <div key={r.id} className="flex items-center justify-between text-xs text-muted-foreground">
