@@ -99,16 +99,7 @@ export const authConfig = {
       }
       return session;
     },
-    authorized({ auth, request: { nextUrl } }) {
-      const isLoggedIn = !!auth?.user;
-      const isDashboard = nextUrl.pathname.match(/^\/(en|es|zh)\/dashboard/);
-      
-      if (isDashboard) {
-        if (isLoggedIn) return true;
-        return false; // Redirects to signin page
-      }
-      return true;
-    },
   },
 } satisfies NextAuthConfig;
+
 
