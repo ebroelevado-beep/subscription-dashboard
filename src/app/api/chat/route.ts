@@ -1,7 +1,6 @@
 import { auth } from "@/lib/auth";
 import { createUserScopedTools } from "@/lib/copilot-tools";
 import path from "path";
-import { createRequire } from "module";
 import { prisma } from "@/lib/prisma";
 
 export const maxDuration = 60;
@@ -83,35 +82,37 @@ export async function POST(req: Request) {
     const { createUIMessageStream, createUIMessageStreamResponse } = ai;
 
     // 5. Resolve the native Copilot CLI binary path
-    // Both `import.meta.resolve` and `createRequire(import.meta.url)` are broken
-    // in Turbopack, so we resolve the path from process.cwd()
+    // We avoid using dynamic `createRequire` calls here as they trigger 
+    // "module.createRequire failed parsing argument" warnings during Next.js build.
+    // Instead, we use a robust filesystem search in common node_modules locations.
     const projectRoot = process.cwd();
-    const esmRequire = createRequire(path.join(projectRoot, "package.json"));
-    let cliPath: string;
-    try {
-      // This should work with pnpm hoisting
-      const sdkPkgJson = esmRequire.resolve("@github/copilot-sdk/package.json");
-      const sdkDir = path.dirname(sdkPkgJson);
-      const sdkRequire = createRequire(path.join(sdkDir, "package.json"));
-      const copilotPkgJson = sdkRequire.resolve("@github/copilot/package.json");
-      const copilotDir = path.dirname(copilotPkgJson);
-      const copilotRequire = createRequire(path.join(copilotDir, "package.json"));
-      const nativePkgJson = copilotRequire.resolve(`@github/copilot-linux-x64/package.json`);
-      cliPath = path.join(path.dirname(nativePkgJson), "copilot");
-    } catch (e) {
-      // Fallback: search for the binary in common pnpm locations
-      const { existsSync } = await import("fs");
+    const { existsSync } = await import("fs");
+    
+    // Check for explicit binary override
+    let cliPath = process.env.COPILOT_CLI_PATH || "";
+    
+    if (!cliPath || !existsSync(cliPath)) {
       const candidates = [
-        path.join(projectRoot, "node_modules", ".pnpm", "node_modules", ".bin", "copilot-linux-x64"),
         path.join(projectRoot, "node_modules", "@github", "copilot-linux-x64", "copilot"),
         path.join(projectRoot, "node_modules", ".bin", "copilot"),
+        path.join(projectRoot, "node_modules", ".pnpm", "node_modules", ".bin", "copilot"),
+        // Specific architecture-package locations for cross-platform robustness
+        path.join(projectRoot, "node_modules", "@github", "copilot-darwin-arm64", "copilot"),
+        path.join(projectRoot, "node_modules", "@github", "copilot-darwin-x64", "copilot"),
       ];
+      
       const found = candidates.find(c => existsSync(c));
-      if (!found) {
-        console.error("[Chat API] Failed to find Copilot CLI binary. Tried:", candidates, "Error:", e);
-        throw new Error("Copilot CLI binary not found");
+      if (found) {
+        cliPath = found;
       }
-      cliPath = found;
+    }
+
+    if (!cliPath || !existsSync(cliPath)) {
+      console.error("❌ Copilot binary not found in any of the expected locations.");
+      return new Response(
+        JSON.stringify({ error: "Copilot binary not found. Please ensure dependencies are installed." }),
+        { status: 500, headers: { "Content-Type": "application/json" } }
+      );
     }
 
     // 6. Create CopilotClient with user's OAuth token
