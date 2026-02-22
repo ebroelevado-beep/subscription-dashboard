@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useChat } from "@ai-sdk/react";
 import type { UIMessage } from "ai";
-import { Send, Bot, Trash2, Loader2, Github, Copy, Check, Terminal, ChevronDown, ChevronUp, BrainCircuit, AlertCircle } from "lucide-react";
+import { Send, Bot, Trash2, Loader2, Github, Copy, Check, Terminal, ChevronDown, ChevronUp, BrainCircuit, AlertCircle, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -296,6 +296,22 @@ export function ChatInterface() {
         .catch(console.error);
     }
   }, [hasCopilot]);
+  
+  const handleLogout = async () => {
+    if (!confirm("¿Estás seguro de que quieres cerrar sesión en GitHub Copilot?")) return;
+    
+    try {
+      const res = await fetch("/api/copilot/logout", { method: "POST" });
+      if (res.ok) {
+        setHasCopilot(false);
+        setModels([]);
+        setSelectedModel("");
+        setMessages([]);
+      }
+    } catch (err) {
+      console.error("Error logging out:", err);
+    }
+  };
 
   const initiateCopilotAuth = async () => {
     try {
@@ -442,15 +458,43 @@ export function ChatInterface() {
         </div>
         
         {messages.length > 0 && (
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={handleLogout}
+              className="text-muted-foreground hover:text-destructive"
+              disabled={isLoading}
+              title="Cerrar sesión en Copilot"
+            >
+              <LogOut className="size-4 mr-2" />
+              <span className="hidden sm:inline">Logout</span>
+            </Button>
+            
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => setMessages([])}
+              className="text-muted-foreground hover:text-destructive"
+              disabled={isLoading}
+            >
+              <Trash2 className="size-4 mr-2" />
+              <span className="hidden sm:inline">Clear</span>
+            </Button>
+          </div>
+        )}
+        
+        {messages.length === 0 && (
           <Button 
             variant="ghost" 
             size="sm" 
-            onClick={() => setMessages([])}
+            onClick={handleLogout}
             className="text-muted-foreground hover:text-destructive"
             disabled={isLoading}
+            title="Cerrar sesión en Copilot"
           >
-            <Trash2 className="size-4 mr-2" />
-            Clear
+            <LogOut className="size-4 mr-2" />
+            Logout
           </Button>
         )}
       </div>
