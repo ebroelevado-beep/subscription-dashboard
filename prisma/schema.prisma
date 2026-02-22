@@ -17,6 +17,7 @@ model User {
   emailVerified DateTime? @map("email_verified")
   password      String? // hashed
   image         String?
+  copilotToken  String?   @db.Text
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
 

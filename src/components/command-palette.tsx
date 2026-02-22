@@ -16,6 +16,7 @@ import {
   BarChart3,
   CreditCard,
   ScrollText,
+  Bot
 } from "lucide-react";
 import {
   Dialog,
@@ -31,6 +32,7 @@ const staticPages = [
   { key: "clients" as const, href: "/dashboard/clients", icon: Users },
   { key: "history" as const, href: "/dashboard/history", icon: ScrollText },
   { key: "analytics" as const, href: "/dashboard/analytics", icon: BarChart3 },
+  { key: "assistant" as const, href: "/dashboard/assistant", icon: Bot },
 ];
 
 export function CommandPalette() {

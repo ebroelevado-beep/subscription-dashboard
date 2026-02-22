@@ -105,6 +105,7 @@
     "clients": "Clientes",
     "history": "Historial",
     "analytics": "Analítica",
+    "assistant": "Asistente AI",
     "settings": "Ajustes"
   },
   "landing": {
@@ -181,7 +182,8 @@
     "managePlatforms": "Gestionar Plataformas",
     "viewSubscriptions": "Ver Suscripciones",
     "viewClients": "Ver Clientes",
-    "viewPlans": "Ver Planes"
+    "viewPlans": "Ver Planes",
+    "askAssistant": "Preguntar al Asistente"
   },
   "platforms": {
     "title": "Plataformas",

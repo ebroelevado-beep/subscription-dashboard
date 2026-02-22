@@ -16,6 +16,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Settings,
+  Bot,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -54,6 +55,7 @@ const navItems = [
   { key: "clients" as const, href: "/dashboard/clients", icon: Users },
   { key: "history" as const, href: "/dashboard/history", icon: ScrollText },
   { key: "analytics" as const, href: "/dashboard/analytics", icon: BarChart3 },
+  { key: "assistant" as const, href: "/dashboard/assistant", icon: Bot },
   { key: "settings" as const, href: "/dashboard/settings", icon: Settings },
 ];
 

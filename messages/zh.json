@@ -105,6 +105,7 @@
     "clients": "客户",
     "history": "历史",
     "analytics": "分析",
+    "assistant": "AI 助手",
     "settings": "设置"
   },
   "landing": {
@@ -181,7 +182,8 @@
     "managePlatforms": "管理平台",
     "viewSubscriptions": "查看订阅",
     "viewClients": "查看客户",
-    "viewPlans": "查看计划"
+    "viewPlans": "查看计划",
+    "askAssistant": "询问助手"
   },
   "platforms": {
     "title": "平台",

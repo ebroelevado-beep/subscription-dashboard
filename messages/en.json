@@ -105,6 +105,7 @@
     "clients": "Clients",
     "history": "History",
     "analytics": "Analytics",
+    "assistant": "AI Assistant",
     "settings": "Settings"
   },
   "landing": {
@@ -181,7 +182,8 @@
     "managePlatforms": "Manage Platforms",
     "viewSubscriptions": "View Subscriptions",
     "viewClients": "View Clients",
-    "viewPlans": "View Plans"
+    "viewPlans": "View Plans",
+    "askAssistant": "Ask Assistant"
   },
   "platforms": {
     "title": "Platforms",
