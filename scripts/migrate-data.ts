@@ -1,7 +1,7 @@
 import { Client } from "pg";
 
-const SOURCE_URL = "postgresql://postgres:QRZlJXPCdNRigXdznmmHTUcvVpeqMECy@interchange.proxy.rlwy.net:42901/railway";
-const TARGET_URL = "postgresql://fruta:wHEXuO4E2DDsiJFhDPKz@127.0.0.1:5432/macedonia";
+const SOURCE_URL = process.env.SOURCE_URL || "postgresql://user:pass@host:port/dbname";
+const TARGET_URL = process.env.TARGET_URL || "postgresql://user:pass@host:port/dbname";
 
 const TABLES = [
   "users",

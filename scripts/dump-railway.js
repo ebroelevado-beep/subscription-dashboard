@@ -1,7 +1,7 @@
 const { Client } = require("pg");
 const fs = require("fs");
 
-const SOURCE_URL = "postgresql://postgres:QRZlJXPCdNRigXdznmmHTUcvVpeqMECy@interchange.proxy.rlwy.net:42901/railway";
+const SOURCE_URL = process.env.SOURCE_URL || "postgresql://postgres:PASSWORD@proxy.rlwy.net:PORT/railway";
 
 const TABLES = [
   "users",
