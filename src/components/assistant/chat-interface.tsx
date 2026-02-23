@@ -368,8 +368,11 @@ export function ChatInterface() {
     const ta = textareaRef.current;
     if (!ta) return;
     ta.style.height = "auto";
-    // Max 5 lines (~120px)
-    ta.style.height = `${Math.min(ta.scrollHeight, 120)}px`;
+    const maxH = 120;
+    const newH = Math.min(ta.scrollHeight, maxH);
+    ta.style.height = `${newH}px`;
+    // Only allow scroll when content exceeds max height
+    ta.style.overflowY = ta.scrollHeight > maxH ? "auto" : "hidden";
   }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -654,7 +657,7 @@ export function ChatInterface() {
               onKeyDown={handleKeyDown}
               placeholder={t("chat.placeholder")}
               rows={1}
-              className="w-full resize-none rounded-2xl pl-4 pr-4 py-3 text-[16px] sm:text-sm bg-muted/30 border border-muted-foreground/20 focus:outline-none focus:ring-1 focus:ring-primary shadow-sm placeholder:text-muted-foreground/60 leading-normal"
+              className="w-full resize-none rounded-2xl pl-4 pr-4 py-3 text-[16px] sm:text-sm bg-muted/30 border border-muted-foreground/20 focus:outline-none focus:border-primary transition-colors shadow-sm placeholder:text-muted-foreground/60 leading-normal overflow-hidden"
               disabled={isLoading}
               style={{ maxHeight: "120px" }}
             />
