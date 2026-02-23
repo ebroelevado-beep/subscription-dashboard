@@ -36,7 +36,7 @@ A high-performance, modern dashboard built with **Next.js 16**, **Prisma**, and 
 
    ```bash
    git clone https://github.com/ebroelevado-beep/subscription-dashboard.git
-   cd dashboard
+   cd subscription-dashboard
    ```
 
 2. Install dependencies:
