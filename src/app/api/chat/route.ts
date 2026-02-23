@@ -1,6 +1,5 @@
 import { auth } from "@/lib/auth";
 import { createUserScopedTools } from "@/lib/copilot-tools";
-import path from "path";
 import { prisma } from "@/lib/prisma";
 
 export const maxDuration = 60;
@@ -81,51 +80,22 @@ export async function POST(req: Request) {
     const ai = await import("ai") as any;
     const { createUIMessageStream, createUIMessageStreamResponse } = ai;
 
-    // 5. Resolve the native Copilot CLI binary path
-    // We avoid using dynamic `createRequire` calls here as they trigger 
-    // "module.createRequire failed parsing argument" warnings during Next.js build.
-    // Instead, we use a robust filesystem search in common node_modules locations.
-    const projectRoot = process.cwd();
-    const { existsSync } = await import("fs");
-    
-    // Check for explicit binary override
-    let cliPath = process.env.COPILOT_CLI_PATH || "";
-    
-    if (!cliPath || !existsSync(cliPath)) {
-      const candidates = [
-        // Standard locations
-        path.join(projectRoot, "node_modules", "@github", "copilot-linux-x64", "copilot"),
-        path.join(projectRoot, "node_modules", ".bin", "copilot"),
-        path.join(projectRoot, "node_modules", ".pnpm", "node_modules", ".bin", "copilot"),
-        // Specific architecture-package locations for cross-platform robustness
-        path.join(projectRoot, "node_modules", "@github", "copilot-darwin-arm64", "copilot"),
-        path.join(projectRoot, "node_modules", "@github", "copilot-darwin-x64", "copilot"),
-        // Production standalone paths (where Next.js might relocate node_modules)
-        path.join(projectRoot, ".next", "standalone", "node_modules", "@github", "copilot-linux-x64", "copilot"),
-        path.join(projectRoot, ".next", "standalone", "node_modules", ".bin", "copilot"),
-      ];
-      
-      const found = candidates.find(c => existsSync(c));
-      if (found) {
-        cliPath = found;
-      }
-    }
-
-    if (!cliPath || !existsSync(cliPath)) {
-      console.error("❌ Copilot binary not found in any of the expected locations.");
-      return new Response(
-        JSON.stringify({ error: "Copilot binary not found. Please ensure dependencies are installed." }),
-        { status: 500, headers: { "Content-Type": "application/json" } }
-      );
-    }
-
-    // 6. Create CopilotClient with user's OAuth token
-    const client = new CopilotClient({
+    // 5. Create CopilotClient with user's OAuth token
+    // The SDK's built-in getBundledCliPath() resolves to @github/copilot/index.js
+    // which is a self-contained JS bundle that runs via `node`. We let the SDK
+    // handle this automatically instead of manually searching for a native binary.
+    // An optional COPILOT_CLI_PATH env var can override this if needed.
+    const clientOptions: Record<string, unknown> = {
       githubToken: user.copilotToken,
       useLoggedInUser: false,
       autoStart: false,
-      cliPath,
-    });
+    };
+
+    if (process.env.COPILOT_CLI_PATH) {
+      clientOptions.cliPath = process.env.COPILOT_CLI_PATH;
+    }
+
+    const client = new CopilotClient(clientOptions);
 
     await client.start();
 
