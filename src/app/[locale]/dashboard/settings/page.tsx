@@ -507,6 +507,7 @@ function DangerZone() {
 // ── Assistant Tab ──
 function AssistantTab() {
   const t = useTranslations("settings");
+  const tc = useTranslations("common");
   const [isDisconnecting, setIsDisconnecting] = useState(false);
   const [open, setOpen] = useState(false);
 
@@ -572,7 +573,7 @@ function AssistantTab() {
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>{t("common.cancel", { fallback: "Cancel" })}</AlertDialogCancel>
+                  <AlertDialogCancel>{tc("cancel")}</AlertDialogCancel>
                   <AlertDialogAction 
                     onClick={(e) => {
                       e.preventDefault();
