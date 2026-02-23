@@ -93,12 +93,16 @@ export async function POST(req: Request) {
     
     if (!cliPath || !existsSync(cliPath)) {
       const candidates = [
+        // Standard locations
         path.join(projectRoot, "node_modules", "@github", "copilot-linux-x64", "copilot"),
         path.join(projectRoot, "node_modules", ".bin", "copilot"),
         path.join(projectRoot, "node_modules", ".pnpm", "node_modules", ".bin", "copilot"),
         // Specific architecture-package locations for cross-platform robustness
         path.join(projectRoot, "node_modules", "@github", "copilot-darwin-arm64", "copilot"),
         path.join(projectRoot, "node_modules", "@github", "copilot-darwin-x64", "copilot"),
+        // Production standalone paths (where Next.js might relocate node_modules)
+        path.join(projectRoot, ".next", "standalone", "node_modules", "@github", "copilot-linux-x64", "copilot"),
+        path.join(projectRoot, ".next", "standalone", "node_modules", ".bin", "copilot"),
       ];
       
       const found = candidates.find(c => existsSync(c));
