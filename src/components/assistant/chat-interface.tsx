@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useChat } from "@ai-sdk/react";
+import { useTranslations } from "next-intl";
 import type { UIMessage } from "ai";
 import { Send, Bot, Loader2, Github, Copy, Check, Terminal, ChevronDown, ChevronUp, BrainCircuit, AlertCircle, MessageSquarePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -254,6 +255,7 @@ import {
 } from "@/components/ui/select";
 
 export function ChatInterface() {
+  const t = useTranslations();
   // Copilot Auth State
   const [hasCopilot, setHasCopilot] = useState<boolean | null>(null);
   const [userCode, setUserCode] = useState<string | null>(null);

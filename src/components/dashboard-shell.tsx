@@ -128,17 +128,16 @@ function NavLinks({
           </Link>
         );
 
-        // Wrap in tooltip when collapsed
-        if (collapsed) {
-          return (
-            <Tooltip key={item.href}>
-              <TooltipTrigger asChild>{link}</TooltipTrigger>
-              <TooltipContent side="right">{t(item.key)}</TooltipContent>
-            </Tooltip>
-          );
-        }
-
-        return link;
+        return (
+          <Tooltip key={item.href} open={collapsed ? undefined : false}>
+            <TooltipTrigger asChild>
+              <div className={cn(collapsed && "w-full flex justify-center")}>
+                {link}
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="right">{t(item.key)}</TooltipContent>
+          </Tooltip>
+        );
       })}
     </nav>
   );
@@ -250,22 +249,18 @@ function UserMenu({ collapsed }: { collapsed: boolean }) {
     </DropdownMenu>
   );
 
-  // When collapsed, wrap the entire dropdown in a tooltip
-  // (tooltip on hover, dropdown on click — no nesting conflicts)
-  if (collapsed) {
-    return (
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <div>{menu}</div>
-        </TooltipTrigger>
-        <TooltipContent side="right">
-          {user?.name || tc("userDefault")}
-        </TooltipContent>
-      </Tooltip>
-    );
-  }
-
-  return menu;
+  return (
+    <Tooltip open={collapsed ? undefined : false}>
+      <TooltipTrigger asChild>
+        <div className={cn(collapsed && "w-full flex justify-center")}>
+          {menu}
+        </div>
+      </TooltipTrigger>
+      <TooltipContent side="right">
+        {user?.name || tc("userDefault")}
+      </TooltipContent>
+    </Tooltip>
+  );
 }
 
 // Full-feature mobile user menu (always expanded look)
