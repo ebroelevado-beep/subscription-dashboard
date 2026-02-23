@@ -10,7 +10,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 
 export default async function AssistantPage() {
   return (
-    <div className="flex flex-col h-[calc(100vh-theme(spacing.16))] -mx-4 lg:-mx-6 -my-4 lg:-my-6">
+    <div className="flex flex-col h-[calc(100dvh-theme(spacing.16))] -mx-4 lg:-mx-6 -my-4 lg:-my-6">
       <div className="flex-1 overflow-hidden relative border-b bg-background">
         <ChatInterface />
       </div>

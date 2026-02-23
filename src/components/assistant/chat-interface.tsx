@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useChat } from "@ai-sdk/react";
 import { useTranslations } from "next-intl";
 import type { UIMessage } from "ai";
 import { Send, Bot, Loader2, Github, Copy, Check, Terminal, ChevronDown, ChevronUp, BrainCircuit, AlertCircle, MessageSquarePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -347,12 +346,25 @@ export function ChatInterface() {
   };
 
   const [input, setInput] = useState("");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
 
   // Vercel AI SDK v4 — useChat with sendMessage API
   const { messages, sendMessage, status, setMessages } = useChat({});
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Auto-resize textarea
+  const adjustTextarea = useCallback(() => {
+    const ta = textareaRef.current;
+    if (!ta) return;
+    ta.style.height = "auto";
+    // Max 5 lines (~120px)
+    ta.style.height = `${Math.min(ta.scrollHeight, 120)}px`;
+  }, []);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value);
+    adjustTextarea();
   };
 
   const handleSubmit = (e?: React.FormEvent) => {
@@ -363,9 +375,25 @@ export function ChatInterface() {
       { body: { model: selectedModel || undefined } }
     );
     setInput("");
+    // Reset textarea height
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit();
+    }
   };
 
   const isLoading = status === "submitted" || status === "streaming";
+
+  // Auto-scroll to bottom on new messages
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, isLoading]);
 
   if (hasCopilot === null) {
     return (
@@ -414,27 +442,27 @@ export function ChatInterface() {
     );
   }
 
+
   return (
-    <div className="flex flex-col h-full bg-background">
-      {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b bg-muted/20">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center size-10 rounded-full bg-primary/10 text-primary">
-              <Bot className="size-5" />
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold tracking-tight">Pearfect AI</h2>
-              <p className="text-sm text-muted-foreground mb-1">
-                Powered by GitHub Models
-              </p>
-            </div>
+    <div className="flex flex-col h-full bg-background overflow-hidden">
+      {/* ── Header ── slim, single row */}
+      <div className="flex items-center justify-between px-3 sm:px-6 py-2 sm:py-3 border-b bg-muted/20 shrink-0 min-h-[48px] sm:min-h-[56px]">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <div className="flex items-center justify-center size-8 sm:size-9 rounded-full bg-primary/10 text-primary shrink-0">
+            <Bot className="size-4 sm:size-5" />
           </div>
-          
+          <div className="min-w-0">
+            <h2 className="text-sm sm:text-base font-semibold tracking-tight truncate">Pearfect AI</h2>
+            <p className="hidden sm:block text-xs text-muted-foreground">
+              Powered by GitHub Models
+            </p>
+          </div>
+
+          {/* Model selector — inline on all screens */}
           {hasCopilot && models.length > 0 && (
             <Select value={selectedModel} onValueChange={setSelectedModel} disabled={isLoading}>
-              <SelectTrigger className="w-[180px] h-8 text-xs font-medium">
-                <SelectValue placeholder="Select a model" />
+              <SelectTrigger className="w-auto max-w-[140px] sm:max-w-[180px] h-7 sm:h-8 text-[11px] sm:text-xs font-medium ml-1 sm:ml-3">
+                <SelectValue placeholder="Model" />
               </SelectTrigger>
               <SelectContent>
                 {models.map(m => (
@@ -447,48 +475,45 @@ export function ChatInterface() {
           )}
         </div>
         
+        {/* New Chat button */}
         {messages.length > 0 && (
-          <div className="flex items-center gap-2">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={handleNewChat}
-              className="text-muted-foreground hover:text-foreground"
-              disabled={isLoading}
-              title={t("common.newChat")}
-            >
-              <MessageSquarePlus className="size-4 mr-2" />
-              <span className="hidden sm:inline">{t("common.newChat")}</span>
-            </Button>
-          </div>
+          <Button 
+            variant="ghost" 
+            size="icon"
+            onClick={handleNewChat}
+            className="text-muted-foreground hover:text-foreground size-8 sm:size-9 shrink-0"
+            disabled={isLoading}
+            title={t("common.newChat")}
+          >
+            <MessageSquarePlus className="size-4" />
+          </Button>
         )}
-        
       </div>
 
-      {/* Chat Area */}
-      <div className="flex-1 p-6 overflow-y-auto w-full">
-        <div className="flex flex-col gap-6 max-w-3xl mx-auto pb-4">
+      {/* ── Chat Area ── */}
+      <div ref={scrollRef} className="flex-1 px-3 sm:px-6 py-4 sm:py-6 overflow-y-auto overscroll-contain w-full">
+        <div className="flex flex-col gap-4 sm:gap-6 max-w-3xl mx-auto">
           {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center text-center h-40 space-y-4">
-              <div className="size-16 rounded-full bg-primary/10 flex items-center justify-center">
-                <Bot className="size-8 text-primary" />
+            <div className="flex flex-col items-center justify-center text-center flex-1 min-h-[40vh] space-y-4">
+              <div className="size-14 sm:size-16 rounded-full bg-primary/10 flex items-center justify-center">
+                <Bot className="size-7 sm:size-8 text-primary" />
               </div>
               <div>
-                <h3 className="text-lg font-medium">How can I help you today?</h3>
-                <p className="text-sm text-muted-foreground max-w-sm mt-1">
+                <h3 className="text-base sm:text-lg font-medium">How can I help you today?</h3>
+                <p className="text-xs sm:text-sm text-muted-foreground max-w-sm mt-1 px-4">
                   Ask me about your clients, active subscriptions, revenue metrics, or anything else about your business.
                 </p>
               </div>
             </div>
           ) : (
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+            <>
             {messages.map((m: UIMessage) => (
               <div
                 key={m.id}
-                className={`flex gap-4 ${m.role === "user" ? "flex-row-reverse" : "flex-row"}`}
+                className={`flex gap-2.5 sm:gap-4 ${m.role === "user" ? "flex-row-reverse" : "flex-row"}`}
               >
-                {/* Avatar */}
-                <Avatar className="size-8 shrink-0 border">
+                {/* Avatar — hidden on mobile */}
+                <Avatar className="size-7 sm:size-8 shrink-0 border hidden sm:flex">
                   {m.role === "user" ? (
                     <AvatarFallback className="bg-primary text-primary-foreground text-xs">U</AvatarFallback>
                   ) : (
@@ -499,16 +524,18 @@ export function ChatInterface() {
                 </Avatar>
 
                 {/* Message Bubble */}
-                 <div
-                  className={`flex flex-col gap-1 w-full max-w-full ${
-                    m.role === "user" ? "items-end" : "items-start"
+                <div
+                  className={`flex flex-col gap-1 min-w-0 ${
+                    m.role === "user" 
+                      ? "items-end max-w-[85%] sm:max-w-[75%]" 
+                      : "items-start max-w-full sm:max-w-[85%]"
                   }`}
                 >
                   <div
-                    className={`rounded-2xl px-4 py-3 text-sm shadow-sm relative group w-full ${
+                    className={`rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3 text-sm shadow-sm relative group ${
                       m.role === "user"
-                        ? "bg-primary text-primary-foreground inline-block self-end"
-                        : "bg-muted/50 text-foreground border min-w-[300px]"
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted/40 text-foreground border w-full"
                     }`}
                   >
                     {m.parts && m.parts.length > 0 && m.parts.map((part: ExtendedUIMessagePart, i: number) => {
@@ -519,7 +546,7 @@ export function ChatInterface() {
                             return <ReasonerBlock key={`${i}-${j}`} text={p.content.trim()} isThinking={!p.isComplete} />;
                           }
                           return (
-                            <div key={`${i}-${j}`} className="prose prose-sm dark:prose-invert max-w-none break-words leading-relaxed mb-3 last:mb-0">
+                            <div key={`${i}-${j}`} className="prose prose-sm dark:prose-invert max-w-none break-words leading-relaxed mb-3 last:mb-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_code]:break-all sm:[&_code]:break-normal">
                               <ReactMarkdown
                                 remarkPlugins={[remarkGfm, remarkMath]}
                                 rehypePlugins={[rehypeKatex]}
@@ -527,8 +554,8 @@ export function ChatInterface() {
                                   table: ({node: _node, ...props}) => {
                                     void _node;
                                     return (
-                                      <div className="my-4 w-full overflow-x-auto rounded-lg border bg-card text-card-foreground shadow-sm">
-                                        <table className="w-full text-sm text-left break-words" {...props} />
+                                      <div className="my-3 w-full overflow-x-auto rounded-lg border bg-card text-card-foreground shadow-sm">
+                                        <table className="min-w-full text-sm text-left" {...props} />
                                       </div>
                                     );
                                   },
@@ -542,15 +569,15 @@ export function ChatInterface() {
                                   },
                                   tr: ({node: _node, ...props}) => {
                                     void _node;
-                                    return <tr className="transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted" {...props} />;
+                                    return <tr className="transition-colors hover:bg-muted/50" {...props} />;
                                   },
                                   th: ({node: _node, ...props}) => {
                                     void _node;
-                                    return <th className="h-10 px-3 py-2 align-middle font-medium text-muted-foreground min-w-[100px]" {...props} />;
+                                    return <th className="h-9 px-2.5 sm:px-3 py-2 align-middle font-medium text-muted-foreground whitespace-nowrap text-xs sm:text-sm" {...props} />;
                                   },
                                   td: ({node: _node, ...props}) => {
                                     void _node;
-                                    return <td className="p-3 align-middle min-w-[100px]" {...props} />;
+                                    return <td className="px-2.5 sm:px-3 py-2 align-middle text-xs sm:text-sm" {...props} />;
                                   },
                                 }}
                               >
@@ -567,28 +594,28 @@ export function ChatInterface() {
                       return null;
                     })}
 
-                    {/* Copy Button for Assistant */}
-                    {m.role !== "user" && (
-                      <div className="absolute -bottom-3 -right-3 opacity-0 group-hover:opacity-100 transition-opacity bg-background border rounded-full shadow-sm p-0.5 z-10">
-                        <CopyButton text={m.parts?.filter((p) => p.type === 'text').map((p) => p.text).join("") || ""} />
-                      </div>
-                    )}
                   </div>
+                  {/* Copy Button — below bubble, shown on hover */}
+                  {m.role !== "user" && (
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center mt-0.5">
+                      <CopyButton text={m.parts?.filter((p) => p.type === 'text').map((p) => p.text).join("") || ""} />
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
-            </div>
+            </>
           )}
           
           {isLoading && messages[messages.length - 1]?.role === "user" && (
-            <div className="flex gap-4">
-              <Avatar className="size-8 shrink-0 border">
+            <div className="flex gap-2.5 sm:gap-4">
+              <Avatar className="size-7 sm:size-8 shrink-0 border hidden sm:flex">
                 <AvatarFallback className="bg-muted text-muted-foreground">
                   <Bot className="size-4" />
                 </AvatarFallback>
               </Avatar>
-              <div className="flex items-center max-w-[85%]">
-                <div className="flex items-center gap-2 bg-muted/50 rounded-2xl px-4 py-3 border shadow-sm">
+              <div className="flex items-center">
+                <div className="flex items-center gap-2 bg-muted/40 rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3 border shadow-sm">
                   <Loader2 className="size-4 animate-spin text-primary shrink-0" />
                   <span className="text-xs text-muted-foreground font-medium animate-pulse">
                     Analizando tu consulta...
@@ -597,33 +624,42 @@ export function ChatInterface() {
               </div>
             </div>
           )}
+
+          {/* Scroll anchor */}
+          <div ref={bottomRef} />
         </div>
       </div>
 
-      {/* Input Area */}
-      <div className="p-4 bg-background border-t">
+      {/* ── Input Area ── sticky bottom, auto-expanding */}
+      <div className="shrink-0 px-3 sm:px-4 pt-2 pb-3 sm:pb-4 bg-background border-t pb-safe">
         <form
           onSubmit={handleSubmit}
-          className="flex items-center gap-3 max-w-3xl mx-auto relative"
+          className="flex items-end gap-2 max-w-3xl mx-auto"
         >
-          <Input
-            value={input}
-            onChange={handleInputChange}
-            placeholder="Ask about revenue, expiries, or your clients..."
-            className="flex-1 h-12 rounded-full pl-4 pr-12 bg-muted/30 border-muted-foreground/20 focus-visible:ring-1 focus-visible:ring-primary shadow-sm"
-            disabled={isLoading}
-          />
+          <div className="flex-1 relative">
+            <textarea
+              ref={textareaRef}
+              value={input}
+              onChange={handleInputChange}
+              onKeyDown={handleKeyDown}
+              placeholder="Ask about revenue, expiries, or your clients..."
+              rows={1}
+              className="w-full resize-none rounded-2xl pl-4 pr-4 py-3 text-[16px] sm:text-sm bg-muted/30 border border-muted-foreground/20 focus:outline-none focus:ring-1 focus:ring-primary shadow-sm placeholder:text-muted-foreground/60 leading-normal"
+              disabled={isLoading}
+              style={{ maxHeight: "120px" }}
+            />
+          </div>
           <Button 
             type="submit" 
             size="icon" 
             disabled={isLoading || !input.trim()}
-            className="absolute right-1 size-10 rounded-full"
+            className="size-11 rounded-full shrink-0 mb-0.5"
           >
             {isLoading ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4 ml-0.5" />}
           </Button>
         </form>
-        <div className="text-center mt-2">
-          <span className="text-[10px] text-muted-foreground font-medium">
+        <div className="text-center mt-1.5">
+          <span className="text-[10px] sm:text-[11px] text-muted-foreground font-medium">
             AI can make mistakes. Verify important financial data.
           </span>
         </div>
