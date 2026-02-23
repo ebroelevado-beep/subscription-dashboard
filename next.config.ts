@@ -10,17 +10,18 @@ const nextConfig: NextConfig = {
 
   // Disable Turbopack for production builds to avoid OOM errors.
   // The --webpack flag in package.json ensures this, but adding it here for safety.
+  // Explicitly trace and include the native Copilot CLI binary in the standalone build.
+  // This resolves the "Copilot binary not found" error in production environments.
+  outputFileTracingIncludes: {
+    "/api/chat": [
+      "./node_modules/.pnpm/@github+copilot-linux-x64@*/node_modules/@github/copilot-linux-x64/copilot"
+    ]
+  },
+
   experimental: {
     // Limit CPU count to prevent OOM during production build on high-core machines.
     cpus: 4,
     workerThreads: false,
-    // Explicitly trace and include the native Copilot CLI binary in the standalone build.
-    // This resolves the "Copilot binary not found" error in production environments.
-    outputFileTracingIncludes: {
-      "/api/chat": [
-        "./node_modules/.pnpm/@github+copilot-linux-x64@*/node_modules/@github/copilot-linux-x64/copilot"
-      ]
-    }
   }
 };
 
