@@ -99,7 +99,7 @@ function NavLinks({
             onMouseEnter={() => prefetch(item.href)}
             className={cn(
               "relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
-              collapsed && "size-10 p-0 justify-center shrink-0",
+              collapsed && "size-10 p-0 justify-center gap-0 shrink-0",
               isActive
                 ? "bg-primary/10 text-primary dark:bg-primary/15"
                 : "text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground"
@@ -120,7 +120,7 @@ function NavLinks({
             <span
               className={cn(
                 "transition-opacity duration-200 whitespace-nowrap",
-                collapsed ? "opacity-0 w-0 overflow-hidden" : "opacity-100"
+                collapsed ? "hidden" : "opacity-100"
               )}
             >
               {t(item.key)}
@@ -207,7 +207,7 @@ function UserMenu({ collapsed }: { collapsed: boolean }) {
           variant="ghost"
           className={cn(
             "w-full justify-start gap-3 px-3 py-2.5 h-auto transition-all",
-            collapsed && "size-10 p-0 justify-center shrink-0"
+            collapsed && "size-10 p-0 justify-center gap-0 shrink-0"
           )}
         >
           <Avatar className="size-8 shrink-0">
