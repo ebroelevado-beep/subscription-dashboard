@@ -81,35 +81,29 @@ export async function POST(req: Request) {
     const { createUIMessageStream, createUIMessageStreamResponse } = ai;
 
     // 5. Resolve the Copilot CLI path manually.
-    // The SDK's getBundledCliPath() uses import.meta.resolve("@github/copilot/sdk")
-    // which fails in standalone because @github/copilot may not be in the expected
-    // pnpm resolution path. We resolve it ourselves from the SDK package location.
+    // We search known filesystem locations because:
+    // - The SDK's getBundledCliPath() uses import.meta.resolve which webpack breaks
+    // - The railpack build copies @github/copilot to .next/standalone/copilot-cli/
     const { existsSync } = await import("fs");
     const { dirname, join } = await import("path");
-    const { fileURLToPath } = await import("url");
 
     let cliPath = process.env.COPILOT_CLI_PATH || "";
 
     if (!cliPath || !existsSync(cliPath)) {
-      try {
-        // Since @github/copilot-sdk is in serverExternalPackages, import.meta.resolve works for IT.
-        // We then find @github/copilot as a sibling package in the same node_modules/@github/ directory.
-        const sdkPath = fileURLToPath(import.meta.resolve("@github/copilot-sdk"));
-        const githubDir = dirname(dirname(sdkPath)); // go up from copilot-sdk/dist -> copilot-sdk -> @github
-        const copilotIndexJs = join(githubDir, "copilot", "index.js");
-        if (existsSync(copilotIndexJs)) {
-          cliPath = copilotIndexJs;
-        }
-      } catch {
-        // Fallback: try common filesystem locations
-        const projectRoot = process.cwd();
-        const candidates = [
-          join(projectRoot, "node_modules", "@github", "copilot", "index.js"),
-          join(projectRoot, ".next", "standalone", "node_modules", "@github", "copilot", "index.js"),
-        ];
-        const found = candidates.find(c => existsSync(c));
-        if (found) cliPath = found;
-      }
+      // Derive the server root from process.argv[1] (e.g. /app/.next/standalone/server.js)
+      const serverDir = process.argv[1] ? dirname(process.argv[1]) : "";
+      const projectRoot = process.cwd();
+
+      const candidates = [
+        // Production: railpack copies @github/copilot here during build
+        join(serverDir, "copilot-cli", "index.js"),
+        join(projectRoot, ".next", "standalone", "copilot-cli", "index.js"),
+        // Development: standard node_modules
+        join(projectRoot, "node_modules", "@github", "copilot", "index.js"),
+      ];
+
+      const found = candidates.find(c => c && existsSync(c));
+      if (found) cliPath = found;
     }
 
     if (!cliPath || !existsSync(cliPath)) {

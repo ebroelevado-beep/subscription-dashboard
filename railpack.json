@@ -10,7 +10,7 @@
         "pnpm build",
         "cp -r public .next/standalone/public",
         "cp -r .next/static .next/standalone/.next/static",
-        "SDK_DIR=$(find .next/standalone -path '*/node_modules/@github/copilot-sdk' -type d | head -1) && if [ -n \"$SDK_DIR\" ]; then cp -rL node_modules/@github/copilot \"$(dirname $SDK_DIR)/copilot\"; echo '✅ Copied @github/copilot to standalone'; else echo '⚠ copilot-sdk not found in standalone, skipping copy'; fi"
+        "cp -rL node_modules/@github/copilot .next/standalone/copilot-cli"
       ],
       "variables": {
         "NODE_OPTIONS": "--max-old-space-size=4096",
