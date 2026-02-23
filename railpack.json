@@ -10,7 +10,7 @@
         "pnpm build",
         "cp -r public .next/standalone/public",
         "cp -r .next/static .next/standalone/.next/static",
-        "cp -rL node_modules/@github/copilot .next/standalone/copilot-cli"
+        "cp -rL node_modules/.pnpm/@github+copilot@0.0.411/node_modules/@github/copilot .next/standalone/copilot-cli"
       ],
       "variables": {
         "NODE_OPTIONS": "--max-old-space-size=4096",
