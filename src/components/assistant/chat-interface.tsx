@@ -296,7 +296,10 @@ export function ChatInterface() {
              });
              setModels(unique);
              if (unique.length > 0) {
-               const defaultModel = unique.find((m: {id: string, capabilities?: {type?: string}}) => m.id === "gpt-4o") || unique[0];
+               const defaultModel = 
+                 unique.find((m: {id: string}) => m.id === "oswe-vscode-prime") || 
+                 unique.find((m: {id: string}) => m.id === "gpt-4o") || 
+                 unique[0];
                setSelectedModel(defaultModel.id);
              }
           }
