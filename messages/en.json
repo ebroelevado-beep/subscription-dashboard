@@ -95,7 +95,8 @@
     "resume": "Resume",
     "recording": "Recording…",
     "recordPayment": "Record Payment",
-    "dashboardShortcut": "Dashboard"
+    "dashboardShortcut": "Dashboard",
+    "newChat": "New Chat"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -433,7 +434,15 @@
     "appearance": "Appearance",
     "language": "Language",
     "appearanceDescription": "Customize how the application looks to you.",
-    "themeLabel": "Appearance Mode"
+    "themeLabel": "Appearance Mode",
+    "assistant": "AI Assistant",
+    "assistantDescription": "Manage your AI Assistant and external integrations.",
+    "copilotTitle": "GitHub Copilot",
+    "copilotDescription": "Your assistant is powered by GitHub Copilot. You can disconnect your account here if you want to use a different one or revoke access.",
+    "disconnectCopilot": "Disconnect Copilot",
+    "confirmDisconnect": "Disconnect GitHub Copilot?",
+    "disconnectDescription": "This will remove your Copilot access token from the dashboard. You will need to re-authenticate to use the AI Assistant again.",
+    "disconnectSuccess": "Successfully disconnected from GitHub Copilot"
   },
   "validation": {
     "required": "This field is required",

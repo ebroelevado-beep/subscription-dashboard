@@ -12,6 +12,9 @@ import {
   Loader2,
   Settings,
   Palette,
+  BrainCircuit,
+  Github,
+  LogOut,
 } from "lucide-react";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -501,6 +504,96 @@ function DangerZone() {
   );
 }
 
+// ── Assistant Tab ──
+function AssistantTab() {
+  const t = useTranslations("settings");
+  const [isDisconnecting, setIsDisconnecting] = useState(false);
+  const [open, setOpen] = useState(false);
+
+  const handleDisconnect = async () => {
+    setIsDisconnecting(true);
+    try {
+      const res = await fetch("/api/copilot/logout", { method: "POST" });
+      if (res.ok) {
+        toast.success(t("disconnectSuccess"));
+        setOpen(false);
+        // We could use router.refresh() or window.location.reload()
+        // but since it's a settings change, a simple success toast might be enough.
+        // However, the chat interface needs to know. A reload is safest for the token state.
+        window.location.reload();
+      } else {
+        throw new Error("Failed to disconnect");
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Error disconnecting");
+    } finally {
+      setIsDisconnecting(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <BrainCircuit className="size-5" />
+          {t("assistant")}
+        </CardTitle>
+        <CardDescription>
+          {t("assistantDescription")}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="rounded-lg border p-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="size-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <Github className="size-5" />
+              </div>
+              <div className="space-y-0.5">
+                <h4 className="text-sm font-medium">{t("copilotTitle")}</h4>
+                <p className="text-xs text-muted-foreground">
+                  {t("copilotDescription")}
+                </p>
+              </div>
+            </div>
+            
+            <AlertDialog open={open} onOpenChange={setOpen}>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <LogOut className="size-4 mr-2" />
+                  {t("disconnectCopilot")}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>{t("confirmDisconnect")}</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {t("disconnectDescription")}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>{t("common.cancel", { fallback: "Cancel" })}</AlertDialogCancel>
+                  <AlertDialogAction 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleDisconnect();
+                    }}
+                    disabled={isDisconnecting}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    {isDisconnecting && <Loader2 className="size-4 animate-spin mr-2" />}
+                    {t("disconnectCopilot")}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 // ── Page ──
 export default function SettingsPage() {
   const t = useTranslations("settings");
@@ -521,6 +614,7 @@ export default function SettingsPage() {
         <TabsList>
           <TabsTrigger value="profile">{t("profile")}</TabsTrigger>
           <TabsTrigger value="appearance">{t("appearance")}</TabsTrigger>
+          <TabsTrigger value="assistant">{t("assistant")}</TabsTrigger>
           <TabsTrigger value="data">{t("data")}</TabsTrigger>
           <TabsTrigger value="danger">{t("danger")}</TabsTrigger>
         </TabsList>
@@ -531,6 +625,10 @@ export default function SettingsPage() {
 
         <TabsContent value="appearance">
           <AppearanceTab />
+        </TabsContent>
+
+        <TabsContent value="assistant">
+          <AssistantTab />
         </TabsContent>
 
         <TabsContent value="data">

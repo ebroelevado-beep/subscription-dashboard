@@ -95,7 +95,8 @@
     "resume": "Reanudar",
     "recording": "Grabando…",
     "recordPayment": "Registrar Pago",
-    "dashboardShortcut": "Panel"
+    "dashboardShortcut": "Panel",
+    "newChat": "Nuevo Chat"
   },
   "nav": {
     "dashboard": "Panel",
@@ -433,7 +434,15 @@
     "appearance": "Apariencia",
     "language": "Idioma",
     "appearanceDescription": "Personaliza cómo se ve la aplicación para ti.",
-    "themeLabel": "Modo de Apariencia"
+    "themeLabel": "Modo de Apariencia",
+    "assistant": "Asistente AI",
+    "assistantDescription": "Gestiona tu Asistente AI e integraciones externas.",
+    "copilotTitle": "GitHub Copilot",
+    "copilotDescription": "Tu asistente utiliza GitHub Copilot. Puedes desconectar tu cuenta aquí si deseas usar una diferente o revocar el acceso.",
+    "disconnectCopilot": "Desconectar Copilot",
+    "confirmDisconnect": "¿Desconectar GitHub Copilot?",
+    "disconnectDescription": "Esto eliminará tu token de acceso de Copilot del panel. Deberás volver a autenticarte para usar el Asistente AI de nuevo.",
+    "disconnectSuccess": "Se ha desconectado de GitHub Copilot correctamente"
   },
   "validation": {
     "required": "Este campo es obligatorio",
