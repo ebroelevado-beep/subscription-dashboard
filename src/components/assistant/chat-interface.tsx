@@ -164,18 +164,21 @@ function ToolInvocationBlock({ part }: { part: ExtendedUIMessagePart & { toolInv
         <button 
           type="button"
           onClick={() => setOpen(!open)}
-          className="flex items-center justify-between p-2.5 text-muted-foreground hover:bg-muted/40 transition-colors w-full text-left"
+          className="flex items-center justify-between p-2.5 text-muted-foreground hover:bg-muted/40 transition-colors w-full text-left gap-2"
         >
-          <div className="flex items-center gap-1.5 font-medium">
+          <div className="flex items-center gap-1.5 font-medium min-w-0 flex-1">
             <div className={`size-4 rounded-full flex items-center justify-center shrink-0 ${isError ? 'bg-red-500/10' : 'bg-green-500/10'}`}>
               {isError ? <AlertCircle className="size-2.5 text-red-500" /> : <Check className="size-2.5 text-green-500" />}
             </div>
             <Terminal className="size-3 shrink-0" />
-            <span className="text-foreground truncate">{toolName}</span> {isError ? 'error' : 'completado'}
+            <div className="flex items-center gap-1 min-w-0">
+              <span className="text-foreground truncate">{toolName}</span>
+              <span className="shrink-0 text-muted-foreground/70 text-[10px]">({isError ? 'error' : 'completado'})</span>
+            </div>
           </div>
-          <div className="flex items-center gap-1">
-            <span className="text-[10px] mr-1">{open ? "Ocultar Detalles" : "Ver Detalles"}</span>
-            {open ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
+          <div className="flex items-center gap-1 shrink-0 bg-muted/30 px-1.5 py-0.5 rounded text-[10px] font-semibold text-primary/80">
+            <span>{open ? "Ocultar" : "Ver Detalles"}</span>
+            {open ? <ChevronUp className="size-3" /> : <ChevronDown className="size-3" />}
           </div>
         </button>
         {open && (
@@ -238,9 +241,13 @@ function ToolInvocationBlock({ part }: { part: ExtendedUIMessagePart & { toolInv
 
   // Still loading
   return (
-    <div className="my-3 flex items-center gap-2.5 text-xs bg-background/50 p-2.5 rounded-lg border shadow-sm text-muted-foreground font-medium w-full sm:w-[80%] border-primary/20">
+    <div className="my-3 flex items-center gap-2.5 text-xs bg-background/50 p-2.5 rounded-lg border shadow-sm text-muted-foreground font-medium w-full sm:w-[80%] border-primary/20 min-w-0">
       <Loader2 className="size-3.5 animate-spin text-primary shrink-0" />
-      Ejecutando <span className="text-foreground animate-pulse truncate">{toolName}</span>...
+      <div className="min-w-0 flex items-center gap-1">
+        <span className="shrink-0">Ejecutando</span>
+        <span className="text-foreground animate-pulse truncate font-semibold">{toolName}</span>
+        <span className="shrink-0">...</span>
+      </div>
     </div>
   );
 }
