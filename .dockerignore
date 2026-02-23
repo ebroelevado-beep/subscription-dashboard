@@ -1,0 +1,18 @@
+node_modules
+.next
+out
+build
+dist
+.vercel
+.git
+*.log
+*.tsbuildinfo
+.env*
+! .env.example
+prisma/generated
+# Temporary/Debug files
+batch_*.json
+project_data.json
+build_log.txt
+collect_files.py
+split_batches.py
