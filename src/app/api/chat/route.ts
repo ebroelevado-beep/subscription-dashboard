@@ -80,22 +80,53 @@ export async function POST(req: Request) {
     const ai = await import("ai") as any;
     const { createUIMessageStream, createUIMessageStreamResponse } = ai;
 
-    // 5. Create CopilotClient with user's OAuth token
-    // The SDK's built-in getBundledCliPath() resolves to @github/copilot/index.js
-    // which is a self-contained JS bundle that runs via `node`. We let the SDK
-    // handle this automatically instead of manually searching for a native binary.
-    // An optional COPILOT_CLI_PATH env var can override this if needed.
-    const clientOptions: Record<string, unknown> = {
+    // 5. Resolve the Copilot CLI path manually.
+    // The SDK's getBundledCliPath() uses import.meta.resolve("@github/copilot/sdk")
+    // which fails in standalone because @github/copilot may not be in the expected
+    // pnpm resolution path. We resolve it ourselves from the SDK package location.
+    const { existsSync } = await import("fs");
+    const { dirname, join } = await import("path");
+    const { fileURLToPath } = await import("url");
+
+    let cliPath = process.env.COPILOT_CLI_PATH || "";
+
+    if (!cliPath || !existsSync(cliPath)) {
+      try {
+        // Since @github/copilot-sdk is in serverExternalPackages, import.meta.resolve works for IT.
+        // We then find @github/copilot as a sibling package in the same node_modules/@github/ directory.
+        const sdkPath = fileURLToPath(import.meta.resolve("@github/copilot-sdk"));
+        const githubDir = dirname(dirname(sdkPath)); // go up from copilot-sdk/dist -> copilot-sdk -> @github
+        const copilotIndexJs = join(githubDir, "copilot", "index.js");
+        if (existsSync(copilotIndexJs)) {
+          cliPath = copilotIndexJs;
+        }
+      } catch {
+        // Fallback: try common filesystem locations
+        const projectRoot = process.cwd();
+        const candidates = [
+          join(projectRoot, "node_modules", "@github", "copilot", "index.js"),
+          join(projectRoot, ".next", "standalone", "node_modules", "@github", "copilot", "index.js"),
+        ];
+        const found = candidates.find(c => existsSync(c));
+        if (found) cliPath = found;
+      }
+    }
+
+    if (!cliPath || !existsSync(cliPath)) {
+      console.error("❌ Could not resolve @github/copilot/index.js");
+      return new Response(
+        JSON.stringify({ error: "Copilot CLI not found. Please check deployment configuration." }),
+        { status: 500, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    // 6. Create CopilotClient with manually resolved cliPath
+    const client = new CopilotClient({
       githubToken: user.copilotToken,
       useLoggedInUser: false,
       autoStart: false,
-    };
-
-    if (process.env.COPILOT_CLI_PATH) {
-      clientOptions.cliPath = process.env.COPILOT_CLI_PATH;
-    }
-
-    const client = new CopilotClient(clientOptions);
+      cliPath,
+    });
 
     await client.start();
 
