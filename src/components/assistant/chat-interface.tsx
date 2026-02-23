@@ -525,14 +525,14 @@ export function ChatInterface() {
 
                 {/* Message Bubble */}
                 <div
-                  className={`flex flex-col gap-1 min-w-0 ${
+                  className={`flex flex-col gap-1 min-w-0 relative group ${
                     m.role === "user" 
                       ? "items-end max-w-[85%] sm:max-w-[75%]" 
                       : "items-start max-w-full sm:max-w-[85%]"
                   }`}
                 >
                   <div
-                    className={`rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3 text-sm shadow-sm relative group ${
+                    className={`rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3 text-sm shadow-sm relative ${
                       m.role === "user"
                         ? "bg-primary text-primary-foreground"
                         : "bg-muted/40 text-foreground border w-full"
@@ -595,9 +595,9 @@ export function ChatInterface() {
                     })}
 
                   </div>
-                  {/* Copy Button — below bubble, shown on hover */}
+                  {/* Copy Button — shown on hover over the message group */}
                   {m.role !== "user" && (
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center mt-0.5">
+                    <div className="absolute -bottom-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center bg-background border rounded-full shadow-sm p-0.5 z-10">
                       <CopyButton text={m.parts?.filter((p) => p.type === 'text').map((p) => p.text).join("") || ""} />
                     </div>
                   )}
