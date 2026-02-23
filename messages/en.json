@@ -454,6 +454,14 @@
     "costMin": "Cost must be ≥ 0",
     "atLeast1Month": "Must be at least 1 month"
   },
+  "chat": {
+    "placeholder": "Ask about your clients...",
+    "emptyTitle": "How can I help you today?",
+    "emptyDescription": "Ask me about your clients, active subscriptions, revenue metrics, or anything else about your business.",
+    "disclaimer": "AI can make mistakes. Verify important financial data.",
+    "subtitle": "Powered by GitHub Models",
+    "analyzing": "Analyzing your query..."
+  },
   "metadata": {
     "title": "Pearfect S.L. — Professional Subscription Management",
     "description": "Manage platforms, plans, seats, and client renewals from a single dashboard. Automated profitability tracking.",

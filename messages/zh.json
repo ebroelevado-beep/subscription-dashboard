@@ -454,6 +454,14 @@
     "costMin": "成本必须 ≥ 0",
     "atLeast1Month": "至少需要1个月"
   },
+  "chat": {
+    "placeholder": "询问有关您的客户...",
+    "emptyTitle": "今天我能帮您什么？",
+    "emptyDescription": "您可以询问有关客户、活跃订阅、收入指标或其他业务相关的任何问题。",
+    "disclaimer": "AI 可能会犯错。请验证重要的财务数据。",
+    "subtitle": "由 GitHub Models 驱动",
+    "analyzing": "正在分析您的问题..."
+  },
   "metadata": {
     "title": "Pearfect S.L. — 专业订阅管理",
     "description": "从单一面板管理平台、计划、席位和客户续约。自动追踪盈利能力。",

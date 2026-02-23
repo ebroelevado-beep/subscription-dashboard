@@ -464,7 +464,7 @@ export function ChatInterface() {
           <div className="min-w-0">
             <h2 className="text-sm sm:text-base font-semibold tracking-tight truncate">Pearfect AI</h2>
             <p className="hidden sm:block text-xs text-muted-foreground">
-              Powered by GitHub Models
+              {t("chat.subtitle")}
             </p>
           </div>
 
@@ -509,9 +509,9 @@ export function ChatInterface() {
                 <Bot className="size-7 sm:size-8 text-primary" />
               </div>
               <div>
-                <h3 className="text-base sm:text-lg font-medium">How can I help you today?</h3>
+                <h3 className="text-base sm:text-lg font-medium">{t("chat.emptyTitle")}</h3>
                 <p className="text-xs sm:text-sm text-muted-foreground max-w-sm mt-1 px-4">
-                  Ask me about your clients, active subscriptions, revenue metrics, or anything else about your business.
+                  {t("chat.emptyDescription")}
                 </p>
               </div>
             </div>
@@ -628,7 +628,7 @@ export function ChatInterface() {
                 <div className="flex items-center gap-2 bg-muted/40 rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3 border shadow-sm">
                   <Loader2 className="size-4 animate-spin text-primary shrink-0" />
                   <span className="text-xs text-muted-foreground font-medium animate-pulse">
-                    Analizando tu consulta...
+                    {t("chat.analyzing")}
                   </span>
                 </div>
               </div>
@@ -652,7 +652,7 @@ export function ChatInterface() {
               value={input}
               onChange={handleInputChange}
               onKeyDown={handleKeyDown}
-              placeholder="Ask about revenue, expiries, or your clients..."
+              placeholder={t("chat.placeholder")}
               rows={1}
               className="w-full resize-none rounded-2xl pl-4 pr-4 py-3 text-[16px] sm:text-sm bg-muted/30 border border-muted-foreground/20 focus:outline-none focus:ring-1 focus:ring-primary shadow-sm placeholder:text-muted-foreground/60 leading-normal"
               disabled={isLoading}
@@ -670,7 +670,7 @@ export function ChatInterface() {
         </form>
         <div className="text-center mt-1.5">
           <span className="text-[10px] sm:text-[11px] text-muted-foreground font-medium">
-            AI can make mistakes. Verify important financial data.
+            {t("chat.disclaimer")}
           </span>
         </div>
       </div>

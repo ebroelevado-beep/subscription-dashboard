@@ -452,6 +452,14 @@
     "costMin": "El coste debe ser ≥ 0",
     "atLeast1Month": "Debe ser al menos 1 mes"
   },
+  "chat": {
+    "placeholder": "Pregunta sobre tus clientes...",
+    "emptyTitle": "¿En qué puedo ayudarte hoy?",
+    "emptyDescription": "Pregúntame sobre tus clientes, suscripciones activas, métricas de ingresos o cualquier cosa sobre tu negocio.",
+    "disclaimer": "La IA puede cometer errores. Verifica los datos financieros importantes.",
+    "subtitle": "Impulsado por GitHub Models",
+    "analyzing": "Analizando tu consulta..."
+  },
   "metadata": {
     "title": "Pearfect S.L. — Gestión Profesional de Suscripciones",
     "description": "Gestiona plataformas, planes, asientos y renovaciones de clientes desde un solo panel. Controla la rentabilidad automáticamente.",
