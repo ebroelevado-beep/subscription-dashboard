@@ -27,7 +27,6 @@
     "notesPlaceholder": "例如：通过 Bizum 支付",
     "currentExpiry": "当前有效期",
     "lapsed": "已失效",
-    "lapsedHint": "已失效 — 续约将从今天开始，而非原到期日。",
     "newExpiry": "新到期日",
     "resultInPastWarning": "这将把到期日设置为过去日期。席位将显示为已过期。",
     "confirm": "确认",

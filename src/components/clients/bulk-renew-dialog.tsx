@@ -91,8 +91,7 @@ export function BulkRenewDialog({
     return renewableSeats.map((seat) => {
       const currentExpiry = startOfDay(new Date(seat.activeUntil));
       const isLapsed = currentExpiry < today;
-      const baseDate = isLapsed ? today : currentExpiry;
-      const newExpiry = addMonths(baseDate, months);
+      const newExpiry = addMonths(currentExpiry, months);
       const diff = differenceInDays(currentExpiry, today);
       return { ...seat, currentExpiry, newExpiry, isLapsed, daysLeft: diff };
     });

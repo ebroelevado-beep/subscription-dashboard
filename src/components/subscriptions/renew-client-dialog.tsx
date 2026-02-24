@@ -39,8 +39,7 @@ export function RenewClientDialog({ seat, open, onOpenChange }: RenewClientDialo
   if (isCorrection) {
     newExpiry = subMonths(currentExpiry, Math.abs(months));
   } else {
-    const baseDate = currentExpiry >= today ? currentExpiry : today;
-    newExpiry = addMonths(baseDate, months);
+    newExpiry = addMonths(currentExpiry, months);
   }
 
   const isLapsed = currentExpiry < today;
@@ -158,13 +157,7 @@ export function RenewClientDialog({ seat, open, onOpenChange }: RenewClientDialo
                 {format(newExpiry, "dd/MM/yyyy")}
               </span>
             </div>
-            {isLapsed && months > 0 && (
-              <p className="text-xs text-muted-foreground mt-1">
-                Lapsed — renewal starts from today instead of the old expiry.
-              </p>
-            )}
           </div>
-
           {/* Warning for corrections that push into past */}
           {resultInPast && (
             <div className="flex items-start gap-2 rounded-md border border-amber-500/50 bg-amber-50 dark:bg-amber-950/20 p-3 text-sm text-amber-800 dark:text-amber-300">

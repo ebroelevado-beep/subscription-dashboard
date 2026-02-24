@@ -27,7 +27,6 @@
     "notesPlaceholder": "ej. Pagado por Bizum",
     "currentExpiry": "Vencimiento actual",
     "lapsed": "caducado",
-    "lapsedHint": "Caducado — la renovación comienza desde hoy en lugar del vencimiento anterior.",
     "newExpiry": "Nuevo vencimiento",
     "resultInPastWarning": "Esto establecerá el vencimiento en una fecha pasada. El asiento aparecerá como caducado.",
     "confirm": "Confirmar",

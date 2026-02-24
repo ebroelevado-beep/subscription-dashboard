@@ -45,9 +45,8 @@ export async function renewClientSubscription({
     // 2. Compute new expiry
     let newExpiry: Date;
     if (months > 0) {
-      // Normal renewal: extend from current or today if lapsed
-      const baseDate = currentExpiry >= today ? currentExpiry : today;
-      newExpiry = addMonths(baseDate, months);
+      // Normal renewal: always extend from current expiry
+      newExpiry = addMonths(currentExpiry, months);
     } else {
       // Negative correction: always subtract from current expiry
       newExpiry = subMonths(currentExpiry, Math.abs(months));
@@ -128,9 +127,8 @@ export async function renewBulkClientSubscriptions({
       const currentExpiry = startOfDay(new Date(seat.activeUntil));
       const customPrice = Number(seat.customPrice);
 
-      // 2. Lapsed vs. future — each seat independently
-      const baseDate = currentExpiry >= today ? currentExpiry : today;
-      const newExpiry = addMonths(baseDate, months);
+      // 2. Compute new expiry — each seat independently
+      const newExpiry = addMonths(currentExpiry, months);
 
       // 3. Period boundaries
       const periodStart = addDays(currentExpiry, 1);

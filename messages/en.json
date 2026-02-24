@@ -27,7 +27,6 @@
     "notesPlaceholder": "e.g. Paid via Bizum",
     "currentExpiry": "Current expiry",
     "lapsed": "lapsed",
-    "lapsedHint": "Lapsed — renewal starts from today instead of the old expiry.",
     "newExpiry": "New expiry",
     "resultInPastWarning": "This will set the expiry to a past date. The seat will show as expired.",
     "confirm": "Confirm",

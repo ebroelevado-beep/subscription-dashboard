@@ -127,8 +127,7 @@ export function ClientDetailSheet({ clientId, open, onOpenChange }: ClientDetail
   if (isRenewCorrection) {
     newExpiry = subMonths(currentExpiry, Math.abs(renewMonths));
   } else {
-    const baseDate = currentExpiry >= today ? currentExpiry : today;
-    newExpiry = addMonths(baseDate, renewMonths);
+    newExpiry = addMonths(currentExpiry, renewMonths);
   }
   const isLapsed = renewSeat ? currentExpiry < today : false;
   const resultInPast = newExpiry < today;
@@ -444,11 +443,6 @@ export function ClientDetailSheet({ clientId, open, onOpenChange }: ClientDetail
                   {format(newExpiry, "dd/MM/yyyy")}
                 </span>
               </div>
-              {isLapsed && renewMonths > 0 && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  {tc("lapsedHint")}
-                </p>
-              )}
             </div>
 
             {resultInPast && (
