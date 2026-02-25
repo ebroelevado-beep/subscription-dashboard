@@ -18,6 +18,8 @@ import { Link } from "@/i18n/navigation";
 import { useSession } from "next-auth/react";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { CurrencySelector } from "@/components/currency-selector";
+import { useCurrency } from "@/hooks/use-currency";
 
 /* ─── animation helpers ─── */
 const fadeUp = {
@@ -81,6 +83,7 @@ export default function LandingPage() {
   const t = useTranslations("landing");
   const tc = useTranslations("common");
   const { data: session, status } = useSession();
+  const { currency } = useCurrency();
 
   return (
     <div className="min-h-dvh bg-background text-foreground overflow-x-hidden">
@@ -95,6 +98,7 @@ export default function LandingPage() {
           </Link>
           <div className="flex items-center gap-2">
             <div className="hidden sm:flex items-center gap-2 mr-2 border-r pr-2 shadow-none border-border/50">
+               <CurrencySelector variant="header" />
                <LanguageSwitcher />
                <ThemeToggle />
             </div>
@@ -166,7 +170,9 @@ export default function LandingPage() {
             variants={fadeUp}
             custom={2}
           >
-            {t("heroDescription")}
+            {t("heroDescription", { 
+              everyCurrency: t(`every${currency}`) || t("everyEUR")
+            })}
           </motion.p>
 
           <motion.div

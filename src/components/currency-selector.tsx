@@ -1,6 +1,6 @@
 "use client";
 
-import { useSession } from "next-auth/react";
+import { useCurrency } from "@/hooks/use-currency";
 import { toast } from "sonner";
 import { CURRENCIES, Currency } from "@/lib/currency";
 import { useUpdateSettings } from "@/hooks/use-account";
@@ -27,25 +27,23 @@ interface CurrencySelectorProps {
 }
 
 export function CurrencySelector({ variant = "select" }: CurrencySelectorProps) {
-  const { data: session, update: updateSession } = useSession();
+  const { currency: currentCurrency, setCurrency, isGuest } = useCurrency();
   const updateSettings = useUpdateSettings();
   const t = useTranslations("settings");
-  
-  const currentCurrency = ((session?.user as { currency?: string })?.currency || "EUR") as Currency;
 
-  const handleCurrencyChange = (newCurrency: string) => {
+  const handleCurrencyChange = async (newCurrency: string) => {
+    if (isGuest) {
+      setCurrency(newCurrency as Currency);
+      return;
+    }
+
     toast.loading(t("updating") || "Updating...", { id: "currency-update" });
     updateSettings.mutate(
       { currency: newCurrency },
       {
         onSuccess: () => {
           toast.success(t("currencyUpdated"), { id: "currency-update" });
-          updateSession({ 
-            user: { 
-              ...(session?.user || {}), 
-              currency: newCurrency 
-            } 
-          });
+          setCurrency(newCurrency as Currency);
         },
         onError: (err) => {
           console.error("Currency update failed:", err);
