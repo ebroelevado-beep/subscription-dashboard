@@ -13,14 +13,13 @@ import { ArrowLeft, UserCircle, Plus, Trash2 } from "lucide-react";
 import { AssignSubscriptionDialog } from "@/components/clients/assign-subscription-dialog";
 import { useCancelSeat } from "@/hooks/use-seats";
 import { useState } from "react";
+import { useSession } from "next-auth/react";
+import { formatCurrency } from "@/lib/currency";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-function formatCurrency(amount: number) {
-  return new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(amount);
-}
 
 const statusVariant: Record<string, "default" | "secondary" | "destructive"> = {
   active: "default",
@@ -33,6 +32,8 @@ export default function ClientDetailPage() {
   const [assignOpen, setAssignOpen] = useState(false);
   const [cancelSeatId, setCancelSeatId] = useState<string | null>(null);
   const cancelMutation = useCancelSeat();
+  const { data: session } = useSession();
+  const currency = (session?.user as { currency?: string })?.currency || "EUR";
 
   if (isLoading) {
     return (
@@ -92,7 +93,7 @@ export default function ClientDetailPage() {
         </div>
         <div className="rounded-lg border p-4">
           <p className="text-sm text-muted-foreground">Total Monthly Cost</p>
-          <p className="text-2xl font-bold">{formatCurrency(totalMonthly)}</p>
+          <p className="text-2xl font-bold">{formatCurrency(totalMonthly, currency)}</p>
         </div>
       </div>
 
@@ -134,7 +135,7 @@ export default function ClientDetailPage() {
                     </Link>
                   </TableCell>
                   <TableCell className="text-right font-mono">
-                    {formatCurrency(Number(cs.customPrice))}
+                    {formatCurrency(Number(cs.customPrice), currency)}
                   </TableCell>
                   <TableCell className="text-center">
                     <Badge variant={statusVariant[cs.status] ?? "secondary"}>

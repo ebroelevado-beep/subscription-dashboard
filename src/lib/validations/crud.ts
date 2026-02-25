@@ -37,6 +37,7 @@ export const createSubscriptionSchema = z.object({
   masterUsername: z.string().max(100).nullable().optional(),
   masterPassword: z.string().max(100).nullable().optional(),
   ownerId: z.string().uuid().nullable().optional(),
+  isAutopayable: z.boolean().optional().default(true),
 });
 
 export type CreateSubscriptionInput = z.infer<typeof createSubscriptionSchema>;

@@ -12,9 +12,8 @@ import { toast } from "sonner";
 import { differenceInDays, startOfDay } from "date-fns";
 import { useTranslations } from "next-intl";
 
-function formatCurrency(amount: number) {
-  return new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(amount);
-}
+import { formatCurrency } from "@/lib/currency";
+import { useSession } from "next-auth/react";
 
 type ExpiryStatus = "ok" | "expiring" | "expired";
 
@@ -98,6 +97,8 @@ interface SeatCardProps {
 export function SeatCard({ seat, onPause, onResume, onCancel, onRenew, onEdit }: SeatCardProps) {
   const t = useTranslations("subscriptions");
   const tc = useTranslations("common");
+  const { data: session } = useSession();
+  const currency = (session?.user as { currency?: string })?.currency || "EUR";
   const [showPassword, setShowPassword] = useState(false);
   const expiry = getExpiryStatus(seat.activeUntil, tc);
   const hasCredentials = seat.client.serviceUser || seat.client.servicePassword;
@@ -228,7 +229,7 @@ export function SeatCard({ seat, onPause, onResume, onCancel, onRenew, onEdit }:
       <div className="flex items-center justify-between text-sm">
         <span className="text-muted-foreground">{tc("plan")}</span>
         <span className="font-mono font-medium">
-          {formatCurrency(Number(seat.customPrice))}
+          {formatCurrency(Number(seat.customPrice), currency)}
         </span>
       </div>
 

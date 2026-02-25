@@ -6,6 +6,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useCreatePlan, useUpdatePlan, type Plan } from "@/hooks/use-plans";
 import { usePlatforms } from "@/hooks/use-platforms";
+import { useSession } from "next-auth/react";
+import { CURRENCIES, type Currency } from "@/lib/currency";
 import {
   Dialog,
   DialogContent,
@@ -72,6 +74,9 @@ export function PlanFormDialog({
   const t = useTranslations("plans");
   const tc = useTranslations("common");
   const tv = useTranslations("validation");
+  const { data: session } = useSession();
+  const currency = (session?.user as { currency?: string })?.currency as Currency || "EUR";
+  const currencySymbol = CURRENCIES[currency].symbol;
 
   const {
     register,
@@ -203,7 +208,7 @@ export function PlanFormDialog({
           {/* Cost + Max Seats row */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="plan-cost">{t("myCost")}</Label>
+              <Label htmlFor="plan-cost">{t("myCost")} ({currencySymbol})</Label>
               <Input
                 id="plan-cost"
                 type="number"

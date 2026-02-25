@@ -4,6 +4,8 @@ import { useState, useEffect, useMemo } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useSession } from "next-auth/react";
+import { CURRENCIES, type Currency } from "@/lib/currency";
 import {
   useCreateSubscription, useUpdateSubscription, type Subscription,
 } from "@/hooks/use-subscriptions";
@@ -22,6 +24,8 @@ import { Label } from "@/components/ui/label";
 import { addMonths, format } from "date-fns";
 import { AlertTriangle } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { Switch } from "@/components/ui/switch";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const schema = z.object({
   platformId: z.string().min(1, "validation.platformRequired"),
@@ -33,6 +37,7 @@ const schema = z.object({
   masterUsername: z.string().optional(),
   masterPassword: z.string().optional(),
   ownerId: z.string().optional(),
+  isAutopayable: z.boolean().default(true),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -53,18 +58,19 @@ export function SubscriptionFormDialog({ mode, subscription, open, onOpenChange 
   const t = useTranslations("subscriptions");
   const tc = useTranslations("common");
   const tv = useTranslations("validation");
+  const { data: session } = useSession();
 
   const today = new Date().toISOString().split("T")[0];
 
   const {
     register, handleSubmit, reset, control, watch, setValue, formState: { errors },
   } = useForm<FormValues>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolver: zodResolver(schema) as any,
+    resolver: zodResolver(schema) as any, // zodResolver sometimes needs this cast with react-hook-form
       defaultValues: {
       platformId: "", planId: "", label: "", startDate: today,
       durationMonths: 1, status: "active",
       masterUsername: "", masterPassword: "", ownerId: "",
+      isAutopayable: true,
     },
   });
 
@@ -128,6 +134,7 @@ export function SubscriptionFormDialog({ mode, subscription, open, onOpenChange 
             masterUsername: subscription.masterUsername || "",
             masterPassword: subscription.masterPassword || "",
             ownerId: subscription.ownerId || "none",
+            isAutopayable: subscription.isAutopayable,
           });
           setPrevPlatformId(platform?.id ?? "");
         }, 0);
@@ -136,6 +143,7 @@ export function SubscriptionFormDialog({ mode, subscription, open, onOpenChange 
           platformId: "", planId: "", label: "", startDate: today,
           durationMonths: 1, status: "active",
           masterUsername: "", masterPassword: "", ownerId: "",
+          isAutopayable: true,
         });
       }
     }
@@ -157,6 +165,7 @@ export function SubscriptionFormDialog({ mode, subscription, open, onOpenChange 
         masterUsername: parsedMasterUsername,
         masterPassword: parsedMasterPassword,
         ownerId: parsedOwnerId,
+        isAutopayable: values.isAutopayable,
       });
     } else {
       await createMutation.mutateAsync({
@@ -168,6 +177,7 @@ export function SubscriptionFormDialog({ mode, subscription, open, onOpenChange 
         masterUsername: parsedMasterUsername,
         masterPassword: parsedMasterPassword,
         ownerId: parsedOwnerId,
+        isAutopayable: values.isAutopayable,
       });
     }
     onOpenChange(false);
@@ -178,7 +188,6 @@ export function SubscriptionFormDialog({ mode, subscription, open, onOpenChange 
     const parts = msg.split(".");
     if (parts.length === 2 && parts[0] === "validation") {
       try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return tv(parts[1] as any);
       } catch {
         return msg;
@@ -247,7 +256,9 @@ export function SubscriptionFormDialog({ mode, subscription, open, onOpenChange 
                   <SelectContent>
                     {plans?.map((p) => (
                       <SelectItem key={p.id} value={p.id}>
-                        {p.platform.name} — {p.name} (€{Number(p.cost).toFixed(2)})
+                        <span className="text-xs text-muted-foreground mr-2 group-hover:text-primary-foreground/70 transition-colors">
+                          {p.platform.name} — {p.name} ({CURRENCIES[(session?.user as { currency?: string })?.currency as Currency || "EUR"].symbol}{Number(p.cost).toFixed(2)})
+                        </span>
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -328,6 +339,40 @@ export function SubscriptionFormDialog({ mode, subscription, open, onOpenChange 
                   </Select>
                 )}
               />
+          </div>
+
+          {/* Autopayable toggle */}
+          <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-2">
+                <Label className="text-sm font-medium">
+                  {t("isAutopayable")}
+                </Label>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <AlertTriangle className="size-3.5 text-muted-foreground cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-[200px]">
+                      {t("autopayableTooltip")}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+              <p className="text-[12px] text-muted-foreground">
+                {t("autopayableDescription")}
+              </p>
+            </div>
+            <Controller
+              control={control}
+              name="isAutopayable"
+              render={({ field }) => (
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              )}
+            />
           </div>
 
           {/* Date preview */}

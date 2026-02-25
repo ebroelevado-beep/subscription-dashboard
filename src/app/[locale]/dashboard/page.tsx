@@ -16,16 +16,15 @@ import {
   AlertTriangle,
   Clock,
   ArrowRight,
-  DollarSign,
+  Banknote,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useTranslations } from "next-intl";
 import { ClientDetailSheet } from "@/components/clients/client-detail-sheet";
 import { useState } from "react";
+import { formatCurrency } from "@/lib/currency";
+import { useSession } from "next-auth/react";
 
-function formatCurrency(amount: number) {
-  return new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(amount);
-}
 
 function StatCard({
   title,
@@ -69,10 +68,13 @@ function StatCard({
 }
 
 export default function DashboardPage() {
+  const { data: session } = useSession();
   const { data: stats, isLoading } = useDashboardStats();
   const t = useTranslations("dashboard");
   const tc = useTranslations("common");
   const [sheetClientId, setSheetClientId] = useState<string | null>(null);
+
+  const currency = ((session?.user as { currency?: string })?.currency || "EUR");
 
   if (isLoading) {
     return (
@@ -155,23 +157,23 @@ export default function DashboardPage() {
       </div>
 
       {/* Financial Summary */}
-      <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-3">
         <StatCard
           title={t("monthlyRevenue")}
-          value={formatCurrency(stats.monthlyRevenue)}
+          value={formatCurrency(stats.monthlyRevenue, currency)}
           icon={TrendingUp}
           trend="up"
           description={t("totalFromActiveSeats")}
         />
         <StatCard
           title={t("monthlyCost")}
-          value={formatCurrency(stats.monthlyCost)}
+          value={formatCurrency(stats.monthlyCost, currency)}
           icon={CreditCard}
           description={t("totalSubscriptionCosts")}
         />
         <StatCard
           title={t("netProfit")}
-          value={formatCurrency(profit)}
+          value={formatCurrency(profit, currency)}
           icon={profit >= 0 ? TrendingUp : TrendingDown}
           trend={profitTrend}
           description={
@@ -186,7 +188,7 @@ export default function DashboardPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <DollarSign className="size-5 text-emerald-500" />
+            <Banknote className="size-5 text-emerald-500" />
             {t("financialHealth")}
           </CardTitle>
         </CardHeader>
@@ -195,7 +197,7 @@ export default function DashboardPage() {
             <div className="rounded-lg border bg-muted/30 p-4">
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{t("revenue")}</p>
               <p className="mt-1 text-2xl font-bold text-green-600 dark:text-green-400">
-                {formatCurrency(stats.thisMonthRevenue ?? 0)}
+                {formatCurrency(stats.thisMonthRevenue ?? 0, currency)}
               </p>
               <p className="text-xs text-muted-foreground mt-1">
                 {t("fromClientRenewals")}
@@ -204,7 +206,7 @@ export default function DashboardPage() {
             <div className="rounded-lg border bg-muted/30 p-4">
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{t("cost")}</p>
               <p className="mt-1 text-2xl font-bold">
-                {formatCurrency(stats.thisMonthCost ?? 0)}
+                {formatCurrency(stats.thisMonthCost ?? 0, currency)}
               </p>
               <p className="text-xs text-muted-foreground mt-1">
                 {t("platformRenewalsPaid")}
@@ -213,7 +215,7 @@ export default function DashboardPage() {
             <div className="rounded-lg border bg-muted/30 p-4">
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{t("net")}</p>
               <p className={`mt-1 text-2xl font-bold ${(stats.thisMonthProfit ?? 0) >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
-                {formatCurrency(stats.thisMonthProfit ?? 0)}
+                {formatCurrency(stats.thisMonthProfit ?? 0, currency)}
               </p>
               <p className="text-xs text-muted-foreground mt-1">
                 {t("actualCashFlow")}

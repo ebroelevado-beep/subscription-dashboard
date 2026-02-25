@@ -10,24 +10,20 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-function formatCurrency(val: number) {
-  return val.toLocaleString("es-ES", {
-    style: "currency",
-    currency: "EUR",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  });
-}
+import { useSession } from "next-auth/react";
+import { CURRENCIES, formatCurrency } from "@/lib/currency";
 
 function ChartTooltip({
   active,
   payload,
   label,
+  currency,
 }: {
   active?: boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   payload?: any[];
   label?: string;
+  currency?: string;
 }) {
   if (!active || !payload?.length) return null;
   return (
@@ -35,7 +31,7 @@ function ChartTooltip({
       <p className="font-medium">{label}</p>
       {payload.map((entry) => (
         <p key={entry.name} style={{ color: entry.color }}>
-          {entry.name}: {formatCurrency(entry.value)}
+          {entry.name}: {formatCurrency(entry.value, currency)}
         </p>
       ))}
     </div>
@@ -49,6 +45,9 @@ export interface TrendDataPoint {
 }
 
 export default function RevenueChart({ data }: { data: TrendDataPoint[] }) {
+  const { data: session } = useSession();
+  const currency = (session?.user as { currency?: string })?.currency || "EUR";
+
   return (
     <ResponsiveContainer width="100%" height={300}>
       <AreaChart data={data}>
@@ -72,9 +71,12 @@ export default function RevenueChart({ data }: { data: TrendDataPoint[] }) {
         <YAxis
           tick={{ fontSize: 12 }}
           className="fill-muted-foreground"
-          tickFormatter={(v) => `€${v}`}
+          tickFormatter={(v) => {
+            const symbol = (CURRENCIES[currency as keyof typeof CURRENCIES] || CURRENCIES.EUR).symbol;
+            return `${symbol}${v}`;
+          }}
         />
-        <Tooltip content={<ChartTooltip />} />
+        <Tooltip content={<ChartTooltip currency={currency} />} />
         <Area
           type="monotone"
           dataKey="revenue"

@@ -3,6 +3,8 @@
 import { useState, useMemo } from "react";
 import { useSubscriptions } from "@/hooks/use-subscriptions";
 import { useCreateSeat } from "@/hooks/use-seats";
+import { useSession } from "next-auth/react";
+import { CURRENCIES, type Currency } from "@/lib/currency";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
@@ -31,6 +33,7 @@ export function AssignSubscriptionDialog({
 }: AssignSubscriptionDialogProps) {
   const createSeat = useCreateSeat();
   const { data: subscriptions } = useSubscriptions();
+  const { data: session } = useSession();
 
   // Form state
   const [search, setSearch] = useState("");
@@ -188,8 +191,10 @@ export function AssignSubscriptionDialog({
 
           {/* Price + Duration */}
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="sub-price">Price (€/month)</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="sub-price">
+                Price ({CURRENCIES[((session?.user as { currency?: string })?.currency as Currency) || "EUR"].symbol}/month)
+              </Label>
               <Input
                 id="sub-price"
                 type="number"

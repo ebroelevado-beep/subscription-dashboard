@@ -58,7 +58,10 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     // Allow clearing these fields by checking against undefined (so null sets them to null)
     if (data.masterUsername !== undefined) updateData.masterUsername = data.masterUsername;
     if (data.masterPassword !== undefined) updateData.masterPassword = data.masterPassword;
-    if (data.ownerId !== undefined) updateData.ownerId = data.ownerId;
+    if (data.ownerId !== undefined) {
+      updateData.owner = data.ownerId ? { connect: { id: data.ownerId } } : { disconnect: true };
+    }
+    if (data.isAutopayable !== undefined) updateData.isAutopayable = data.isAutopayable;
 
     // If planId is changing, enforce capacity check
     if (data.planId) {
@@ -79,7 +82,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
           );
         }
       }
-      updateData.planId = data.planId;
+      updateData.plan = { connect: { id: data.planId } };
     }
 
     const subscription = await prisma.subscription.update({

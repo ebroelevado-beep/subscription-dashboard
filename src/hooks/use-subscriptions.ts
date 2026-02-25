@@ -24,6 +24,7 @@ export interface Subscription {
   masterUsername?: string | null;
   masterPassword?: string | null;
   ownerId?: string | null;
+  isAutopayable: boolean;
 }
 
 export interface SubscriptionDetail extends Omit<Subscription, "clientSubscriptions"> {
@@ -78,6 +79,7 @@ export function useCreateSubscription() {
       masterUsername?: string | null;
       masterPassword?: string | null;
       ownerId?: string | null;
+      isAutopayable?: boolean;
     }) =>
       fetchApi<Subscription>("/api/subscriptions", {
         method: "POST",
@@ -105,6 +107,7 @@ export function useUpdateSubscription() {
       masterUsername?: string | null;
       masterPassword?: string | null;
       ownerId?: string | null;
+      isAutopayable?: boolean;
     }) =>
       fetchApi<Subscription>(`/api/subscriptions/${data.id}`, {
         method: "PATCH",

@@ -14,6 +14,8 @@ import {
 import { usePlans } from "@/hooks/use-plans";
 import { useSubscriptions } from "@/hooks/use-subscriptions";
 import { useClients } from "@/hooks/use-clients";
+import { useSession } from "next-auth/react";
+import { formatCurrency } from "@/lib/currency";
 import {
   TrendingUp,
   TrendingDown,
@@ -63,14 +65,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-function formatCurrency(val: number) {
-  return val.toLocaleString("es-ES", {
-    style: "currency",
-    currency: "EUR",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  });
-}
 
 function formatPercent(val: number) {
   return `${val.toFixed(1)}%`;
@@ -118,6 +112,8 @@ function KpiCard({
 export default function AnalyticsPage() {
   const t = useTranslations("analytics");
   const tc = useTranslations("common");
+  const { data: session } = useSession();
+  const currency = session?.user?.currency || "EUR";
 
   // ── Time Scale Toggle ──
   const SCALE_OPTIONS: { value: TrendScale; label: string; icon: React.ElementType }[] = [
@@ -199,20 +195,20 @@ export default function AnalyticsPage() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard
           title={t("totalRevenue")}
-          value={formatCurrency(summary?.totalRevenue ?? 0)}
+          value={formatCurrency(summary?.totalRevenue ?? 0, currency)}
           subtitle={`${summary?.uniqueClientCount ?? 0} ${t("clientsLabel").toLowerCase()}`}
           icon={TrendingUp}
           color="emerald"
         />
         <KpiCard
           title={t("cogs")}
-          value={formatCurrency(summary?.totalCost ?? 0)}
+          value={formatCurrency(summary?.totalCost ?? 0, currency)}
           icon={TrendingDown}
           color="red"
         />
         <KpiCard
           title={t("netMargin")}
-          value={formatCurrency(summary?.netMargin ?? 0)}
+          value={formatCurrency(summary?.netMargin ?? 0, currency)}
           subtitle={
             summary && summary.totalRevenue > 0
               ? `${((summary.netMargin / summary.totalRevenue) * 100).toFixed(1)}% ${t("grossMargin").toLowerCase()}`
@@ -223,7 +219,7 @@ export default function AnalyticsPage() {
         />
         <KpiCard
           title={t("arpu")}
-          value={formatCurrency(summary?.arpu ?? 0)}
+          value={formatCurrency(summary?.arpu ?? 0, currency)}
           icon={Users}
           color="amber"
         />
@@ -456,7 +452,7 @@ export default function AnalyticsPage() {
                   </div>
                   <div className="text-right">
                     <span className="font-semibold text-sm tabular-nums">
-                      {formatCurrency(c.totalPaid)}
+                      {formatCurrency(c.totalPaid, currency)}
                     </span>
                   </div>
                 </div>
@@ -509,13 +505,13 @@ export default function AnalyticsPage() {
                   <div>
                     <p className="text-xs text-muted-foreground">{t("revenueLabel")}</p>
                     <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 tabular-nums">
-                      {formatCurrency(sub.revenue)}
+                      {formatCurrency(sub.revenue, currency)}
                     </p>
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">{t("costLabel")}</p>
                     <p className="text-sm font-semibold text-red-600 dark:text-red-400 tabular-nums">
-                      {formatCurrency(sub.cost)}
+                      {formatCurrency(sub.cost, currency)}
                     </p>
                   </div>
                   <div>
@@ -528,7 +524,7 @@ export default function AnalyticsPage() {
                           : "text-red-600 dark:text-red-400"
                       )}
                     >
-                      {formatCurrency(sub.net)}
+                      {formatCurrency(sub.net, currency)}
                     </p>
                   </div>
                 </div>

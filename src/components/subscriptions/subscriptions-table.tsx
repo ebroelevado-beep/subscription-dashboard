@@ -14,9 +14,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Pencil, Trash2, Eye, CreditCard } from "lucide-react";
+import { Pencil, Trash2, Eye, CreditCard, RefreshCw } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useTranslations } from "next-intl";
+import { differenceInDays, startOfDay } from "date-fns";
+import { useSession } from "next-auth/react";
+import { formatCurrency } from "@/lib/currency";
 
 interface SubscriptionsTableProps {
   subscriptions: Subscription[];
@@ -27,14 +30,25 @@ function formatDate(date: string) {
   return new Date(date).toLocaleDateString("es-ES");
 }
 
-const statusVariant: Record<string, "default" | "secondary" | "destructive"> = {
-  active: "default",
-  paused: "secondary",
-};
+type ExpiryStatus = "ok" | "expiring" | "expired";
+
+function getExpiryInfo(activeUntil: string) {
+  const today = startOfDay(new Date());
+  const expiry = startOfDay(new Date(activeUntil));
+  const diff = differenceInDays(expiry, today);
+
+  let status: ExpiryStatus = "ok";
+  if (diff < 0) status = "expired";
+  else if (diff <= 3) status = "expiring";
+
+  return { diff, status };
+}
 
 export function SubscriptionsTable({ subscriptions, isLoading }: SubscriptionsTableProps) {
   const [editSub, setEditSub] = useState<Subscription | null>(null);
   const [deleteSub, setDeleteSub] = useState<Subscription | null>(null);
+  const { data: session } = useSession();
+  const currency = session?.user?.currency || "EUR";
   const t = useTranslations("subscriptions");
   const tc = useTranslations("common");
   const router = useRouter();
@@ -50,6 +64,7 @@ export function SubscriptionsTable({ subscriptions, isLoading }: SubscriptionsTa
               <TableHead className="text-center">{t("seats")}</TableHead>
               <TableHead className="text-center">{tc("status")}</TableHead>
               <TableHead>{t("nextRenewal")}</TableHead>
+              <TableHead>{t("cost")}</TableHead>
               <TableHead className="text-right">{tc("actions")}</TableHead>
             </TableRow>
           </TableHeader>
@@ -61,6 +76,7 @@ export function SubscriptionsTable({ subscriptions, isLoading }: SubscriptionsTa
                 <TableCell className="text-center"><Skeleton className="h-5 w-12 mx-auto rounded-full" /></TableCell>
                 <TableCell className="text-center"><Skeleton className="h-5 w-14 mx-auto rounded-full" /></TableCell>
                 <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                <TableCell><Skeleton className="h-4 w-16" /></TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-1">
                     <Skeleton className="size-8 rounded-md" />
@@ -99,6 +115,7 @@ export function SubscriptionsTable({ subscriptions, isLoading }: SubscriptionsTa
               <TableHead className="text-center">{t("seats")}</TableHead>
               <TableHead className="text-center">{tc("status")}</TableHead>
               <TableHead>{t("nextRenewal")}</TableHead>
+              <TableHead>{t("cost")}</TableHead>
               <TableHead className="text-right">{tc("actions")}</TableHead>
             </TableRow>
           </TableHeader>
@@ -135,12 +152,50 @@ export function SubscriptionsTable({ subscriptions, isLoading }: SubscriptionsTa
                     </TooltipProvider>
                   </TableCell>
                   <TableCell className="text-center">
-                    <Badge variant={statusVariant[sub.status] ?? "secondary"}>
-                      {tc(sub.status as "active" | "paused")}
-                    </Badge>
+                    <div className="flex flex-col items-center gap-1.5">
+                      {(() => {
+                        const { diff, status } = getExpiryInfo(sub.activeUntil);
+                        
+                        // Stress coloring only for manual payments
+                        let variant: "default" | "secondary" | "destructive" | "outline" | "warning" | "success" = "outline";
+                        if (!sub.isAutopayable) {
+                          if (status === "expired") variant = "destructive";
+                          else if (status === "expiring") variant = "warning";
+                          else variant = "success";
+                        }
+
+                        const label = diff < 0 ? tc("daysOverdue", { count: Math.abs(diff) }) : tc("daysLeft", { count: diff });
+                        
+                        return (
+                          <>
+                            <Badge variant={variant}>
+                              {label}
+                            </Badge>
+                            {sub.isAutopayable && (
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <div className="flex items-center gap-1 text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
+                                      <RefreshCw className="size-2.5 text-primary animate-spin-slow" />
+                                      {t("isAutopayable")}
+                                    </div>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    {t("autopayableTooltip")}
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            )}
+                          </>
+                        );
+                      })()}
+                    </div>
                   </TableCell>
-                  <TableCell className="text-muted-foreground">
+                  <TableCell className="text-muted-foreground whitespace-nowrap">
                     {formatDate(sub.activeUntil)}
+                  </TableCell>
+                  <TableCell className="font-medium whitespace-nowrap">
+                    {formatCurrency(sub.plan.cost, currency)}
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">

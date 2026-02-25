@@ -10,6 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { addMonths, subMonths, startOfDay, format } from "date-fns";
 import { AlertTriangle } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { CURRENCIES, formatCurrency } from "@/lib/currency";
 
 interface RenewClientDialogProps {
   seat: {
@@ -87,6 +89,10 @@ export function RenewClientDialog({ seat, open, onOpenChange }: RenewClientDialo
     onOpenChange(isOpen);
   };
 
+  const { data: session } = useSession();
+  const currency = (session?.user as { currency?: string })?.currency || "EUR";
+  const symbol = (CURRENCIES[currency as keyof typeof CURRENCIES] || CURRENCIES.EUR).symbol;
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-md">
@@ -98,7 +104,7 @@ export function RenewClientDialog({ seat, open, onOpenChange }: RenewClientDialo
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="amountPaid">Amount Received (€)</Label>
+            <Label htmlFor="amountPaid">Amount Received ({symbol})</Label>
             <Input
               id="amountPaid"
               type="number"
@@ -108,7 +114,7 @@ export function RenewClientDialog({ seat, open, onOpenChange }: RenewClientDialo
             />
             {months > 1 && (
               <p className="text-xs text-muted-foreground">
-                Auto-calculated: {price.toFixed(2)} × {months} months
+                Auto-calculated: {formatCurrency(price * months, currency)}
               </p>
             )}
           </div>

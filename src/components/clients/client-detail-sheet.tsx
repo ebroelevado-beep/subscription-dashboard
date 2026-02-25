@@ -24,11 +24,11 @@ import {
 } from "lucide-react";
 import { differenceInDays, startOfDay, addMonths, subMonths, format } from "date-fns";
 import { toast } from "sonner";
+import { useSession } from "next-auth/react";
+import { CURRENCIES, formatCurrency, type Currency } from "@/lib/currency";
 import { useTranslations } from "next-intl";
 
-function formatCurrency(amount: number) {
-  return new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(amount);
-}
+
 
 type ExpiryStatus = "ok" | "expiring" | "expired";
 
@@ -67,6 +67,8 @@ export function ClientDetailSheet({ clientId, open, onOpenChange }: ClientDetail
   const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
   const [lang, setLang] = useState<Lang>("es");
   const [bulkRenewOpen, setBulkRenewOpen] = useState(false);
+  const { data: session } = useSession();
+  const currency = (session?.user as { currency?: string })?.currency || "EUR";
 
   // Renew dialog state
   const [renewSeat, setRenewSeat] = useState<{
@@ -322,7 +324,7 @@ export function ClientDetailSheet({ clientId, open, onOpenChange }: ClientDetail
 
                         {/* Price & Expiry */}
                         <div className="flex items-center justify-between text-sm">
-                          <span className="font-mono">{formatCurrency(Number(cs.customPrice))}</span>
+                          <span className="font-mono">{formatCurrency(Number(cs.customPrice), currency)}</span>
                           <div className="flex items-center gap-1.5">
                             <span className="text-xs text-muted-foreground">
                               {isPaused
@@ -365,7 +367,7 @@ export function ClientDetailSheet({ clientId, open, onOpenChange }: ClientDetail
                             {cs.renewalLogs.slice(0, 3).map((r) => (
                               <div key={r.id} className="flex items-center justify-between text-xs text-muted-foreground">
                                 <span>{format(new Date(r.paidOn), "dd/MM/yyyy")}</span>
-                                <span className="font-mono">{formatCurrency(Number(r.amountPaid))}</span>
+                                <span className="font-mono">{formatCurrency(Number(r.amountPaid), currency)}</span>
                               </div>
                             ))}
                           </div>
@@ -389,8 +391,10 @@ export function ClientDetailSheet({ clientId, open, onOpenChange }: ClientDetail
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleRenew} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="renew-amount">{tc("amountPaid")} (€)</Label>
+            <div className="space-y-1.5 flex-1">
+              <Label htmlFor="renew-amount">
+                {tc("amountPaid")} ({CURRENCIES[currency as Currency || "EUR"].symbol})
+              </Label>
               <Input
                 id="renew-amount"
                 type="number"

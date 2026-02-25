@@ -211,8 +211,9 @@
     "editDescription": "更新此计划的详情。",
     "selectPlatform": "选择平台…",
     "namePlaceholder": "例如 高级版、家庭版、基础版…",
-    "myCost": "我的成本 (€)",
-    "maxSeats": "最大席位数",
+    "cost": "方案成本",
+    "myCost": "我的成本",
+    "maxSeats": "最高名额",
     "maxSeatsTooltip": "留空则为无限席位",
     "activeToggle": "启用",
     "inactivePlansHint": "停用的计划不会出现在新订阅中",
@@ -277,7 +278,10 @@
     "keepSeatAction": "保留席位",
     "cancelling": "正在取消…",
     "noActiveSeats": "无活跃席位",
-    "renewSeat": "续约席位"
+    "renewSeat": "续约席位",
+    "isAutopayable": "自动续约",
+    "autopayableTooltip": "如果开启，订阅将在到期时自动续约",
+    "autopayableDescription": "如果该服务从您的卡或账户自动扣款，请开启此选项。"
   },
   "clients": {
     "title": "客户",
@@ -355,6 +359,7 @@
     "filterByType": "按类型筛选：",
     "platformRenewal": "平台续约",
     "clientRenewal": "客户续约",
+    "platformPayment": "平台支付",
     "to": "至"
   },
   "analytics": {
@@ -434,6 +439,10 @@
     "language": "语言",
     "appearanceDescription": "自定义应用程序的外观。",
     "themeLabel": "外观模式",
+    "currency": "首选货币",
+    "currencyDescription": "选择价格显示符号（仅视觉效果）。",
+    "currencyUpdated": "货币已更新",
+    "updating": "正在更新...",
     "assistant": "AI 助手",
     "assistantDescription": "管理您的 AI 助手和外部集成。",
     "copilotTitle": "GitHub Copilot",

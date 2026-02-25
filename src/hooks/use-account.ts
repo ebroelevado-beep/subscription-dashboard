@@ -17,6 +17,18 @@ export function useUpdateProfile() {
   });
 }
 
+// ── Update Settings (Currency etc.) ──
+export function useUpdateSettings() {
+  return useMutation({
+    mutationFn: (data: { currency: string }) =>
+      fetchApi("/api/user/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      }),
+  });
+}
+
 // ── Export Data ──
 export function useExportData() {
   return useMutation({

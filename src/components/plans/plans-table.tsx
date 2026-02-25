@@ -18,6 +18,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Pencil, Trash2, CreditCard } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useTranslations } from "next-intl";
+import { useSession } from "next-auth/react";
+import { formatCurrency } from "@/lib/currency";
 
 interface PlansTableProps {
   plans: Plan[];
@@ -27,8 +29,10 @@ interface PlansTableProps {
 export function PlansTable({ plans, isLoading }: PlansTableProps) {
   const [editPlan, setEditPlan] = useState<Plan | null>(null);
   const [deletePlan, setDeletePlan] = useState<Plan | null>(null);
-  const t = useTranslations("plans");
-  const tc = useTranslations("common");
+   const t = useTranslations("plans");
+   const tc = useTranslations("common");
+   const { data: session } = useSession();
+   const currency = (session?.user as any)?.currency || "EUR";
 
   if (isLoading) {
     return (
@@ -78,11 +82,7 @@ export function PlansTable({ plans, isLoading }: PlansTableProps) {
     );
   }
 
-  const formatCurrency = (val: number) =>
-    new Intl.NumberFormat("es-ES", {
-      style: "currency",
-      currency: "EUR",
-    }).format(val);
+   const formatCurrencyVal = (val: number) => formatCurrency(val, currency);
 
   return (
     <>
@@ -106,7 +106,7 @@ export function PlansTable({ plans, isLoading }: PlansTableProps) {
                   {plan.platform.name}
                 </TableCell>
                 <TableCell className="text-right font-mono tabular-nums">
-                  {formatCurrency(Number(plan.cost))}
+                  {formatCurrencyVal(Number(plan.cost))}
                 </TableCell>
                 <TableCell className="text-center">
                   {plan.maxSeats ?? tc("unlimited")}

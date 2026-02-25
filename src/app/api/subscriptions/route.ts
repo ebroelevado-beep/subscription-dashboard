@@ -52,15 +52,16 @@ export async function POST(request: NextRequest) {
 
     const subscription = await prisma.subscription.create({
       data: {
-        userId,
-        planId: data.planId,
         label: data.label,
         startDate: data.startDate,
         activeUntil,
         status: data.status,
         masterUsername: data.masterUsername,
         masterPassword: data.masterPassword,
-        ownerId: data.ownerId,
+        isAutopayable: data.isAutopayable,
+        user: { connect: { id: userId } },
+        plan: { connect: { id: data.planId } },
+        ...(data.ownerId && { owner: { connect: { id: data.ownerId } } }),
       },
     });
     return success(subscription, 201);

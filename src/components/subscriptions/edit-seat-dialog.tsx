@@ -11,6 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
 
 import { useTranslations } from "next-intl";
+import { useSession } from "next-auth/react";
+import { CURRENCIES, type Currency } from "@/lib/currency";
 
 interface EditSeatDialogProps {
   seat?: {
@@ -31,6 +33,7 @@ export function EditSeatDialog({ seat, open, onOpenChange }: EditSeatDialogProps
   const t = useTranslations("subscriptions");
   const tc = useTranslations("common");
   const updateSeat = useUpdateSeat();
+  const { data: session } = useSession();
   const [customPrice, setCustomPrice] = useState(seat?.customPrice.toString() ?? "");
   const [startDate, setStartDate] = useState(seat?.joinedAt.split("T")[0] ?? "");
   const [activeUntil, setActiveUntil] = useState(seat?.activeUntil.split("T")[0] ?? "");
@@ -63,8 +66,10 @@ export function EditSeatDialog({ seat, open, onOpenChange }: EditSeatDialogProps
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
-          <div className="space-y-2 col-span-2">
-            <Label htmlFor="edit-seat-price">Price (€/month)</Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="edit-seat-price">
+              Price ({CURRENCIES[(session?.user as { currency?: string })?.currency as Currency || "EUR"].symbol}/month)
+            </Label>
             <Input
               id="edit-seat-price"
               type="number"

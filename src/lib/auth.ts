@@ -70,13 +70,14 @@ const nextAuth = NextAuth({
       if (token.id && (!token.hasPassword || trigger === "update")) {
         const dbUser = await prisma.user.findUnique({
           where: { id: token.id as string },
-          select: { name: true, image: true, password: true, accounts: { select: { provider: true } } },
+          select: { name: true, image: true, password: true, accounts: { select: { provider: true } }, currency: true },
         });
         if (dbUser) {
           token.name = dbUser.name;
           token.image = dbUser.image;
           token.hasPassword = !!dbUser.password;
           token.isOAuth = dbUser.accounts.some(acc => acc.provider !== "credentials");
+          token.currency = dbUser.currency || "EUR";
         }
       }
       return token;

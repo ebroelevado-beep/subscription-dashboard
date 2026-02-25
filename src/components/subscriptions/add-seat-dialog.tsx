@@ -11,6 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Search, UserPlus, Eye, EyeOff } from "lucide-react";
 import { addMonths, format } from "date-fns";
+import { useSession } from "next-auth/react";
+import { CURRENCIES } from "@/lib/currency";
 
 interface AddSeatDialogProps {
   subscriptionId: string;
@@ -84,6 +86,10 @@ export function AddSeatDialog({ subscriptionId, open, onOpenChange }: AddSeatDia
     if (!isOpen) resetForm();
     onOpenChange(isOpen);
   };
+
+  const { data: session } = useSession();
+  const currency = (session?.user as { currency?: string })?.currency || "EUR";
+  const symbol = (CURRENCIES[currency as keyof typeof CURRENCIES] || CURRENCIES.EUR).symbol;
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -169,7 +175,7 @@ export function AddSeatDialog({ subscriptionId, open, onOpenChange }: AddSeatDia
           {/* Price + Duration */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="seat-price">Price (€/month)</Label>
+              <Label htmlFor="seat-price">Price ({symbol}/month)</Label>
               <Input
                 id="seat-price"
                 type="number"

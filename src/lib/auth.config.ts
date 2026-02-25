@@ -12,6 +12,7 @@ declare module "next-auth" {
       image?: string | null;
       hasPassword?: boolean;
       isOAuth?: boolean;
+      currency?: string;
     };
   }
 }
@@ -21,6 +22,7 @@ declare module "next-auth/jwt" {
     id?: string;
     hasPassword?: boolean;
     isOAuth?: boolean;
+    currency?: string;
   }
 }
 
@@ -95,6 +97,7 @@ export const authConfig = {
         session.user.name = (token.name as string) ?? null;
         session.user.hasPassword = token.hasPassword as boolean;
         session.user.isOAuth = token.isOAuth as boolean;
+        session.user.currency = (token.currency as string) ?? "EUR";
       }
       return session;
     },

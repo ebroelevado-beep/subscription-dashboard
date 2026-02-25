@@ -14,10 +14,9 @@ import { RefreshCw, CheckSquare, Square } from "lucide-react";
 import { addMonths, startOfDay, format, differenceInDays } from "date-fns";
 import { useRenewBulkClients } from "@/hooks/use-renewals";
 import { useTranslations } from "next-intl";
+import { useSession } from "next-auth/react";
+import { formatCurrency } from "@/lib/currency";
 
-function formatCurrency(amount: number) {
-  return new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(amount);
-}
 
 
 export interface BulkRenewSeat {
@@ -45,6 +44,8 @@ export function BulkRenewDialog({
 }: BulkRenewDialogProps) {
   const t = useTranslations("clients");
   const tc = useTranslations("common");
+  const { data: session } = useSession();
+  const currency = (session?.user as { currency?: string })?.currency || "EUR";
   const bulkMut = useRenewBulkClients();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [months, setMonths] = useState(1);
@@ -197,7 +198,7 @@ export function BulkRenewDialog({
                     </span>
                   </div>
                   <span className="text-sm font-mono font-semibold">
-                    {formatCurrency(seat.customPrice * months)}
+                    {formatCurrency(seat.customPrice * months, currency)}
                   </span>
                 </div>
 
@@ -222,7 +223,7 @@ export function BulkRenewDialog({
                 {/* Row 3: price per month hint */}
                 {months > 1 && (
                   <p className="text-[10px] text-muted-foreground pl-6">
-                    {formatCurrency(seat.customPrice)}{t("perMonth")} × {months}
+                    {formatCurrency(seat.customPrice, currency)}{t("perMonth")} × {months}
                   </p>
                 )}
               </button>
@@ -238,7 +239,7 @@ export function BulkRenewDialog({
             {tc("totalCount", { count: selectedCount })}
           </span>
           <span className="text-lg font-bold font-mono">
-            {formatCurrency(selectedTotal)}
+            {formatCurrency(selectedTotal, currency)}
           </span>
         </div>
 

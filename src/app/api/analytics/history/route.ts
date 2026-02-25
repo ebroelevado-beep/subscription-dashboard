@@ -141,8 +141,8 @@ export async function GET(request: NextRequest) {
         plan: r.subscription.plan.name,
         subscriptionLabel: r.subscription.label,
         subscriptionId: r.subscription.id,
-        clientName: null,
-        notes: null,
+        clientName: r.subscription.label,
+        notes: "platform_payment",
       }));
       costCount = count;
     }

@@ -1,0 +1,56 @@
+En la rama main
+Tu rama está actualizada con 'origin/main'.
+
+Cambios no rastreados para el commit:
+  (usa "git add <archivo>..." para actualizar lo que será confirmado)
+  (usa "git restore <archivo>..." para descartar los cambios en el directorio de trabajo)
+	modificados:     messages/en.json
+	modificados:     messages/es.json
+	modificados:     messages/zh.json
+	modificados:     prisma/schema.prisma
+	modificados:     src/app/[locale]/dashboard/analytics/page.tsx
+	modificados:     src/app/[locale]/dashboard/clients/[id]/page.tsx
+	modificados:     src/app/[locale]/dashboard/history/page.tsx
+	modificados:     src/app/[locale]/dashboard/page.tsx
+	modificados:     src/app/[locale]/dashboard/settings/page.tsx
+	modificados:     src/app/[locale]/dashboard/subscriptions/[id]/page.tsx
+	modificados:     src/app/api/analytics/history/route.ts
+	modificados:     src/app/api/subscriptions/[id]/route.ts
+	modificados:     src/app/api/subscriptions/route.ts
+	modificados:     src/components/analytics/revenue-chart.tsx
+	modificados:     src/components/clients/assign-subscription-dialog.tsx
+	modificados:     src/components/clients/bulk-renew-dialog.tsx
+	modificados:     src/components/clients/client-detail-sheet.tsx
+	modificados:     src/components/dashboard-shell.tsx
+	modificados:     src/components/plans/plan-form-dialog.tsx
+	modificados:     src/components/plans/plans-table.tsx
+	modificados:     src/components/subscriptions/add-seat-dialog.tsx
+	modificados:     src/components/subscriptions/edit-seat-dialog.tsx
+	modificados:     src/components/subscriptions/renew-client-dialog.tsx
+	modificados:     src/components/subscriptions/renew-platform-dialog.tsx
+	modificados:     src/components/subscriptions/seat-card.tsx
+	modificados:     src/components/subscriptions/subscription-form-dialog.tsx
+	modificados:     src/components/subscriptions/subscriptions-table.tsx
+	modificados:     src/components/ui/badge.tsx
+	modificados:     src/hooks/use-account.ts
+	modificados:     src/hooks/use-subscriptions.ts
+	modificados:     src/lib/auth.config.ts
+	modificados:     src/lib/auth.ts
+	modificados:     src/lib/validations/crud.ts
+
+Archivos sin seguimiento:
+  (usa "git add <archivo>..." para incluirlo a lo que será confirmado)
+	app_dev.log
+	prisma_push.log
+	src/app/api/cron/
+	src/app/api/user/
+	src/components/currency-selector.tsx
+	src/lib/currency.ts
+	status_output.txt
+	test-copilot.ts
+	test-db.ts
+	test-pg.js
+	test-prisma.js
+	test-prisma.ts
+
+sin cambios agregados al commit (usa "git add" y/o "git commit -a")

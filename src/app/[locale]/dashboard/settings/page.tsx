@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { CurrencySelector } from "@/components/currency-selector";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -292,6 +293,16 @@ function AppearanceTab() {
             </p>
           </div>
           <LanguageSwitcher />
+        </div>
+
+        <div className="flex items-center justify-between rounded-lg border p-4">
+          <div className="space-y-0.5">
+            <h4 className="text-sm font-medium">{t("currency")}</h4>
+            <p className="text-xs text-muted-foreground">
+              {t("currencyDescription")}
+            </p>
+          </div>
+          <CurrencySelector />
         </div>
       </CardContent>
     </Card>

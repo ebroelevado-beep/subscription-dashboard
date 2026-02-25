@@ -95,7 +95,8 @@
     "recording": "Grabando…",
     "recordPayment": "Registrar Pago",
     "dashboardShortcut": "Panel",
-    "newChat": "Nuevo Chat"
+    "newChat": "Nuevo Chat",
+    "autopayable": "Auto-pagable"
   },
   "nav": {
     "dashboard": "Panel",
@@ -211,7 +212,7 @@
     "editDescription": "Actualiza los detalles de este plan.",
     "selectPlatform": "Selecciona una plataforma…",
     "namePlaceholder": "ej. Premium, Familiar, Básico…",
-    "myCost": "Mi Coste (€)",
+    "myCost": "Mi Coste",
     "maxSeats": "Máx. Asientos",
     "maxSeatsTooltip": "Deja vacío para asientos ilimitados",
     "activeToggle": "Activo",
@@ -277,7 +278,10 @@
     "keepSeatAction": "Mantener asiento",
     "cancelling": "Cancelando…",
     "noActiveSeats": "No hay asientos activos",
-    "renewSeat": "Renovar Asiento"
+    "renewSeat": "Renovar Asiento",
+    "isAutopayable": "Renovación automática",
+    "autopayableTooltip": "Si está activo, la suscripción se renovará automáticamente al llegar al vencimiento",
+    "autopayableDescription": "Activa esta opción si el servicio se cobra automáticamente de tu tarjeta o cuenta."
   },
   "clients": {
     "title": "Clientes",
@@ -355,6 +359,7 @@
     "filterByType": "Filtrar por tipo:",
     "platformRenewal": "Renovación de Plataforma",
     "clientRenewal": "Renovación de Cliente",
+    "platformPayment": "Pago de plataforma",
     "to": "a"
   },
   "analytics": {
@@ -434,6 +439,10 @@
     "language": "Idioma",
     "appearanceDescription": "Personaliza cómo se ve la aplicación para ti.",
     "themeLabel": "Modo de Apariencia",
+    "currency": "Divisa preferida",
+    "currencyDescription": "Elige el símbolo para los precios (solo visual).",
+    "currencyUpdated": "Divisa actualizada",
+    "updating": "Actualizando...",
     "assistant": "Asistente AI",
     "assistantDescription": "Gestiona tu Asistente AI e integraciones externas.",
     "copilotTitle": "GitHub Copilot",

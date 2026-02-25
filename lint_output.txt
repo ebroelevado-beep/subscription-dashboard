@@ -15,21 +15,63 @@
   75:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
 
 /home/angel/Documentos/dashboard/src/app/[locale]/dashboard/history/page.tsx
-  134:17  warning  Compilation Skipped: Use of incompatible library
+  150:17  warning  Compilation Skipped: Use of incompatible library
 
 This API returns functions which cannot be memoized without leading to stale UI. To prevent this, by default React Compiler will skip memoizing this component/hook. However, you may see issues if values from this API are passed to other components/hooks that are memoized.
 
-/home/angel/Documentos/dashboard/src/app/[locale]/dashboard/history/page.tsx:134:17
-  132 |   const { data: plans } = usePlans();
-  133 |
-> 134 |   const table = useReactTable({
+/home/angel/Documentos/dashboard/src/app/[locale]/dashboard/history/page.tsx:150:17
+  148 |   const { data: plans } = usePlans();
+  149 |
+> 150 |   const table = useReactTable({
       |                 ^^^^^^^^^^^^^ TanStack Table's `useReactTable()` API returns functions that cannot be memoized safely
-  135 |     data: data?.rows ?? [],
-  136 |     columns,
-  137 |     getCoreRowModel: getCoreRowModel(),  react-hooks/incompatible-library
+  151 |     data: data?.rows ?? [],
+  152 |     columns,
+  153 |     getCoreRowModel: getCoreRowModel(),  react-hooks/incompatible-library
 
-/home/angel/Documentos/dashboard/src/components/dashboard-shell.tsx
-  327:5  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+/home/angel/Documentos/dashboard/src/app/api/copilot/token/route.ts
+  49:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/angel/Documentos/dashboard/src/app/api/cron/renew-subscriptions/route.ts
+  63:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/angel/Documentos/dashboard/src/app/api/user/settings/route.ts
+  18:40  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  27:28  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/angel/Documentos/dashboard/src/components/analytics/revenue-chart.tsx
+  49:38  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/angel/Documentos/dashboard/src/components/currency-selector.tsx
+  34:46  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/angel/Documentos/dashboard/src/components/plans/plans-table.tsx
+  35:39  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/angel/Documentos/dashboard/src/components/subscriptions/add-seat-dialog.tsx
+  91:38  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/angel/Documentos/dashboard/src/components/subscriptions/edit-seat-dialog.tsx
+  14:10  warning  'toast' is defined but never used         @typescript-eslint/no-unused-vars
+  72:52  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/angel/Documentos/dashboard/src/components/subscriptions/subscription-form-dialog.tsx
+    7:10  warning  'toast' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     @typescript-eslint/no-unused-vars
+   79:30  warning  Compilation Skipped: Use of incompatible library
+
+This API returns functions which cannot be memoized without leading to stale UI. To prevent this, by default React Compiler will skip memoizing this component/hook. However, you may see issues if values from this API are passed to other components/hooks that are memoized.
+
+/home/angel/Documentos/dashboard/src/components/subscriptions/subscription-form-dialog.tsx:79:30
+  77 |   });
+  78 |
+> 79 |   const selectedPlatformId = watch("platformId");
+     |                              ^^^^^ React Hook Form's `useForm()` API returns a `watch()` function which cannot be memoized safely.
+  80 |   const selectedStartDate = watch("startDate");
+  81 |   const selectedDuration = watch("durationMonths");
+  82 |  react-hooks/incompatible-library
+  263:87  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              @typescript-eslint/no-explicit-any
+
+/home/angel/Documentos/dashboard/src/components/theme-toggle.tsx
+  13:5  error  Error: Calling setState synchronously within an effect can trigger cascading renders
 
 Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
 * Update external systems with the latest state from React.
@@ -37,29 +79,28 @@ Effects are intended to synchronize state between React and external systems suc
 
 Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
 
-/home/angel/Documentos/dashboard/src/components/dashboard-shell.tsx:327:5
-  325 |   // Initialize theme on mount
-  326 |   useEffect(() => {
-> 327 |     setMounted(true);
-      |     ^^^^^^^^^^ Avoid calling setState() directly within an effect
-  328 |     const stored = localStorage.getItem("theme");
-  329 |     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-  330 |     const initialDark = stored === "dark" || (!stored && prefersDark);  react-hooks/set-state-in-effect
+/home/angel/Documentos/dashboard/src/components/theme-toggle.tsx:13:5
+  11 |   // Initialize theme on mount
+  12 |   useEffect(() => {
+> 13 |     setMounted(true);
+     |     ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  14 |     const stored = localStorage.getItem("theme");
+  15 |     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  16 |     const initialDark = stored === "dark" || (!stored && prefersDark);  react-hooks/set-state-in-effect
 
-/home/angel/Documentos/dashboard/src/components/subscriptions/subscription-form-dialog.tsx
-  71:30  warning  Compilation Skipped: Use of incompatible library
+/home/angel/Documentos/dashboard/src/lib/copilot-tools.ts
+  386:35  warning  '_' is defined but never used  @typescript-eslint/no-unused-vars
 
-This API returns functions which cannot be memoized without leading to stale UI. To prevent this, by default React Compiler will skip memoizing this component/hook. However, you may see issues if values from this API are passed to other components/hooks that are memoized.
+/home/angel/Documentos/dashboard/test-copilot.ts
+  1:10  warning  'createOpenAI' is defined but never used  @typescript-eslint/no-unused-vars
+  2:10  warning  'generateText' is defined but never used  @typescript-eslint/no-unused-vars
 
-/home/angel/Documentos/dashboard/src/components/subscriptions/subscription-form-dialog.tsx:71:30
-  69 |   });
-  70 |
-> 71 |   const selectedPlatformId = watch("platformId");
-     |                              ^^^^^ React Hook Form's `useForm()` API returns a `watch()` function which cannot be memoized safely.
-  72 |   const selectedStartDate = watch("startDate");
-  73 |   const selectedDuration = watch("durationMonths");
-  74 |  react-hooks/incompatible-library
+/home/angel/Documentos/dashboard/test-pg.js
+  1:20  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
 
-✖ 8 problems (5 errors, 3 warnings)
+/home/angel/Documentos/dashboard/test-prisma.js
+  1:26  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+✖ 25 problems (17 errors, 8 warnings)
 
  ELIFECYCLE  Command failed with exit code 1.

@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useSession } from "next-auth/react";
+import { CURRENCIES, type Currency } from "@/lib/currency";
 import { useRenewPlatform } from "@/hooks/use-renewals";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
@@ -32,6 +34,7 @@ export function RenewPlatformDialog({
   const [notes, setNotes] = useState("");
   const t = useTranslations("subscriptions");
   const tc = useTranslations("common");
+  const { data: session } = useSession();
 
   const currentExpiry = subscription
     ? new Date(subscription.activeUntil)
@@ -80,8 +83,10 @@ export function RenewPlatformDialog({
             })}
           </p>
 
-          <div className="space-y-2">
-            <Label htmlFor="platformAmount">{tc("amountPaid")} (€)</Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="platformAmount">
+              {tc("amountPaid")} ({CURRENCIES[(session?.user as { currency?: string })?.currency as Currency || "EUR"].symbol})
+            </Label>
             <Input
               id="platformAmount"
               type="number"

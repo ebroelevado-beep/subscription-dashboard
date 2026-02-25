@@ -25,18 +25,18 @@ import {
   TrendingUp,
   TrendingDown,
   Users,
-  DollarSign,
   Calendar,
   PauseCircle,
   PlayCircle,
+  Banknote,
 } from "lucide-react";
+import { formatCurrency } from "@/lib/currency";
+import { useSession } from "next-auth/react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 
-function formatCurrency(amount: number) {
-  return new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(amount);
-}
+
 
 async function fetchApi<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, init);
@@ -52,11 +52,14 @@ export default function SubscriptionDetailPage({
 }) {
   const t = useTranslations("subscriptions");
   const tc = useTranslations("common");
+  const th = useTranslations("history");
   const { id } = use(params);
   const { data: sub, isLoading, isError } = useSubscription(id);
   const [addSeatOpen, setAddSeatOpen] = useState(false);
   const [editSeat, setEditSeat] = useState<typeof sub extends undefined ? never : NonNullable<typeof sub>["clientSubscriptions"][number] | null>(null);
   const [renewClientSeat, setRenewClientSeat] = useState<typeof sub extends undefined ? never : NonNullable<typeof sub>["clientSubscriptions"][number] | null>(null);
+  const { data: session } = useSession();
+  const currency = (session?.user as { currency?: string })?.currency || "EUR";
   const [renewPlatformOpen, setRenewPlatformOpen] = useState(false);
 
   // Lifecycle dialogs
@@ -187,10 +190,10 @@ export default function SubscriptionDetailPage({
             <CardTitle className="text-sm font-medium text-muted-foreground">
               {t("actualRevenue")}
             </CardTitle>
-            <DollarSign className="size-4 text-muted-foreground" />
+            <Banknote className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">{formatCurrency(actualRevenue)}</p>
+            <p className="text-2xl font-bold">{formatCurrency(actualRevenue, currency)}</p>
             <p className="text-xs text-muted-foreground">
               {tc("activeSeats", { count: activeSeats.length })}
             </p>
@@ -206,10 +209,10 @@ export default function SubscriptionDetailPage({
             <TrendingUp className="size-4 text-amber-500" />
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">{formatCurrency(potentialRevenue)}</p>
+            <p className="text-2xl font-bold">{formatCurrency(potentialRevenue, currency)}</p>
             {revenueDelta > 0 && (
               <p className="text-xs text-amber-600 dark:text-amber-400">
-                {t("revenueDelta", { amount: formatCurrency(revenueDelta) })}
+                {t("revenueDelta", { amount: formatCurrency(revenueDelta, currency) })}
               </p>
             )}
           </CardContent>
@@ -224,7 +227,7 @@ export default function SubscriptionDetailPage({
             <Calendar className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">{formatCurrency(cost)}</p>
+            <p className="text-2xl font-bold">{formatCurrency(cost, currency)}</p>
             <p className="text-xs text-muted-foreground">
               {t("expires")} {format(new Date(sub.activeUntil), "dd/MM/yyyy")}
             </p>
@@ -251,7 +254,7 @@ export default function SubscriptionDetailPage({
                   : "text-red-600 dark:text-red-400"
               }`}
             >
-              {formatCurrency(profit)}
+              {formatCurrency(profit, currency)}
             </p>
             <p className="text-xs text-muted-foreground">
               {profitMargin >= 0
@@ -350,7 +353,7 @@ export default function SubscriptionDetailPage({
       {sub.platformRenewals && sub.platformRenewals.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>{tc("history", { ns: "nav" })}</CardTitle>
+            <CardTitle>{th("title")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
@@ -368,7 +371,7 @@ export default function SubscriptionDetailPage({
                     )}
                   </div>
                   <span className="font-mono font-medium">
-                    {formatCurrency(Number(r.amountPaid))}
+                    {formatCurrency(Number(r.amountPaid), currency)}
                   </span>
                 </div>
               ))}

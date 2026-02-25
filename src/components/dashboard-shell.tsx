@@ -42,6 +42,7 @@ import { usePrefetch } from "@/hooks/use-prefetch";
 import { Logo } from "@/components/logo";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { CurrencySelector } from "@/components/currency-selector";
 
 // ── Sidebar dimensions ──
 const SIDEBAR_EXPANDED = 260;
@@ -450,6 +451,10 @@ export function DashboardShell({
                 <LanguageSwitcher />
               </div>
               <div className="flex items-center justify-between p-4 pt-0">
+                <span className="text-sm font-medium">{t("currency")}</span>
+                <CurrencySelector variant="header" />
+              </div>
+              <div className="flex items-center justify-between p-4 pt-0">
                 <span className="text-sm font-medium">{t("themeLabel")}</span>
                 <ThemeToggle />
               </div>
@@ -459,6 +464,7 @@ export function DashboardShell({
           <div className="flex-1" />
 
           <CommandPalette />
+          <CurrencySelector variant="header" />
           <LanguageSwitcher />
           <ThemeToggle />
         </header>

@@ -15,6 +15,8 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+import { useSession } from "next-auth/react";
+import { formatCurrency } from "@/lib/currency";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -72,18 +74,11 @@ function useHistoryColumns() {
     }),
     columnHelper.accessor("amount", {
       header: () => <span className="text-right block">{t("amount")}</span>,
-      cell: (info) => (
-        <span
-          className={cn(
-            "block text-right font-semibold tabular-nums",
-            info.row.original.type === "income"
-              ? "text-emerald-600 dark:text-emerald-400"
-              : "text-red-600 dark:text-red-400"
-          )}
-        >
-          {info.row.original.type === "income" ? "+" : "−"}€
-          {info.getValue().toFixed(2)}
-        </span>
+      cell: ({ row }) => (
+        <AmountCell 
+          amount={Number(row.getValue("amount"))} 
+          type={row.original.type} 
+        />
       ),
     }),
     columnHelper.accessor("platform", { header: t("platform") }),
@@ -106,14 +101,35 @@ function useHistoryColumns() {
       cell: (info) => {
         const val = info.getValue();
         if (!val) return <span className="text-muted-foreground">—</span>;
+        const displayVal = val === "platform_payment" ? t("platformPayment") : val;
         return (
-          <span className="max-w-[200px] truncate block text-xs" title={val}>
-            {val}
+          <span className="max-w-[200px] truncate block text-xs" title={displayVal}>
+            {displayVal}
           </span>
         );
       },
     }),
   ];
+}
+
+function AmountCell({ amount, type }: { amount: number; type: string }) {
+  const { data: session } = useSession();
+  const currency = (session?.user as { currency?: string })?.currency || "EUR";
+  const isIncome = type === "income";
+  
+  return (
+    <span
+      className={cn(
+        "block text-right font-semibold tabular-nums",
+        isIncome
+          ? "text-emerald-600 dark:text-emerald-400"
+          : "text-red-600 dark:text-red-400"
+      )}
+    >
+      {isIncome ? "+" : "−"}
+      {formatCurrency(amount, currency)}
+    </span>
+  );
 }
 
 export default function HistoryPage() {
@@ -158,7 +174,7 @@ export default function HistoryPage() {
         Client: r.clientName ?? "",
         PeriodStart: r.periodStart,
         PeriodEnd: r.periodEnd,
-        Notes: r.notes ?? "",
+        Notes: r.notes === "platform_payment" ? t("platformPayment") : (r.notes ?? ""),
       })),
       `pearfect-ledger-${new Date().toISOString().split("T")[0]}`
     );

@@ -20,6 +20,7 @@ model User {
   copilotToken  String?   @db.Text
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
+  currency      String    @default("EUR") @db.VarChar(10)
 
   accounts      Account[]
   sessions      Session[]
@@ -138,6 +139,7 @@ model Subscription {
   startDate   DateTime           @map("start_date") @db.Date
   activeUntil DateTime           @map("active_until") @db.Date
   status      SubscriptionStatus @default(active)
+  isAutopayable Boolean           @default(true) @map("is_autopayable")
   createdAt   DateTime           @default(now()) @map("created_at")
 
   user                User                 @relation(fields: [userId], references: [id], onDelete: Cascade)

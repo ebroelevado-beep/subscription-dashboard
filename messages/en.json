@@ -211,7 +211,8 @@
     "editDescription": "Update this plan's details.",
     "selectPlatform": "Select a platform…",
     "namePlaceholder": "e.g. Premium, Family, Basic…",
-    "myCost": "My Cost (€)",
+    "cost": "Plan Cost",
+    "myCost": "My Cost",
     "maxSeats": "Max Seats",
     "maxSeatsTooltip": "Leave empty for unlimited seats",
     "activeToggle": "Active",
@@ -248,6 +249,8 @@
     "seats": "Seats",
     "nextRenewal": "Next Renewal",
     "cost": "Cost",
+    "myCost": "我的成本",
+    "maxSeats": "最高名额",
     "seat": "Seat",
     "addSeat": "Add Seat",
     "removeSeat": "Remove Seat",
@@ -277,7 +280,10 @@
     "keepSeatAction": "Keep seat",
     "cancelling": "Cancelling…",
     "noActiveSeats": "No active seats",
-    "renewSeat": "Renew Seat"
+    "renewSeat": "Renew Seat",
+    "isAutopayable": "Automatic renewal",
+    "autopayableTooltip": "If active, the subscription will renew automatically upon expiration",
+    "autopayableDescription": "Enable this if the service is charged automatically from your card or account."
   },
   "clients": {
     "title": "Clients",
@@ -355,6 +361,7 @@
     "filterByType": "Filter by type:",
     "platformRenewal": "Platform Renewal",
     "clientRenewal": "Client Renewal",
+    "platformPayment": "Platform Payment",
     "to": "to"
   },
   "analytics": {
@@ -434,6 +441,10 @@
     "language": "Language",
     "appearanceDescription": "Customize how the application looks to you.",
     "themeLabel": "Appearance Mode",
+    "currency": "Preferred Currency",
+    "currencyDescription": "Choose the symbol used for prices (visual only).",
+    "currencyUpdated": "Currency updated",
+    "updating": "Updating...",
     "assistant": "AI Assistant",
     "assistantDescription": "Manage your AI Assistant and external integrations.",
     "copilotTitle": "GitHub Copilot",

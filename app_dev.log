@@ -1,0 +1,99 @@
+
+> dashboard@0.1.0 dev /home/angel/Documentos/dashboard
+> next dev
+
+▲ Next.js 16.1.6 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.1.75:3000
+- Environments: .env
+- Experiments (use with caution):
+  · cpus: 4
+
+✓ Starting...
+✓ Ready in 701ms
+ GET /es/dashboard/assistant 200 in 3.2s (compile: 2.7s, proxy.ts: 99ms, render: 435ms)
+ GET /api/copilot/status 200 in 874ms (compile: 515ms, render: 359ms)
+ GET /api/platforms 200 in 926ms (compile: 745ms, render: 180ms)
+ GET /api/clients 200 in 953ms (compile: 697ms, render: 255ms)
+ GET /api/subscriptions 200 in 989ms (compile: 728ms, render: 261ms)
+ GET /api/auth/session 200 in 1140ms (compile: 1128ms, render: 12ms)
+ GET /api/auth/session 200 in 63ms (compile: 57ms, render: 7ms)
+ GET /api/copilot/models 200 in 1083ms (compile: 137ms, render: 947ms)
+ GET /es/dashboard/assistant 200 in 161ms (compile: 64ms, proxy.ts: 12ms, render: 85ms)
+ GET /api/auth/session 200 in 74ms (compile: 53ms, render: 21ms)
+ GET /api/auth/session 200 in 8ms (compile: 1482µs, render: 7ms)
+ GET /api/copilot/status 200 in 87ms (compile: 1751µs, render: 85ms)
+ GET /api/platforms 200 in 167ms (compile: 7ms, render: 160ms)
+ GET /api/subscriptions 200 in 227ms (compile: 5ms, render: 222ms)
+ GET /api/clients 200 in 229ms (compile: 3ms, render: 227ms)
+ GET /api/copilot/models 200 in 974ms (compile: 2ms, render: 972ms)
+Error [AI_APICallError]: model gpt-4o is not supported via Responses API.
+    at ignore-listed frames {
+  cause: undefined,
+  url: 'https://api.githubcopilot.com/responses',
+  requestBodyValues: [Object],
+  statusCode: 400,
+  responseHeaders: [Object],
+  responseBody: '{"error":{"message":"model gpt-4o is not supported via Responses API.","code":"unsupported_api_for_model"}}\n',
+  isRetryable: false,
+  data: [Object]
+}
+ POST /api/chat 200 in 1054ms (compile: 388ms, render: 666ms)
+ POST /api/chat 401 in 98ms (compile: 88ms, render: 10ms)
+ GET /es/dashboard/assistant 200 in 157ms (compile: 59ms, proxy.ts: 5ms, render: 93ms)
+ GET /api/auth/session 200 in 77ms (compile: 57ms, render: 21ms)
+ GET /api/auth/session 200 in 9ms (compile: 1520µs, render: 7ms)
+ GET /api/copilot/status 200 in 79ms (compile: 2ms, render: 77ms)
+ GET /api/platforms 200 in 169ms (compile: 8ms, render: 161ms)
+ GET /api/subscriptions 200 in 224ms (compile: 4ms, render: 220ms)
+ GET /api/clients 200 in 226ms (compile: 2ms, render: 224ms)
+ GET /api/copilot/models 200 in 926ms (compile: 1530µs, render: 924ms)
+Error [AI_APICallError]: model gpt-4o is not supported via Responses API.
+    at ignore-listed frames {
+  cause: undefined,
+  url: 'https://api.githubcopilot.com/responses',
+  requestBodyValues: [Object],
+  statusCode: 400,
+  responseHeaders: [Object],
+  responseBody: '{"error":{"message":"model gpt-4o is not supported via Responses API.","code":"unsupported_api_for_model"}}\n',
+  isRetryable: false,
+  data: [Object]
+}
+ POST /api/chat 200 in 609ms (compile: 1548µs, render: 607ms)
+ GET /es/dashboard/assistant 200 in 143ms (compile: 58ms, proxy.ts: 7ms, render: 78ms)
+ GET /api/auth/session 200 in 76ms (compile: 57ms, render: 19ms)
+ GET /api/auth/session 200 in 6ms (compile: 1264µs, render: 5ms)
+ GET /api/copilot/status 200 in 87ms (compile: 3ms, render: 85ms)
+ GET /api/platforms 200 in 166ms (compile: 6ms, render: 160ms)
+ GET /api/clients 200 in 208ms (compile: 3ms, render: 205ms)
+ GET /api/subscriptions 200 in 229ms (compile: 5ms, render: 224ms)
+ GET /api/copilot/models 200 in 979ms (compile: 1434µs, render: 978ms)
+
+  #  Node.js[156334]: void node::ResetStdio() at ../src/node.cc:702
+  #  Assertion failed: !(err != 0) || (err == -1 && (*__errno_location ()) == 1)
+
+----- Native stack trace -----
+
+ 1: 0xad2170 node::Abort() [/home/angel/.local/share/pnpm/.tools/pnpm-exe/10.28.0/pnpm]
+ 2: 0xad21ee  [/home/angel/.local/share/pnpm/.tools/pnpm-exe/10.28.0/pnpm]
+ 3: 0xa8fc90  [/home/angel/.local/share/pnpm/.tools/pnpm-exe/10.28.0/pnpm]
+ 4: 0x740c85c488a1  [/lib/x86_64-linux-gnu/libc.so.6]
+ 5: 0x740c85c4897e  [/lib/x86_64-linux-gnu/libc.so.6]
+ 6: 0xa101ef node::DefaultProcessExitHandlerInternal(node::Environment*, node::ExitCode) [/home/angel/.local/share/pnpm/.tools/pnpm-exe/10.28.0/pnpm]
+ 7: 0xa5ac57 node::Environment::Exit(node::ExitCode) [/home/angel/.local/share/pnpm/.tools/pnpm-exe/10.28.0/pnpm]
+ 8: 0x15c4b8e v8::internal::FunctionCallbackArguments::Call(v8::internal::CallHandlerInfo) [/home/angel/.local/share/pnpm/.tools/pnpm-exe/10.28.0/pnpm]
+ 9: 0x15c53cd  [/home/angel/.local/share/pnpm/.tools/pnpm-exe/10.28.0/pnpm]
+10: 0x15c5895 v8::internal::Builtin_HandleApiCall(int, unsigned long*, v8::internal::Isolate*) [/home/angel/.local/share/pnpm/.tools/pnpm-exe/10.28.0/pnpm]
+11: 0x1fa3df6  [/home/angel/.local/share/pnpm/.tools/pnpm-exe/10.28.0/pnpm]
+
+  #  Node.js[156334]: void node::ResetStdio() at ../src/node.cc:702
+  #  Assertion failed: !(err != 0) || (err == -1 && (*__errno_location ()) == 1)
+
+----- Native stack trace -----
+
+ 1: 0xad2170 node::Abort() [/home/angel/.local/share/pnpm/.tools/pnpm-exe/10.28.0/pnpm]
+ 2: 0xad21ee  [/home/angel/.local/share/pnpm/.tools/pnpm-exe/10.28.0/pnpm]
+ 3: 0xa8fc90  [/home/angel/.local/share/pnpm/.tools/pnpm-exe/10.28.0/pnpm]
+ 4: 0xa8fe15 node::TrapWebAssemblyOrContinue(int, siginfo_t*, void*) [/home/angel/.local/share/pnpm/.tools/pnpm-exe/10.28.0/pnpm]
+ 5: 0x740c85c45f60  [/lib/x86_64-linux-gnu/libc.so.6]
+ 6: 0x740c85e34c40  [/lib/x86_64-linux-gnu/libc.so.6]
