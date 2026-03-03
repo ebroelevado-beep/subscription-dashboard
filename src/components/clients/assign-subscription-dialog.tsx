@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Search, Plus, Eye, EyeOff } from "lucide-react";
 import { addMonths, format } from "date-fns";
+import { useTranslations } from "next-intl";
 
 interface AssignSubscriptionDialogProps {
   clientId: string;
@@ -34,6 +35,8 @@ export function AssignSubscriptionDialog({
   const createSeat = useCreateSeat();
   const { data: subscriptions } = useSubscriptions();
   const { data: session } = useSession();
+  const t = useTranslations("clients");
+  const tc = useTranslations("common");
 
   // Form state
   const [search, setSearch] = useState("");
@@ -104,21 +107,24 @@ export function AssignSubscriptionDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Plus className="size-5" />
-            Assign Subscription
+            {t("assignSubscription")}
           </DialogTitle>
           <DialogDescription>
-            Assign <strong>{clientName}</strong> to a subscription.
+            {t.rich("assignSubscriptionDescription", {
+              name: clientName,
+              strong: (chunks) => <strong>{chunks}</strong>,
+            })}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Subscription Search */}
           <div className="space-y-2">
-            <Label>Subscription</Label>
+            <Label>{t("subscriptions")}</Label>
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
               <Input
-                placeholder="Search plan or platform…"
+                placeholder={t("searchPlanOrPlatform")}
                 value={search}
                 onChange={(e) => {
                   setSearch(e.target.value);
@@ -133,7 +139,7 @@ export function AssignSubscriptionDialog({
               <div className="max-h-36 overflow-y-auto rounded-md border text-sm">
                 {filteredSubs.length === 0 ? (
                   <p className="px-3 py-2 text-muted-foreground">
-                    {search ? "No subscriptions found" : "Type to search…"}
+                    {search ? t("noSubscriptionsFound") : t("typeToSearch")}
                   </p>
                 ) : (
                   filteredSubs.map((s) => {
@@ -183,7 +189,7 @@ export function AssignSubscriptionDialog({
                     setSearch("");
                   }}
                 >
-                  Change
+                  {t("change")}
                 </Button>
               </div>
             )}
@@ -193,7 +199,7 @@ export function AssignSubscriptionDialog({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label htmlFor="sub-price">
-                Price ({CURRENCIES[((session?.user as { currency?: string })?.currency as Currency) || "EUR"].symbol}/month)
+                {t("pricePerMonth", { symbol: CURRENCIES[((session?.user as { currency?: string })?.currency as Currency) || "EUR"].symbol })}
               </Label>
               <Input
                 id="sub-price"
@@ -207,7 +213,7 @@ export function AssignSubscriptionDialog({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="sub-duration">Duration (months)</Label>
+              <Label htmlFor="sub-duration">{t("durationMonths")}</Label>
               <Input
                 id="sub-duration"
                 type="number"
@@ -220,7 +226,7 @@ export function AssignSubscriptionDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="sub-start-date">Start Date</Label>
+            <Label htmlFor="sub-start-date">{t("startDate")}</Label>
             <Input
               id="sub-start-date"
               type="date"
@@ -232,17 +238,17 @@ export function AssignSubscriptionDialog({
 
           {previewDate && (
              <p className="text-xs text-muted-foreground">
-               Active until: <span className="font-medium text-foreground">{previewDate}</span>
+               {t("activeUntil", { date: previewDate })}
              </p>
           )}
 
           {/* Service Credentials */}
           <fieldset className="space-y-3 rounded-md border p-3">
             <legend className="px-1 text-xs font-medium text-muted-foreground">
-              Service Credentials (optional)
+              {t("serviceCredentials")} ({tc("optional")})
             </legend>
             <div className="space-y-2">
-              <Label htmlFor="sub-user">Username / Email</Label>
+              <Label htmlFor="sub-user">{t("usernameEmail")}</Label>
               <Input
                 id="sub-user"
                 placeholder="e.g. john@example.com"
@@ -277,13 +283,13 @@ export function AssignSubscriptionDialog({
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
-              Cancel
+              {tc("cancel")}
             </Button>
             <Button
               type="submit"
               disabled={createSeat.isPending || !selectedSubId || !customPrice}
             >
-              {createSeat.isPending ? "Assigning…" : "Assign Subscription"}
+              {createSeat.isPending ? t("assigning") : t("assignSubscription")}
             </Button>
           </DialogFooter>
         </form>
