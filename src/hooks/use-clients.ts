@@ -50,6 +50,8 @@ export interface ClientDetail {
       id: string;
       label: string;
       status: string;
+      masterUsername: string | null;
+      masterPassword: string | null;
       plan: {
         id: string;
         name: string;

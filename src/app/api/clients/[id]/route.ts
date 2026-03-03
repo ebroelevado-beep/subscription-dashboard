@@ -18,7 +18,12 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
         clientSubscriptions: {
           include: {
             subscription: {
-              include: {
+              select: {
+                id: true,
+                label: true,
+                status: true,
+                masterUsername: true,
+                masterPassword: true,
                 plan: {
                   include: {
                     platform: { select: { id: true, name: true } },

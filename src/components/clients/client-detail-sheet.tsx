@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { useClient } from "@/hooks/use-clients";
 import { useRenewClient } from "@/hooks/use-renewals";
+import { useCancelSeat } from "@/hooks/use-seats";
 import { BulkRenewDialog, type BulkRenewSeat } from "@/components/clients/bulk-renew-dialog";
+import { AssignSubscriptionDialog } from "@/components/clients/assign-subscription-dialog";
 import {
   Sheet, SheetContent, SheetTitle, SheetDescription,
 } from "@/components/ui/sheet";
@@ -14,6 +16,10 @@ import { Label } from "@/components/ui/label";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
@@ -21,6 +27,7 @@ import {
 import Link from "next/link";
 import {
   Copy, Eye, EyeOff, RefreshCw, MessageCircle, UserCircle, AlertTriangle,
+  Plus, Trash2, KeyRound,
 } from "lucide-react";
 import { differenceInDays, startOfDay, addMonths, subMonths, format } from "date-fns";
 import { toast } from "sonner";
@@ -62,11 +69,16 @@ export function ClientDetailSheet({ clientId, open, onOpenChange }: ClientDetail
   const t = useTranslations("clients");
   const tc = useTranslations("common");
   const tNav = useTranslations("nav");
+  const tSub = useTranslations("subscriptions");
   const { data: client, isLoading } = useClient(clientId ?? undefined);
   const renewMut = useRenewClient();
+  const cancelSeatMut = useCancelSeat();
   const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
+  const [showCredentials, setShowCredentials] = useState<Record<string, boolean>>({});
   const [lang, setLang] = useState<Lang>("es");
   const [bulkRenewOpen, setBulkRenewOpen] = useState(false);
+  const [assignOpen, setAssignOpen] = useState(false);
+  const [removeSeatId, setRemoveSeatId] = useState<string | null>(null);
   const { data: session } = useSession();
   const currency = (session?.user as { currency?: string })?.currency || "EUR";
 
@@ -121,6 +133,13 @@ export function ClientDetailSheet({ clientId, open, onOpenChange }: ClientDetail
     );
   };
 
+  const handleRemoveSeat = () => {
+    if (!removeSeatId) return;
+    cancelSeatMut.mutate(removeSeatId, {
+      onSuccess: () => setRemoveSeatId(null),
+    });
+  };
+
   // Renew preview
   const currentExpiry = renewSeat ? startOfDay(new Date(renewSeat.activeUntil)) : new Date();
   const today = startOfDay(new Date());
@@ -134,8 +153,13 @@ export function ClientDetailSheet({ clientId, open, onOpenChange }: ClientDetail
   const isLapsed = renewSeat ? currentExpiry < today : false;
   const resultInPast = newExpiry < today;
 
+  // Only show active/paused seats (filter out any orphaned)
+  const validSeats = client?.clientSubscriptions.filter(
+    (cs) => cs.status === "active" || cs.status === "paused"
+  ) ?? [];
+
   // Active seats for WhatsApp
-  const activeSeats = client?.clientSubscriptions.filter((cs) => cs.status === "active") ?? [];
+  const activeSeats = validSeats.filter((cs) => cs.status === "active");
   const canSendReminder = client?.phone && activeSeats.length > 0;
 
   const handleSendReminder = () => {
@@ -145,9 +169,6 @@ export function ClientDetailSheet({ clientId, open, onOpenChange }: ClientDetail
       activeUntil: cs.activeUntil,
       platformName: cs.subscription.plan.platform.name,
     }));
-    // We pass a dummy 't' that can handle placeholders or just use the current translation context
-    // Actually, it's better to use the useTranslations hook results if we want to support dynamic switching
-    // But since the helper is outside, let's just use the current 'tc' and 't' from hook in this scope
     const url = buildWhatsAppUrl(client.phone, client.name, waData, lang, (key: string, vals?: Record<string, string | number>) => {
       if (key.startsWith("common.")) return tc(key.replace("common.", ""), vals);
       if (key.startsWith("clients.")) return t(key.replace("clients.", ""), vals);
@@ -188,41 +209,6 @@ export function ClientDetailSheet({ clientId, open, onOpenChange }: ClientDetail
                   </div>
                 </div>
               </div>
-
-              {/* Credentials */}
-              {(client.serviceUser || client.servicePassword) && (
-                <div className="rounded-lg border bg-muted/30 p-3 space-y-2">
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{tc("credentials")}</p>
-                  {client.serviceUser && (
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">{tc("username")}</span>
-                      <div className="flex items-center gap-1">
-                        <code className="font-mono text-sm">{client.serviceUser}</code>
-                        <Button variant="ghost" size="icon" className="size-6" onClick={() => copyToClipboard(client.serviceUser!, tc("username"))}>
-                          <Copy className="size-3" />
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                  {client.servicePassword && (
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">{tc("password")}</span>
-                      <div className="flex items-center gap-1">
-                        <code className="font-mono text-sm">
-                          {showPasswords["global"] ? client.servicePassword : "••••••••"}
-                        </code>
-                        <Button variant="ghost" size="icon" className="size-6"
-                          onClick={() => setShowPasswords((p) => ({ ...p, global: !p.global }))}>
-                          {showPasswords["global"] ? <EyeOff className="size-3" /> : <Eye className="size-3" />}
-                        </Button>
-                        <Button variant="ghost" size="icon" className="size-6" onClick={() => copyToClipboard(client.servicePassword!, tc("password"))}>
-                          <Copy className="size-3" />
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
 
               {/* WhatsApp Reminder */}
               <div className="flex items-center gap-2">
@@ -270,29 +256,40 @@ export function ClientDetailSheet({ clientId, open, onOpenChange }: ClientDetail
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-medium">
-                    {t("seatsSection")} ({client.clientSubscriptions.length})
+                    {t("seatsSection")} ({validSeats.length})
                   </p>
-                  {activeSeats.length >= 2 && (
+                  <div className="flex items-center gap-1.5">
+                    {activeSeats.length >= 2 && (
+                      <Button
+                        variant="default"
+                        size="sm"
+                        className="h-7 text-xs"
+                        onClick={() => setBulkRenewOpen(true)}
+                      >
+                        <RefreshCw className="mr-1.5 size-3" />
+                        {t("renewAll")}
+                      </Button>
+                    )}
                     <Button
-                      variant="default"
+                      variant="outline"
                       size="sm"
                       className="h-7 text-xs"
-                      onClick={() => setBulkRenewOpen(true)}
+                      onClick={() => setAssignOpen(true)}
                     >
-                      <RefreshCw className="mr-1.5 size-3" />
-                      {t("renewAll")}
+                      <Plus className="mr-1.5 size-3" />
+                      {t("assignSubscription")}
                     </Button>
-                  )}
+                  </div>
                 </div>
 
-                {client.clientSubscriptions.length === 0 ? (
+                {validSeats.length === 0 ? (
                   <p className="text-sm text-muted-foreground">{t("noActiveSeats")}</p>
                 ) : (
-                  client.clientSubscriptions.map((cs) => {
+                  validSeats.map((cs) => {
                     const expiry = getExpiryInfo(cs.activeUntil);
                     const isPaused = cs.status === "paused";
-                    
-                    
+                    const hasCreds = cs.subscription.masterUsername || cs.subscription.masterPassword;
+                    const credsVisible = showCredentials[cs.id];
 
                     return (
                       <div
@@ -341,22 +338,92 @@ export function ClientDetailSheet({ clientId, open, onOpenChange }: ClientDetail
                           </div>
                         </div>
 
-                        {/* Renew button — only for active seats */}
-                        {cs.status === "active" && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="w-full"
-                            onClick={() => openRenewDialog({
-                              id: cs.id,
-                              customPrice: Number(cs.customPrice),
-                              activeUntil: cs.activeUntil,
-                            })}
-                          >
-                            <RefreshCw className="mr-2 size-3.5" />
-                            {t("renewSeat")}
-                          </Button>
+                        {/* Per-subscription credentials */}
+                        {hasCreds && (
+                          <div className="space-y-1.5">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 px-2 text-xs text-muted-foreground"
+                              onClick={() => setShowCredentials((p) => ({ ...p, [cs.id]: !p[cs.id] }))}
+                            >
+                              <KeyRound className="mr-1.5 size-3" />
+                              {credsVisible ? t("hideCredentials") : t("viewCredentials")}
+                            </Button>
+
+                            {credsVisible && (
+                              <div className="rounded-md border bg-muted/30 p-2.5 space-y-1.5 text-sm">
+                                {cs.subscription.masterUsername && (
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-xs text-muted-foreground">{tc("username")}</span>
+                                    <div className="flex items-center gap-1">
+                                      <code className="font-mono text-xs">{cs.subscription.masterUsername}</code>
+                                      <Button variant="ghost" size="icon" className="size-5" onClick={() => copyToClipboard(cs.subscription.masterUsername!, tc("username"))}>
+                                        <Copy className="size-2.5" />
+                                      </Button>
+                                    </div>
+                                  </div>
+                                )}
+                                {cs.subscription.masterPassword && (
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-xs text-muted-foreground">{tc("password")}</span>
+                                    <div className="flex items-center gap-1">
+                                      <code className="font-mono text-xs">
+                                        {showPasswords[cs.id] ? cs.subscription.masterPassword : "••••••••"}
+                                      </code>
+                                      <Button variant="ghost" size="icon" className="size-5"
+                                        onClick={() => setShowPasswords((p) => ({ ...p, [cs.id]: !p[cs.id] }))}>
+                                        {showPasswords[cs.id] ? <EyeOff className="size-2.5" /> : <Eye className="size-2.5" />}
+                                      </Button>
+                                      <Button variant="ghost" size="icon" className="size-5" onClick={() => copyToClipboard(cs.subscription.masterPassword!, tc("password"))}>
+                                        <Copy className="size-2.5" />
+                                      </Button>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
                         )}
+
+                        {/* Action buttons */}
+                        <div className="flex items-center gap-2">
+                          {/* Renew button — only for active seats */}
+                          {cs.status === "active" && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="flex-1"
+                              onClick={() => openRenewDialog({
+                                id: cs.id,
+                                customPrice: Number(cs.customPrice),
+                                activeUntil: cs.activeUntil,
+                              })}
+                            >
+                              <RefreshCw className="mr-2 size-3.5" />
+                              {t("renewSeat")}
+                            </Button>
+                          )}
+
+                          {/* Remove seat button */}
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="size-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                  onClick={() => setRemoveSeatId(cs.id)}
+                                >
+                                  <Trash2 className="size-3.5" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                {t("removeSeat")}
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
 
                         {/* Recent renewals */}
                         {cs.renewalLogs.length > 0 && (
@@ -468,13 +535,35 @@ export function ClientDetailSheet({ clientId, open, onOpenChange }: ClientDetail
         </DialogContent>
       </Dialog>
 
+      {/* Remove Seat Confirmation */}
+      <AlertDialog open={!!removeSeatId} onOpenChange={(o) => { if (!o) setRemoveSeatId(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("confirmRemoveSeat")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("confirmRemoveSeatDescription")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{tc("cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleRemoveSeat}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={cancelSeatMut.isPending}
+            >
+              {cancelSeatMut.isPending ? tc("deleting") : tSub("removeSeatAction")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Bulk Renew Dialog */}
       {client && (
         <BulkRenewDialog
           open={bulkRenewOpen}
           onOpenChange={setBulkRenewOpen}
           clientName={client.name}
-          seats={client.clientSubscriptions.map((cs): BulkRenewSeat => ({
+          seats={validSeats.map((cs): BulkRenewSeat => ({
             id: cs.id,
             customPrice: Number(cs.customPrice),
             activeUntil: cs.activeUntil,
@@ -483,6 +572,18 @@ export function ClientDetailSheet({ clientId, open, onOpenChange }: ClientDetail
             planName: cs.subscription.plan.name,
             subscriptionLabel: cs.subscription.label,
           }))}
+        />
+      )}
+
+      {/* Assign Subscription Dialog */}
+      {client && (
+        <AssignSubscriptionDialog
+          clientId={client.id}
+          clientName={client.name}
+          previousServiceUser={client.serviceUser}
+          previousServicePassword={client.servicePassword}
+          open={assignOpen}
+          onOpenChange={setAssignOpen}
         />
       )}
     </>
