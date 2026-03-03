@@ -115,10 +115,11 @@ export function createUserScopedTools(
           name: client.name,
           phone: client.phone,
           notes: client.notes,
-          serviceUser: client.serviceUser,
           createdAt: client.createdAt,
           subscriptions: client.clientSubscriptions.map((cs) => ({
             seatId: cs.id,
+            serviceUser: cs.serviceUser,
+            servicePassword: cs.servicePassword,
             platform: cs.subscription.plan.platform.name,
             plan: cs.subscription.plan.name,
             subscriptionLabel: cs.subscription.label,

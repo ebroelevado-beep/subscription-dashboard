@@ -47,8 +47,6 @@ const clientImportSchema = z.object({
   name: z.string().min(1).max(150),
   phone: z.string().max(30).nullable().optional(),
   notes: z.string().nullable().optional(),
-  serviceUser: z.string().max(100).nullable().optional(),
-  servicePassword: z.string().max(100).nullable().optional(),
   createdAt: z.string().optional(),
 });
 
@@ -62,6 +60,8 @@ const clientSubscriptionImportSchema = z.object({
   leftAt: z.string().nullable().optional(),
   status: z.enum(["active", "paused"]).default("active"),
   remainingDays: z.number().int().nullable().optional(),
+  serviceUser: z.string().max(100).nullable().optional(),
+  servicePassword: z.string().max(100).nullable().optional(),
 });
 
 const renewalLogImportSchema = z.object({
