@@ -371,8 +371,8 @@ export default function AnalyticsPage() {
             </div>
           ) : (
             <>
-              <div className="flex flex-col md:flex-row gap-6 items-center">
-                <div className="flex items-center gap-6 flex-1">
+              <div className="space-y-6">
+                <div className="flex items-center gap-6">
                   <div className="flex items-center gap-3 flex-1">
                     <div className="rounded-full bg-emerald-100 p-3 dark:bg-emerald-900/40">
                       <CheckCircle className="size-6 text-emerald-600 dark:text-emerald-400" />
@@ -402,49 +402,50 @@ export default function AnalyticsPage() {
                   </div>
                 </div>
 
-                {/* VISUAL SCORE GAUGE/INDICATOR */}
-                <div className="w-full md:w-48 flex flex-col items-center justify-center p-4 rounded-2xl bg-muted/30 border border-primary/5 relative overflow-hidden group">
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none" />
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">{t("disciplineScore")}</p>
+                {/* VISUAL SCORE GAUGE - FULL WIDTH CENTERED */}
+                <div className="w-full flex flex-col items-center justify-center py-8 px-6 rounded-2xl bg-muted/20 border border-border/50 relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent pointer-events-none" />
+                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground mb-6 text-center">{t("disciplineScore")}</p>
+                  
                   <div className="relative flex items-center justify-center">
-                    <svg className="size-24 -rotate-90">
+                    <svg className="size-32 -rotate-90">
                       <circle
-                        cx="48"
-                        cy="48"
-                        r="40"
+                        cx="64"
+                        cy="64"
+                        r="54"
                         stroke="currentColor"
-                        strokeWidth="8"
+                        strokeWidth="10"
                         fill="transparent"
-                        className="text-muted/20"
+                        className="text-muted/10"
                       />
                       <circle
-                        cx="48"
-                        cy="48"
-                        r="40"
+                        cx="64"
+                        cy="64"
+                        r="54"
                         stroke="currentColor"
-                        strokeWidth="8"
+                        strokeWidth="10"
                         fill="transparent"
-                        strokeDasharray={251.2}
-                        strokeDashoffset={251.2 - (251.2 * (discipline?.score ?? 10)) / 10}
+                        strokeDasharray={339.3}
+                        strokeDashoffset={339.3 - (339.3 * (discipline?.score ?? 10)) / 10}
                         strokeLinecap="round"
                         className={cn(
                           "transition-all duration-1000 ease-out",
-                          (discipline?.score ?? 10) >= 9 ? "text-emerald-500" :
+                          (discipline?.score ?? 10) >= 9 ? "text-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.3)]" :
                           (discipline?.score ?? 10) >= 7 ? "text-yellow-500" :
                           (discipline?.score ?? 10) >= 5 ? "text-orange-500" : "text-red-500"
                         )}
                       />
                     </svg>
                     <div className="absolute flex flex-col items-center justify-center leading-none">
-                      <span className="text-2xl font-black tabular-nums">{(discipline?.score ?? 10).toFixed(1)}</span>
-                      <span className="text-[10px] opacity-60">/10</span>
+                      <span className="text-3xl font-black tabular-nums">{(discipline?.score ?? 10).toFixed(1)}</span>
+                      <span className="text-xs font-bold opacity-40 mt-1">/10</span>
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Visual bar & Stats footer */}
-              <div className="mt-6 flex flex-col gap-4">
+              <div className="mt-8 flex flex-col gap-5">
                 <div className="h-2 rounded-full bg-muted overflow-hidden">
                   <div
                     className="h-full rounded-full bg-emerald-500 transition-all duration-1000"
@@ -453,13 +454,13 @@ export default function AnalyticsPage() {
                 </div>
                 
                 <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
-                   <div className="flex items-center gap-1.5">
-                      <Clock className="size-3.5" />
-                      <span>{t("avgDaysLate")}: <strong className={cn("tabular-nums text-sm", (discipline?.avgDaysLate ?? 0) > 0 ? "text-red-500" : "text-emerald-500")}>{discipline?.avgDaysLate ?? 0}d</strong></span>
+                   <div className="flex items-center gap-2">
+                      <Clock className="size-4 opacity-70" />
+                      <span>{t("avgDaysLate")}: <strong className={cn("tabular-nums text-sm ml-1", (discipline?.avgDaysLate ?? 0) > 0 ? "text-red-500" : "text-emerald-500")}>{discipline?.avgDaysLate ?? 0}d</strong></span>
                    </div>
-                   <div className="flex items-center gap-1.5">
-                      <Users className="size-3.5" />
-                      <span>{t("totalPayments")}: <strong className="text-foreground text-sm">{discipline?.totalPayments ?? 0}</strong></span>
+                   <div className="flex items-center gap-2">
+                      <Users className="size-4 opacity-70" />
+                      <span>{t("totalPayments")}: <strong className="text-foreground text-sm ml-1">{discipline?.totalPayments ?? 0}</strong></span>
                    </div>
                 </div>
               </div>
