@@ -74,6 +74,24 @@ export function ClientDetailSheet({ clientId, open, onOpenChange }: ClientDetail
   const [bulkRenewOpen, setBulkRenewOpen] = useState(false);
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
   const { data: session } = useSession();
+
+  const disciplineScore = discipline && discipline.totalPayments > 0 ? (() => {
+    // We already have the batch endpoint precalculating this actually,
+    // but the `useDiscipline` hook here hits `/api/analytics/discipline` which returns aggregates.
+    // The single client endpoint returns aggregates (avgDaysLate, onTimeRate).
+    // To match the new formula without refetching all logs here, we can estimate it:
+    // If we want exact match, we should update the `/api/analytics/discipline` endpoint too, 
+    // or simply use the batch hook.
+    // Let's approximate it with the new formula based on the averages:
+    const avg = discipline.avgDaysLate;
+    if (avg <= 0) {
+      // Early or exactly on time
+      const earlyDays = Math.min(5, Math.abs(avg));
+      return 9.5 + (earlyDays * 0.1);
+    } else {
+      return Math.max(0, 9.5 - avg * 1.5);
+    }
+  })() : null;
   const currency = (session?.user as { currency?: string })?.currency || "EUR";
 
   // Renew dialog state
@@ -221,44 +239,6 @@ export function ClientDetailSheet({ clientId, open, onOpenChange }: ClientDetail
                     </p>
                   </div>
                 </div>
-
-                {/* Score */}
-                {discipline && discipline.totalPayments > 0 && (
-                  <div className="flex flex-col items-end">
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div className={`text-2xl font-black font-mono tracking-tighter ${getScoreColor(
-                            // Calculate single score using same formula as batch API
-                            (() => {
-                              const avg = discipline.avgDaysLate;
-                              const onTimeRate = discipline.onTimeRate;
-                              const onTimeFactor = onTimeRate / 100;
-                              // Approximate global avg to 5 days for single client view fallback
-                              const lateFactor = Math.max(0, 1 - avg / 10);
-                              return Math.round((onTimeFactor * 0.6 + lateFactor * 0.4) * 100) / 10;
-                            })()
-                          )}`}>
-                            {(() => {
-                              const avg = discipline.avgDaysLate;
-                              const onTimeRate = discipline.onTimeRate;
-                              const onTimeFactor = onTimeRate / 100;
-                              const lateFactor = Math.max(0, 1 - avg / 10);
-                              return (Math.round((onTimeFactor * 0.6 + lateFactor * 0.4) * 100) / 10).toFixed(1);
-                            })()}
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent side="bottom" className="text-xs">
-                          <p>{t("disciplineScore")}</p>
-                          <p className="text-muted-foreground">
-                            {t("avgDaysLateLabel")}: {discipline.avgDaysLate}d
-                          </p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                    <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">{t("disciplineScore")}</span>
-                  </div>
-                )}
               </div>
 
               {/* Credentials */}
@@ -364,10 +344,32 @@ export function ClientDetailSheet({ clientId, open, onOpenChange }: ClientDetail
                   </Button>
                 </div>
 
-                {/* Seats count label */}
-                <p className="text-sm font-medium">
-                  {t("seatsSection")} ({client.clientSubscriptions.length})
-                </p>
+                {/* Seats count label & Discipline Score */}
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-medium">
+                    {t("seatsSection")} ({client.clientSubscriptions.length})
+                  </p>
+                  {disciplineScore !== null && discipline && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="flex items-center gap-1.5 cursor-help">
+                            <span className="text-sm font-medium text-muted-foreground">
+                              {t("disciplineScore")}:
+                            </span>
+                            <span className={`text-sm font-bold font-mono ${getScoreColor(disciplineScore)}`}>
+                              {disciplineScore.toFixed(1)}
+                            </span>
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom" className="text-xs">
+                          <p>{t("avgDaysLateLabel")}: {discipline.avgDaysLate}d</p>
+                          <p>{t("onTimeRateLabel")}: {discipline.onTimeRate}%</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                </div>
 
                 {client.clientSubscriptions.length === 0 ? (
                   <p className="text-sm text-muted-foreground">{t("noActiveSeats")}</p>
