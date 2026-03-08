@@ -179,3 +179,26 @@ export function useDiscipline(filters: DisciplineFilters = {}) {
     staleTime: ANALYTICS_STALE,
   });
 }
+
+// ── Per-client discipline (batch) ──
+
+export interface ClientDisciplineEntry {
+  avgDaysLate: number;
+  onTimeRate: number;
+  totalPayments: number;
+  score: number;
+}
+
+export interface ClientsDisciplineResponse {
+  perClient: Record<string, ClientDisciplineEntry>;
+  globalAvgDaysLate: number;
+}
+
+export function useClientsDiscipline() {
+  return useQuery<ClientsDisciplineResponse>({
+    queryKey: queryKeys.analyticsClientsDiscipline,
+    queryFn: () =>
+      fetchApi<ClientsDisciplineResponse>("/api/analytics/clients-discipline"),
+    staleTime: ANALYTICS_STALE,
+  });
+}

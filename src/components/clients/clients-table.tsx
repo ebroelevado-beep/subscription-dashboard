@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { Client } from "@/hooks/use-clients";
+import { useClientsDiscipline } from "@/hooks/use-analytics";
 import { ClientFormDialog } from "./client-form-dialog";
 import { DeleteClientDialog } from "./delete-client-dialog";
 import { ClientDetailSheet } from "./client-detail-sheet";
@@ -11,12 +12,16 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Pencil, Trash2, Users, Eye } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { differenceInDays, startOfDay } from "date-fns";
 import { useTranslations } from "next-intl";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useEffect } from "react";
+import { cn, getScoreColor, getScoreLabel } from "@/lib/utils";
 
 type ClientStatus = "paid" | "due" | "expired" | "none";
 
@@ -53,6 +58,8 @@ function getServicesSummary(client: Client): string {
   return names.join(", ");
 }
 
+
+
 interface ClientsTableProps {
   clients: Client[];
   isLoading: boolean;
@@ -68,6 +75,8 @@ export function ClientsTable({ clients, isLoading }: ClientsTableProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
+
+  const { data: discipline } = useClientsDiscipline();
 
   useEffect(() => {
     const cid = searchParams.get("clientId");
@@ -92,6 +101,7 @@ export function ClientsTable({ clients, isLoading }: ClientsTableProps) {
               <TableHead>{tc("name")}</TableHead>
               <TableHead>{t("phone")}</TableHead>
               <TableHead>{tc("platform")}</TableHead>
+              <TableHead className="text-center">{t("disciplineScore")}</TableHead>
               <TableHead className="text-center">{t("activeSeats")}</TableHead>
               <TableHead className="text-center">{tc("status")}</TableHead>
               <TableHead className="text-right">{tc("actions")}</TableHead>
@@ -103,6 +113,7 @@ export function ClientsTable({ clients, isLoading }: ClientsTableProps) {
                 <TableCell><Skeleton className="h-4 w-24" /></TableCell>
                 <TableCell><Skeleton className="h-4 w-24" /></TableCell>
                 <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                <TableCell className="text-center"><Skeleton className="h-5 w-12 mx-auto rounded-full" /></TableCell>
                 <TableCell className="text-center"><Skeleton className="h-5 w-8 mx-auto rounded-full" /></TableCell>
                 <TableCell className="text-center"><Skeleton className="h-5 w-14 mx-auto rounded-full" /></TableCell>
                 <TableCell className="text-right">
@@ -140,6 +151,7 @@ export function ClientsTable({ clients, isLoading }: ClientsTableProps) {
               <TableHead>{tc("name")}</TableHead>
               <TableHead>{t("phone")}</TableHead>
               <TableHead>{tc("platform")}</TableHead>
+              <TableHead className="text-center">{t("disciplineScore")}</TableHead>
               <TableHead className="text-center">{t("activeSeats")}</TableHead>
               <TableHead className="text-center">{tc("status")}</TableHead>
               <TableHead className="text-right">{tc("actions")}</TableHead>
@@ -153,6 +165,8 @@ export function ClientsTable({ clients, isLoading }: ClientsTableProps) {
               const status = getClientStatus(c);
               const sc = config[status];
               const services = getServicesSummary(c);
+              const cd = discipline?.perClient[c.id];
+              const score = cd?.score ?? null;
 
               return (
                 <TableRow
@@ -166,6 +180,27 @@ export function ClientsTable({ clients, isLoading }: ClientsTableProps) {
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">
                     {services}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    {score !== null ? (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className={`font-mono font-semibold text-sm ${getScoreColor(score)}`}>
+                              {score.toFixed(1)}
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="text-xs">
+                            <p>{getScoreLabel(score, t)}</p>
+                            <p className="text-muted-foreground">
+                              {t("avgDaysLateLabel")}: {cd?.avgDaysLate}d · {t("onTimeRateLabel")}: {cd?.onTimeRate}%
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    ) : (
+                      <span className="text-muted-foreground text-xs">—</span>
+                    )}
                   </TableCell>
                   <TableCell className="text-center">
                     <Badge variant={activeSeats > 0 ? "default" : "secondary"}>

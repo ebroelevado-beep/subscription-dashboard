@@ -28,4 +28,5 @@ export const queryKeys = {
   analyticsBreakEven: ["analytics-break-even"] as const,
   analyticsDiscipline: (filters: object) =>
     ["analytics-discipline", filters] as const,
+  analyticsClientsDiscipline: ["analytics-clients-discipline"] as const,
 } as const;

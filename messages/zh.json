@@ -368,7 +368,15 @@
     },
     "customizeRenewal": "自定义",
     "addNotes": "添加备注",
-    "allExpireSameDate": "同日到期"
+    "allExpireSameDate": "同日到期",
+    "disciplineScore": "付款信誉",
+    "scoreExcellent": "极好 (总是按时)",
+    "scoreGood": "好 (很少迟交)",
+    "scoreAverage": "一般 (偶尔延迟)",
+    "scoreBelowAverage": "差 (经常迟交)",
+    "scorePoor": "极差 (非常不守时)",
+    "avgDaysLateLabel": "平均延迟",
+    "onTimeRateLabel": "准时率"
   },
   "history": {
     "title": "续约历史",

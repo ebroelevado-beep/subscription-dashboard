@@ -371,7 +371,15 @@
     },
     "customizeRenewal": "Customize",
     "addNotes": "Add notes",
-    "allExpireSameDate": "same expiry"
+    "allExpireSameDate": "same expiry",
+    "disciplineScore": "Payment Discipline",
+    "scoreExcellent": "Excellent (Always on time)",
+    "scoreGood": "Good (Rarely late)",
+    "scoreAverage": "Average (Occasional delays)",
+    "scoreBelowAverage": "Below Average (Often late)",
+    "scorePoor": "Poor (Very unpunctual)",
+    "avgDaysLateLabel": "Avg. delay",
+    "onTimeRateLabel": "On-time rate"
   },
   "history": {
     "title": "Renewal History",

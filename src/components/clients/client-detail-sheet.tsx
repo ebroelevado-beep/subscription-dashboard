@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { useClient } from "@/hooks/use-clients";
 import { useRenewClient } from "@/hooks/use-renewals";
+import { useDiscipline } from "@/hooks/use-analytics";
 import { BulkRenewDialog, type BulkRenewSeat } from "@/components/clients/bulk-renew-dialog";
+import { getScoreColor, getScoreLabel } from "@/lib/utils";
 import {
   Sheet, SheetContent, SheetTitle, SheetDescription,
 } from "@/components/ui/sheet";
@@ -26,7 +28,7 @@ import { differenceInDays, startOfDay, addMonths, subMonths, format } from "date
 import { toast } from "sonner";
 import { useSession } from "next-auth/react";
 import { CURRENCIES, formatCurrency, type Currency } from "@/lib/currency";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { AssignSubscriptionDialog } from "@/components/clients/assign-subscription-dialog";
 
 
@@ -64,9 +66,11 @@ export function ClientDetailSheet({ clientId, open, onOpenChange }: ClientDetail
   const tc = useTranslations("common");
   const tNav = useTranslations("nav");
   const { data: client, isLoading } = useClient(clientId ?? undefined);
+  const { data: discipline } = useDiscipline({ clientId: clientId ?? undefined });
   const renewMut = useRenewClient();
   const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
-  const [lang, setLang] = useState<Lang>("es");
+  const locale = useLocale();
+  const [lang, setLang] = useState<Lang>((locale === "en" || locale === "zh" ? locale : "es") as Lang);
   const [bulkRenewOpen, setBulkRenewOpen] = useState(false);
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
   const { data: session } = useSession();
@@ -217,6 +221,44 @@ export function ClientDetailSheet({ clientId, open, onOpenChange }: ClientDetail
                     </p>
                   </div>
                 </div>
+
+                {/* Score */}
+                {discipline && discipline.totalPayments > 0 && (
+                  <div className="flex flex-col items-end">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className={`text-2xl font-black font-mono tracking-tighter ${getScoreColor(
+                            // Calculate single score using same formula as batch API
+                            (() => {
+                              const avg = discipline.avgDaysLate;
+                              const onTimeRate = discipline.onTimeRate;
+                              const onTimeFactor = onTimeRate / 100;
+                              // Approximate global avg to 5 days for single client view fallback
+                              const lateFactor = Math.max(0, 1 - avg / 10);
+                              return Math.round((onTimeFactor * 0.6 + lateFactor * 0.4) * 100) / 10;
+                            })()
+                          )}`}>
+                            {(() => {
+                              const avg = discipline.avgDaysLate;
+                              const onTimeRate = discipline.onTimeRate;
+                              const onTimeFactor = onTimeRate / 100;
+                              const lateFactor = Math.max(0, 1 - avg / 10);
+                              return (Math.round((onTimeFactor * 0.6 + lateFactor * 0.4) * 100) / 10).toFixed(1);
+                            })()}
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom" className="text-xs">
+                          <p>{t("disciplineScore")}</p>
+                          <p className="text-muted-foreground">
+                            {t("avgDaysLateLabel")}: {discipline.avgDaysLate}d
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">{t("disciplineScore")}</span>
+                  </div>
+                )}
               </div>
 
               {/* Credentials */}
@@ -298,15 +340,13 @@ export function ClientDetailSheet({ clientId, open, onOpenChange }: ClientDetail
 
               {/* Seats */}
               <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium">
-                    {t("seatsSection")} ({client.clientSubscriptions.length})
-                  </p>
+                {/* Full-width action buttons row */}
+                <div className="flex gap-2">
                   {activeSeats.length >= 2 && (
                     <Button
                       variant="default"
                       size="sm"
-                      className="h-7 text-xs"
+                      className="flex-1 h-8 text-xs"
                       onClick={() => setBulkRenewOpen(true)}
                     >
                       <RefreshCw className="mr-1.5 size-3" />
@@ -316,13 +356,18 @@ export function ClientDetailSheet({ clientId, open, onOpenChange }: ClientDetail
                   <Button
                     variant="outline"
                     size="sm"
-                    className="h-7 text-xs"
+                    className="flex-1 h-8 text-xs"
                     onClick={() => setAssignDialogOpen(true)}
                   >
                     <Plus className="mr-1.5 size-3" />
                     {t("assignSubscription")}
                   </Button>
                 </div>
+
+                {/* Seats count label */}
+                <p className="text-sm font-medium">
+                  {t("seatsSection")} ({client.clientSubscriptions.length})
+                </p>
 
                 {client.clientSubscriptions.length === 0 ? (
                   <p className="text-sm text-muted-foreground">{t("noActiveSeats")}</p>

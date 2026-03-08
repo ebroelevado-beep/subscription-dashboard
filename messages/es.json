@@ -367,7 +367,15 @@
     },
     "customizeRenewal": "Personalizar",
     "addNotes": "Añadir notas",
-    "allExpireSameDate": "mismo vencimiento"
+    "allExpireSameDate": "mismo vencimiento",
+    "disciplineScore": "Disciplina de pago",
+    "scoreExcellent": "Excelente (Siempre a tiempo)",
+    "scoreGood": "Buena (Rara vez tarde)",
+    "scoreAverage": "Regular (Atrasos ocasionales)",
+    "scoreBelowAverage": "Deficiente (Suele atrasarse)",
+    "scorePoor": "Mala (Muy impuntual)",
+    "avgDaysLateLabel": "Promedio de retraso",
+    "onTimeRateLabel": "Tasa a tiempo"
   },
   "history": {
     "title": "Historial de Renovaciones",
