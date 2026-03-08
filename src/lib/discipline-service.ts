@@ -44,44 +44,40 @@ export async function getDisciplineAnalytics(userId: string, filters?: { clientI
     }
   });
 
-  const perClient: Record<string, {
-    avgDaysLate: number;
-    onTimeRate: number;
-    totalPayments: number;
-    score: number | null;
-    daysOverdue: number;
-    pendingAmount: number;
-    isUnpaid: boolean;
-    healthStatus: "Excellent" | "Good" | "Late" | "Overdue" | "Critical" | "New";
-    // Detailed stats for individual view
-    lateCount: number;
-    onTimeCount: number;
-  }> = {};
+  const perClient: Record<string, any> = {};
+  const global = {
+      totalDaysLate: 0,
+      lateCount: 0,
+      onTimeCount: 0,
+      totalPayments: 0,
+      totalScorePoints: 0,
+      totalRenewals: 0
+  };
 
   const now = new Date();
 
   for (const client of clients) {
-      // Use client-specific penalty or global one
       const clientPenalty = Number((client as any).disciplinePenalty || 1.0);
       const effectivePenaltyPerDay = BASE_PENALTY_PER_DAY * strictnessMultiplier * clientPenalty;
 
       if (client.clientSubscriptions.length === 0) continue;
 
-      let onTimeCount = 0;
-      let lateCount = 0;
-      let totalDaysLate = 0;
-      let totalScorePoints = 0;
-      let totalPaymentsCount = 0;
+      let cOnTimeCount = 0;
+      let cLateCount = 0;
+      let cTotalDaysLate = 0;
+      let cTotalScorePoints = 0;
+      let cTotalPayments = 0;
       let maxDaysOverdue = 0;
       let pendingAmount = 0;
       let totalRenewalLogs = 0;
 
       for (const seat of client.clientSubscriptions) {
-          totalPaymentsCount++;
-          onTimeCount++; // Assume on time until proven otherwise for current seat
-          totalRenewalLogs += seat.renewalLogs.length;
+          cTotalPayments++;
+          cOnTimeCount++; 
+          
+          global.totalPayments++;
+          global.onTimeCount++;
 
-          // Check for current Overdue status (time since activeUntil)
           const expiryDate = new Date(seat.activeUntil);
           if (expiryDate < now && seat.status === "active") {
               const overdueMs = now.getTime() - expiryDate.getTime();
@@ -91,33 +87,41 @@ export async function getDisciplineAnalytics(userId: string, filters?: { clientI
           }
 
           for (const log of seat.renewalLogs) {
-              totalPaymentsCount++;
+              totalRenewalLogs++;
+              cTotalPayments++;
+              global.totalPayments++;
+
               const diffMs = new Date(log.paidOn).getTime() - new Date(log.dueOn).getTime();
               const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
               
               let paymentScore = 10;
               if (diffDays <= 0) {
-                  onTimeCount++;
+                  cOnTimeCount++;
+                  global.onTimeCount++;
               } else {
-                  lateCount++;
-                  totalDaysLate += diffDays;
+                  cLateCount++;
+                  cTotalDaysLate += diffDays;
+                  global.lateCount++;
+                  global.totalDaysLate += diffDays;
+
                   const deductions = diffDays * effectivePenaltyPerDay;
                   paymentScore = Math.max(0, 10 - deductions);
               }
-              totalScorePoints += paymentScore;
+              cTotalScorePoints += paymentScore;
+              global.totalScorePoints += paymentScore;
+              global.totalRenewals++;
           }
       }
 
-      const avgDaysLate = lateCount > 0 ? Math.round((totalDaysLate / lateCount) * 10) / 10 : 0;
-      const onTimeRate = totalPaymentsCount > 0 ? Math.round((onTimeCount / totalPaymentsCount) * 1000) / 10 : 100;
+      const avgDaysLate = cLateCount > 0 ? Math.round((cTotalDaysLate / cLateCount) * 10) / 10 : 0;
+      const onTimeRate = cTotalPayments > 0 ? Math.round((cOnTimeCount / cTotalPayments) * 1000) / 10 : 100;
       
-      const totalRenewals = totalPaymentsCount - client.clientSubscriptions.length; 
+      const totalRenewals = cTotalPayments - client.clientSubscriptions.length; 
       let finalScore: number | null = null;
       if (totalRenewals > 0) {
-          finalScore = totalScorePoints / totalRenewals;
+          finalScore = cTotalScorePoints / totalRenewals;
       }
 
-      // Determine Category
       let healthStatus: "Excellent" | "Good" | "Late" | "Overdue" | "Critical" | "New" = "New";
       if (totalRenewalLogs === 0) {
           healthStatus = maxDaysOverdue > 7 ? "Critical" : "New";
@@ -131,7 +135,6 @@ export async function getDisciplineAnalytics(userId: string, filters?: { clientI
           else healthStatus = "Late";
       }
 
-      // If no history but healthy, score is 10.0
       if (finalScore === null && healthStatus === "New" && maxDaysOverdue === 0) {
           finalScore = 10.0;
       }
@@ -146,18 +149,16 @@ export async function getDisciplineAnalytics(userId: string, filters?: { clientI
       perClient[client.id] = {
           avgDaysLate,
           onTimeRate,
-          totalPayments: totalPaymentsCount,
+          totalPayments: cTotalPayments,
           score: dataToPersist.disciplineScore,
           daysOverdue: maxDaysOverdue,
           pendingAmount,
           isUnpaid: totalRenewalLogs === 0,
           healthStatus,
-          lateCount,
-          onTimeCount
+          lateCount: cLateCount,
+          onTimeCount: cOnTimeCount
       };
 
-      // 4. PERSIST to Database (Source of Truth)
-      // This ensures the DB always has a clear, readable value.
       try {
           await (prisma.client as any).update({
               where: { id: client.id },
@@ -168,5 +169,15 @@ export async function getDisciplineAnalytics(userId: string, filters?: { clientI
       }
   }
 
-  return { perClient, globalAvgDaysLate: 0 };
+  return { 
+    perClient, 
+    global: {
+        avgDaysLate: global.lateCount > 0 ? Math.round((global.totalDaysLate / global.lateCount) * 10) / 10 : 0,
+        onTimeRate: global.totalPayments > 0 ? Math.round((global.onTimeCount / global.totalPayments) * 1000) / 10 : 100,
+        score: global.totalRenewals > 0 ? Math.round((global.totalScorePoints / global.totalRenewals) * 10) / 10 : 10,
+        totalPayments: global.totalPayments,
+        onTimeCount: global.onTimeCount,
+        lateCount: global.lateCount
+    }
+  };
 }

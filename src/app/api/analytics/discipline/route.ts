@@ -16,10 +16,9 @@ export async function GET(req: NextRequest) {
 
     const data = await getDisciplineAnalytics(userId, { clientId, subscriptionId, planId });
     
-    // If filtering by client, there should be exactly one entry in perClient
-    const clientEntry = clientId ? data.perClient[clientId] : Object.values(data.perClient)[0];
-
-    if (!clientEntry) {
+    const stats = clientId ? data.perClient[clientId] : data.global;
+    
+    if (!stats) {
       return success({
         totalPayments: 0,
         onTimeCount: 0,
@@ -31,12 +30,12 @@ export async function GET(req: NextRequest) {
     }
 
     return success({
-      totalPayments: clientEntry.totalPayments,
-      onTimeCount: clientEntry.onTimeCount,
-      lateCount: clientEntry.lateCount,
-      onTimeRate: clientEntry.onTimeRate,
-      avgDaysLate: clientEntry.avgDaysLate,
-      score: clientEntry.score ?? 10,
+      totalPayments: stats.totalPayments,
+      onTimeCount: stats.onTimeCount,
+      lateCount: stats.lateCount,
+      onTimeRate: stats.onTimeRate,
+      avgDaysLate: stats.avgDaysLate,
+      score: stats.score ?? 10,
     });
   });
 }

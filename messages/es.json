@@ -440,7 +440,9 @@
     "noDataAvailable": "No hay datos disponibles para este período.",
     "arpu": "ARPU",
     "cogs": "COGS",
-    "netMargin": "Margen Neto"
+    "netMargin": "Margen Neto",
+    "disciplineScore": "Puntuación de Disciplina",
+    "totalPayments": "Pagos Totales"
   },
   "settings": {
     "title": "Ajustes",

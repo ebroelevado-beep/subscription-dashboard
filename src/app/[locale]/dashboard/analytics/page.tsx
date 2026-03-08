@@ -371,61 +371,96 @@ export default function AnalyticsPage() {
             </div>
           ) : (
             <>
-              <div className="flex items-center gap-6">
-                <div className="flex items-center gap-3 flex-1">
-                  <div className="rounded-full bg-emerald-100 p-3 dark:bg-emerald-900/40">
-                    <CheckCircle className="size-6 text-emerald-600 dark:text-emerald-400" />
+              <div className="flex flex-col md:flex-row gap-6 items-center">
+                <div className="flex items-center gap-6 flex-1">
+                  <div className="flex items-center gap-3 flex-1">
+                    <div className="rounded-full bg-emerald-100 p-3 dark:bg-emerald-900/40">
+                      <CheckCircle className="size-6 text-emerald-600 dark:text-emerald-400" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold">
+                        {formatPercent(discipline?.onTimeRate ?? 100)}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {t("onTimeRate")} ({discipline?.onTimeCount ?? 0})
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-2xl font-bold">
-                      {formatPercent(discipline?.onTimeRate ?? 100)}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {t("onTimeRate")} ({discipline?.onTimeCount ?? 0})
-                    </p>
+                  <div className="w-px h-12 bg-border hidden sm:block" />
+                  <div className="flex items-center gap-3 flex-1">
+                    <div className="rounded-full bg-red-100 p-3 dark:bg-red-900/40">
+                      <AlertTriangle className="size-6 text-red-600 dark:text-red-400" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold">
+                        {formatPercent(100 - (discipline?.onTimeRate ?? 100))}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {t("latePayments")} ({discipline?.lateCount ?? 0})
+                      </p>
+                    </div>
                   </div>
                 </div>
-                <div className="w-px h-12 bg-border" />
-                <div className="flex items-center gap-3 flex-1">
-                  <div className="rounded-full bg-red-100 p-3 dark:bg-red-900/40">
-                    <AlertTriangle className="size-6 text-red-600 dark:text-red-400" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold">
-                      {formatPercent(100 - (discipline?.onTimeRate ?? 100))}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {t("latePayments")} ({discipline?.lateCount ?? 0})
-                    </p>
+
+                {/* VISUAL SCORE GAUGE/INDICATOR */}
+                <div className="w-full md:w-48 flex flex-col items-center justify-center p-4 rounded-2xl bg-muted/30 border border-primary/5 relative overflow-hidden group">
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none" />
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">{t("disciplineScore")}</p>
+                  <div className="relative flex items-center justify-center">
+                    <svg className="size-24 -rotate-90">
+                      <circle
+                        cx="48"
+                        cy="48"
+                        r="40"
+                        stroke="currentColor"
+                        strokeWidth="8"
+                        fill="transparent"
+                        className="text-muted/20"
+                      />
+                      <circle
+                        cx="48"
+                        cy="48"
+                        r="40"
+                        stroke="currentColor"
+                        strokeWidth="8"
+                        fill="transparent"
+                        strokeDasharray={251.2}
+                        strokeDashoffset={251.2 - (251.2 * (discipline?.score ?? 10)) / 10}
+                        strokeLinecap="round"
+                        className={cn(
+                          "transition-all duration-1000 ease-out",
+                          (discipline?.score ?? 10) >= 9 ? "text-emerald-500" :
+                          (discipline?.score ?? 10) >= 7 ? "text-yellow-500" :
+                          (discipline?.score ?? 10) >= 5 ? "text-orange-500" : "text-red-500"
+                        )}
+                      />
+                    </svg>
+                    <div className="absolute flex flex-col items-center justify-center leading-none">
+                      <span className="text-2xl font-black tabular-nums">{(discipline?.score ?? 10).toFixed(1)}</span>
+                      <span className="text-[10px] opacity-60">/10</span>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Visual bar */}
-              <div className="mt-4 h-3 rounded-full bg-muted overflow-hidden">
-                <div
-                  className="h-full rounded-full bg-emerald-500 transition-all duration-500"
-                  style={{ width: `${discipline?.onTimeRate ?? 100}%` }}
-                />
-              </div>
-
-              {/* Avg Days Late */}
-              <div className="mt-4 flex items-center gap-3 rounded-lg bg-muted/50 px-4 py-3">
-                <Clock className="size-4 text-muted-foreground" />
-                <div>
-                  <p className="text-sm font-medium">
-                    {t("avgDaysLate")}:{" "}
-                    <span
-                      className={cn(
-                        "font-bold tabular-nums",
-                        (discipline?.avgDaysLate ?? 0) > 0
-                          ? "text-red-600 dark:text-red-400"
-                          : "text-emerald-600 dark:text-emerald-400"
-                      )}
-                    >
-                      {discipline?.avgDaysLate ?? 0}
-                    </span>
-                  </p>
+              {/* Visual bar & Stats footer */}
+              <div className="mt-6 flex flex-col gap-4">
+                <div className="h-2 rounded-full bg-muted overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-emerald-500 transition-all duration-1000"
+                    style={{ width: `${discipline?.onTimeRate ?? 100}%` }}
+                  />
+                </div>
+                
+                <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
+                   <div className="flex items-center gap-1.5">
+                      <Clock className="size-3.5" />
+                      <span>{t("avgDaysLate")}: <strong className={cn("tabular-nums text-sm", (discipline?.avgDaysLate ?? 0) > 0 ? "text-red-500" : "text-emerald-500")}>{discipline?.avgDaysLate ?? 0}d</strong></span>
+                   </div>
+                   <div className="flex items-center gap-1.5">
+                      <Users className="size-3.5" />
+                      <span>{t("totalPayments")}: <strong className="text-foreground text-sm">{discipline?.totalPayments ?? 0}</strong></span>
+                   </div>
                 </div>
               </div>
             </>
