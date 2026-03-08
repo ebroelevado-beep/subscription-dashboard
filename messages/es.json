@@ -97,7 +97,8 @@
     "recordPayment": "Registrar Pago",
     "dashboardShortcut": "Panel",
     "newChat": "Nuevo Chat",
-    "autopayable": "Auto-pagable"
+    "autopayable": "Auto-pagable",
+    "totalPayments": "Pagos totales"
   },
   "nav": {
     "dashboard": "Panel",

@@ -76,7 +76,7 @@ export function ClientsTable({ clients, isLoading }: ClientsTableProps) {
   const router = useRouter();
   const pathname = usePathname();
 
-  const { data: discipline } = useClientsDiscipline();
+  const { data: discipline, isLoading: isDisciplineLoading } = useClientsDiscipline();
 
   useEffect(() => {
     const cid = searchParams.get("clientId");
@@ -182,20 +182,25 @@ export function ClientsTable({ clients, isLoading }: ClientsTableProps) {
                     {services}
                   </TableCell>
                   <TableCell className="text-center">
-                    {score !== null ? (
+                    {isDisciplineLoading ? (
+                      <Skeleton className="h-5 w-12 mx-auto rounded-full" />
+                    ) : score !== null ? (
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <span className={`font-mono font-semibold text-sm ${getScoreColor(score)}`}>
+                            <span className={cn("font-mono font-bold text-sm", getScoreColor(score))}>
                               {score.toFixed(1)}
                             </span>
                           </TooltipTrigger>
                           <TooltipContent side="top" className="text-xs">
                             <p>{getScoreLabel(score, t)}</p>
-                            <p className="text-muted-foreground">
-                              {t("avgDaysLateLabel")}: {cd?.avgDaysLate}d · {t("onTimeRateLabel")}: {cd?.onTimeRate}%
-                            </p>
-                          </TooltipContent>
+                             <p className="text-muted-foreground mt-1">
+                               {t("avgDaysLateLabel")}: {cd?.avgDaysLate}d · {t("onTimeRateLabel")}: {cd?.onTimeRate}%
+                             </p>
+                             <p className="text-[10px] text-muted-foreground border-t mt-1 pt-1 opacity-70">
+                               {tc("totalPayments")}: {cd?.totalPayments}
+                             </p>
+                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
                     ) : (

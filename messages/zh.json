@@ -97,7 +97,8 @@
     "recording": "录入中…",
     "recordPayment": "录入付款",
     "dashboardShortcut": "仪表板",
-    "newChat": "新对话"
+    "newChat": "新对话",
+    "totalPayments": "付款总额"
   },
   "nav": {
     "dashboard": "仪表板",

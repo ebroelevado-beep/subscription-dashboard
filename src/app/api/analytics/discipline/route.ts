@@ -43,7 +43,20 @@ export async function GET(req: NextRequest) {
       select: { paidOn: true, dueOn: true },
     });
 
-    const totalPayments = renewalLogs.length;
+    // Also fetch client subscription join dates as initial "on-time" payments
+    const seats = await prisma.clientSubscription.findMany({
+        where: {
+            clientId: where.clientSubscription.clientId,
+            subscriptionId: where.clientSubscription.subscriptionId,
+            subscription: where.clientSubscription.subscription,
+        },
+        select: { joinedAt: true }
+    });
+
+    const initialPayments = seats.map(s => ({ paidOn: s.joinedAt, dueOn: s.joinedAt }));
+    const allPayments = [...initialPayments, ...renewalLogs];
+
+    const totalPayments = allPayments.length;
 
     if (totalPayments === 0) {
       return success({
@@ -59,7 +72,7 @@ export async function GET(req: NextRequest) {
     let totalDaysLate = 0;
     let lateCount = 0;
 
-    for (const log of renewalLogs) {
+    for (const log of allPayments) {
       const paidDate = new Date(log.paidOn);
       const dueDate = new Date(log.dueOn);
       const diffMs = paidDate.getTime() - dueDate.getTime();
