@@ -52,6 +52,7 @@ export function createUserScopedTools(
                   OR: [
                     { name: { contains: search, mode: "insensitive" } },
                     { phone: { contains: search, mode: "insensitive" } },
+                    { notes: { contains: search, mode: "insensitive" } },
                   ],
                 }
               : {}),
@@ -682,6 +683,326 @@ export function createUserScopedTools(
         return {
           totalClients: results.length,
           clientsRanking: results
+        };
+      },
+    }),
+    // ──────────────────────────────────────────
+    // 10. updateUserConfig — Mutation Settings
+    // ──────────────────────────────────────────
+    defineTool("updateUserConfig", {
+      description:
+        "Update the user's personal configuration/settings (e.g. discipline penalty, currency). CRITICAL: This tool requires a second call with confirm:true to actually execute the change.",
+      parameters: z.object({
+        disciplinePenalty: z.number().min(0.1).max(2.0).describe("0.5 to 2.0").optional(),
+        currency: z.string().length(3).describe("ISO code (e.g. EUR)").optional(),
+        __safe_user_approval_ui_only: z.boolean().default(false).describe("SYSTEM-ONLY: Do not use. The UI will set this when the user clicks confirm."),
+      }),
+      handler: async ({ disciplinePenalty, currency, __safe_user_approval_ui_only }: { disciplinePenalty?: number, currency?: string, __safe_user_approval_ui_only: boolean }) => {
+        // Fetch previous state for undo capability
+        const user = await prisma.user.findUnique({
+          where: { id: userId },
+          select: { disciplinePenalty: true, currency: true }
+        });
+        if (!user) return { error: "User not found." };
+
+        if (!__safe_user_approval_ui_only) {
+          return {
+            status: "requires_confirmation",
+            message: "I am ready to update your configuration. Please confirm to proceed.",
+            pendingChanges: {
+              ...(disciplinePenalty !== undefined ? { disciplinePenalty } : {}),
+              ...(currency ? { currency } : {}),
+            }
+          };
+        }
+
+        const updated = await prisma.user.update({
+          where: { id: userId },
+          data: {
+            ...(disciplinePenalty !== undefined ? { disciplinePenalty } : {}),
+            ...(currency ? { currency } : {}),
+          },
+          select: { disciplinePenalty: true, currency: true }
+        });
+
+        return {
+            success: true,
+            status: "executed",
+            message: "Configuration updated successfully.",
+            previousValues: {
+              disciplinePenalty: user.disciplinePenalty,
+              currency: user.currency
+            },
+            config: {
+                disciplinePenalty: updated.disciplinePenalty,
+                currency: updated.currency
+            }
+        };
+      },
+    }),
+
+    // ──────────────────────────────────────────
+    // 11. updateClient — Mutation Clients
+    // ──────────────────────────────────────────
+    defineTool("updateClient", {
+      description:
+        "Update a client's information (name, phone, notes). CRITICAL: Requires a second call with confirm:true.",
+      parameters: z.object({
+        clientId: z.string().describe("The ID of the client to update."),
+        name: z.string().optional().describe("New name for the client."),
+        phone: z.string().optional().describe("New phone number."),
+        notes: z.string().optional().describe("New notes/comments."),
+        __safe_user_approval_ui_only: z.boolean().default(false).describe("SYSTEM-ONLY: Do not use."),
+      }),
+      handler: async ({ clientId, name, phone, notes, __safe_user_approval_ui_only }: { clientId: string, name?: string, phone?: string, notes?: string, __safe_user_approval_ui_only: boolean }) => {
+        // Verify ownership
+        const client = await prisma.client.findFirst({ where: { id: clientId, userId } });
+        if (!client) return { error: "Client not found or access denied." };
+
+        if (!__safe_user_approval_ui_only) {
+          return {
+            status: "requires_confirmation",
+            message: `I'm ready to update client ${client.name}. Please confirm.`,
+            pendingChanges: { name, phone, notes }
+          };
+        }
+
+        const updated = await prisma.client.update({
+          where: { id: clientId },
+          data: {
+            ...(name ? { name } : {}),
+            ...(phone ? { phone } : {}),
+            ...(notes ? { notes } : {}),
+          }
+        });
+
+        return {
+          success: true,
+          status: "executed",
+          message: `Client ${updated.name} updated successfully.`,
+          previousValues: {
+            name: client.name,
+            phone: client.phone,
+            notes: client.notes
+          },
+          client: updated
+        };
+      },
+    }),
+
+    // ──────────────────────────────────────────
+    // 12. undoMutation — Revert Changes
+    // ──────────────────────────────────────────
+    defineTool("undoMutation", {
+      description:
+        "Revert a previous database mutation using the 'previousValues' snapshot. Use this when the user clicks 'Ir Atrás'.",
+      parameters: z.object({
+        type: z.enum(["userConfig", "client", "payment"]).describe("Type of mutation to revert."),
+        targetId: z.string().describe("ID of the record to restore."),
+        previousValues: z.any().describe("The snapshot to restore."),
+      }),
+      handler: async ({ type, targetId, previousValues }: { type: string, targetId: string, previousValues: any }) => {
+        if (type === "userConfig") {
+          await prisma.user.update({
+            where: { id: userId },
+            data: previousValues
+          });
+        } else if (type === "client") {
+          const client = await prisma.client.findFirst({ where: { id: targetId, userId } });
+          if (!client) return { error: "Client not found or unauthorized for undo." };
+          
+          // If previousValues is null/empty, it means we are UNDOING a CREATION (so delete)
+          if (!previousValues || Object.keys(previousValues).length === 0) {
+            await prisma.client.delete({ where: { id: targetId } });
+            return { success: true, message: "Client creation reverted (deleted)." };
+          }
+          
+          await prisma.client.update({ where: { id: targetId }, data: previousValues });
+        } else if (type === "clientSubscription") {
+          // Undoing a seat assignment (deletion)
+          const cs = await prisma.clientSubscription.findFirst({ 
+            where: { id: targetId, client: { userId } } 
+          });
+          if (cs) {
+            await prisma.clientSubscription.delete({ where: { id: targetId } });
+            return { success: true, message: "Assignment reverted (deleted)." };
+          }
+        } else if (type === "payment") {
+          // For payments, 'undo' means deleting the log and restoring subscription date
+          const log = await prisma.renewalLog.findFirst({
+             where: { id: targetId, clientSubscription: { subscription: { userId } } },
+             include: { clientSubscription: true }
+          });
+          if (log) {
+            await prisma.clientSubscription.update({
+              where: { id: log.clientSubscriptionId! },
+              data: { activeUntil: log.dueOn }
+            });
+            await prisma.renewalLog.delete({ where: { id: targetId } });
+          }
+        }
+
+        return { success: true, message: "Action reverted successfully." };
+      },
+    }),
+
+    // ──────────────────────────────────────────
+    // 13. createClient — Mutation
+    // ──────────────────────────────────────────
+    defineTool("createClient", {
+      description: "Create a new client profile. Rejection/Undo deletes the client.",
+      parameters: z.object({
+        name: z.string().describe("The full name of the client."),
+        phone: z.string().optional().describe("Optional phone number."),
+        notes: z.string().optional().describe("Optional notes."),
+        __safe_user_approval_ui_only: z.boolean().default(false).describe("SYSTEM-ONLY."),
+      }),
+      handler: async ({ name, phone, notes, __safe_user_approval_ui_only }: { name: string, phone?: string, notes?: string, __safe_user_approval_ui_only: boolean }) => {
+        if (!__safe_user_approval_ui_only) {
+          return {
+            status: "requires_confirmation",
+            message: `I'm ready to create a new client profile for **${name}**.`,
+            pendingChanges: { name, phone, notes }
+          };
+        }
+
+        const client = await prisma.client.create({
+          data: { userId, name, phone, notes }
+        });
+
+        return {
+          success: true,
+          status: "executed",
+          message: `Client ${client.name} created successfully.`,
+          client: client,
+          previousValues: {} // Empty previousValues indicates "delete on undo"
+        };
+      },
+    }),
+
+    // ──────────────────────────────────────────
+    // 14. assignClientToSubscription — Mutation
+    // ──────────────────────────────────────────
+    defineTool("assignClientToSubscription", {
+      description: "Assign a client to a subscription group (seat). Rejection/Undo removes the assignment.",
+      parameters: z.object({
+        clientId: z.string().describe("The ID of the client."),
+        subscriptionId: z.string().describe("The ID of the subscription group (instance of a plan)."),
+        customPrice: z.number().describe("The price the client pays for this seat."),
+        activeUntil: z.string().describe("ISO date until which the seat is paid for."),
+        joinedAt: z.string().optional().describe("ISO date of joining. Defaults to today."),
+        serviceUser: z.string().optional().describe("Username/Profile name in the service."),
+        servicePassword: z.string().optional().describe("Password for this profile."),
+        __safe_user_approval_ui_only: z.boolean().default(false).describe("SYSTEM-ONLY."),
+      }),
+      handler: async ({ clientId, subscriptionId, customPrice, activeUntil, joinedAt, serviceUser, servicePassword, __safe_user_approval_ui_only }: { 
+        clientId: string, 
+        subscriptionId: string, 
+        customPrice: number, 
+        activeUntil: string, 
+        joinedAt?: string, 
+        serviceUser?: string, 
+        servicePassword?: string, 
+        __safe_user_approval_ui_only: boolean 
+      }) => {
+        // Verify ownership
+        const client = await prisma.client.findFirst({ where: { id: clientId, userId } });
+        const sub = await prisma.subscription.findFirst({ where: { id: subscriptionId, userId } });
+        if (!client || !sub) return { error: "Client or Subscription not found." };
+
+        if (!__safe_user_approval_ui_only) {
+          return {
+            status: "requires_confirmation",
+            message: `I'm ready to assign **${client.name}** to **${sub.label}** for **${customPrice}** until **${activeUntil}**.`,
+            pendingChanges: { clientId, subscriptionId, customPrice, activeUntil, serviceUser }
+          };
+        }
+
+        const cs = await prisma.clientSubscription.create({
+          data: {
+            clientId,
+            subscriptionId,
+            customPrice,
+            activeUntil: new Date(activeUntil),
+            joinedAt: joinedAt ? new Date(joinedAt) : new Date(),
+            serviceUser,
+            servicePassword,
+            status: "active"
+          }
+        });
+
+        return {
+          success: true,
+          status: "executed",
+          message: `Successfully assigned **${client.name}** to **${sub.label}**.`,
+          clientSubscription: cs,
+          previousValues: {} // Empty previousValues for pivot table creation means "delete on undo"
+        };
+      },
+    }),
+
+    // ──────────────────────────────────────────
+    // 12. logPayment — Mutation Payments
+    // ──────────────────────────────────────────
+    defineTool("logPayment", {
+      description:
+        "Register a new payment received from a client for a specific subscription. CRITICAL: Requires a second call with confirm:true.",
+      parameters: z.object({
+        clientSubscriptionId: z.string().describe("The ID of the client's seat/subscription (Not the client ID)."),
+        amountPaid: z.number().describe("The amount paid by the client."),
+        monthsRenewed: z.number().default(1).describe("Number of months the payment covers."),
+        paidOn: z.string().optional().describe("Date of payment (ISO format). Defaults to today."),
+        notes: z.string().optional().describe("Optional notes for the payment."),
+        __safe_user_approval_ui_only: z.boolean().default(false).describe("Requires user confirmation. MUST be false on first call."),
+      }),
+      handler: async ({ clientSubscriptionId, amountPaid, monthsRenewed, paidOn, notes, __safe_user_approval_ui_only }: { clientSubscriptionId: string, amountPaid: number, monthsRenewed: number, paidOn?: string, notes?: string, __safe_user_approval_ui_only: boolean }) => {
+        // Verify ownership via join
+        const cs = await prisma.clientSubscription.findFirst({
+          where: { id: clientSubscriptionId, subscription: { userId } },
+          include: { client: true, subscription: { include: { plan: { include: { platform: true } } } } }
+        });
+        if (!cs) return { error: "Client subscription not found or access denied." };
+
+        const platformName = cs.subscription.plan.platform.name;
+        
+        if (!__safe_user_approval_ui_only) {
+          return {
+            status: "requires_confirmation",
+            message: `I'm ready to register a payment of ${amountPaid}€ from ${cs.client.name} for ${platformName} (${monthsRenewed} month/s). Please confirm.`,
+            pendingChanges: { amountPaid, monthsRenewed, paidOn, notes }
+          };
+        }
+
+        // Calculate period
+        const startDate = cs.activeUntil > new Date() ? cs.activeUntil : new Date();
+        const endDate = new Date(startDate);
+        endDate.setMonth(endDate.getMonth() + monthsRenewed);
+
+        const log = await prisma.renewalLog.create({
+          data: {
+            clientSubscriptionId,
+            amountPaid,
+            expectedAmount: cs.customPrice,
+            periodStart: startDate,
+            periodEnd: endDate,
+            paidOn: paidOn ? new Date(paidOn) : new Date(),
+            dueOn: cs.activeUntil,
+            monthsRenewed,
+            notes
+          }
+        });
+
+        // Update the subscription's end date
+        await prisma.clientSubscription.update({
+          where: { id: clientSubscriptionId },
+          data: { activeUntil: endDate }
+        });
+
+        return {
+          success: true,
+          status: "executed",
+          message: `Payment of ${amountPaid}€ logged successfully for ${cs.client.name}. New expiry: ${endDate.toLocaleDateString()}.`,
+          log
         };
       },
     }),

@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useChat } from "@ai-sdk/react";
 import { useTranslations } from "next-intl";
 import type { UIMessage } from "ai";
-import { Send, Bot, Loader2, Github, Copy, Check, Terminal, ChevronDown, ChevronUp, BrainCircuit, AlertCircle, MessageSquarePlus, Sparkles, Square } from "lucide-react";
+import { SendHorizontal, Bot, Loader2, Github, Copy, Check, Terminal, ChevronDown, ChevronUp, BrainCircuit, AlertCircle, MessageSquarePlus, Sparkles, Square, X, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import ReactMarkdown from "react-markdown";
@@ -125,7 +125,10 @@ function parseTextWithThinking(text: string): { type: string; content: string; i
   return parts;
 }
 
-function ToolInvocationBlock({ part }: { part: ExtendedUIMessagePart & { toolInvocation?: { toolName?: string; state: string; result?: unknown; args?: unknown; error?: string }; errorText?: string } }) {
+function ToolInvocationBlock({ part, onConfirm }: { 
+  part: ExtendedUIMessagePart & { toolInvocation?: { toolName?: string; state: string; result?: unknown; args?: unknown; error?: string }; errorText?: string },
+  onConfirm?: (toolName: string, args: any, accepted: boolean) => void
+}) {
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'args' | 'output'>('output');
   const toolName = part.toolName || part.toolInvocation?.toolName || part.toolCall?.toolName || part.type.replace('tool-', '') || 'tool';
@@ -248,6 +251,64 @@ function ToolInvocationBlock({ part }: { part: ExtendedUIMessagePart & { toolInv
                 )
               )}
             </div>
+          </div>
+        )}
+
+        {/* Confirmation Footer — Always visible when finished and needs confirmation */}
+        {(() => {
+          const res = formattedOutput as any;
+          const isPendingConfirm = isFinished && !isError && (
+            res?.status === "requires_confirmation" || 
+            res?.pendingChanges || 
+            (typeof res === 'object' && res !== null && 'status' in res && res.status === "requires_confirmation")
+          );
+          
+          if (!isPendingConfirm) return null;
+          
+          return (
+            <div className="flex gap-2 px-4 pb-4 animate-in fade-in slide-in-from-bottom-1 duration-500">
+              <Button 
+                onClick={() => onConfirm?.(toolName, formattedArgs, true)}
+              className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-xl text-xs shadow-md transition-all active:scale-[0.95]"
+            >
+              <Check className="size-3.5 mr-2" />
+              Aceptar
+            </Button>
+            <Button 
+              variant="outline"
+              onClick={() => onConfirm?.(toolName, formattedArgs, false)}
+              className="flex-1 border-red-500/30 hover:bg-red-500/10 text-red-500 font-bold py-2 rounded-xl text-xs transition-all active:scale-[0.95]"
+            >
+              <X className="size-3.5 mr-2" />
+              Rechazar
+            </Button>
+            </div>
+          );
+        })()}
+
+        {/* Undo Footer — Always visible after successful mutation */}
+        {isFinished && !isError && (formattedOutput as any)?.success && (formattedOutput as any)?.previousValues && (
+          <div className="px-4 pb-4 animate-in fade-in slide-in-from-bottom-1 duration-500">
+            <Button 
+              variant="secondary"
+              onClick={() => {
+                const undoType = toolName === "updateUserConfig" ? "userConfig" : 
+                                toolName === "updateClient" || toolName === "createClient" ? "client" : 
+                                toolName === "logPayment" ? "payment" : 
+                                toolName === "assignClientToSubscription" ? "clientSubscription" : "";
+                const targetId = (formattedOutput as any)?.client?.id || 
+                                 (formattedOutput as any)?.clientSubscription?.id || 
+                                 (formattedOutput as any)?.log?.id || 
+                                 "myself";
+                if (undoType) {
+                    onConfirm?.("undoMutation", { type: undoType, targetId, previousValues: (formattedOutput as any).previousValues }, true);
+                }
+              }}
+              className="w-full bg-muted/50 hover:bg-muted text-muted-foreground font-bold py-1.5 rounded-xl text-[10px] uppercase tracking-wider transition-all active:scale-[0.95] group"
+            >
+              <Undo2 className="size-3 mr-2 group-hover:-rotate-45 transition-transform" />
+              Ir Atrás (Deshacer)
+            </Button>
           </div>
         )}
       </div>
@@ -413,6 +474,15 @@ export function ChatInterface() {
   const handleSubmit = (e?: React.FormEvent) => {
     e?.preventDefault();
     if (!input.trim() || !sendMessage) return;
+
+    // SaaS Usage Tracking: Increment points
+    const cost = selectedModel === "claude-haiku-4.5" ? 0.5 : 0.3;
+    fetch("/api/user/usage", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ increment: cost })
+    }).catch(err => console.error("Failed to update usage:", err));
+
     sendMessage(
       { text: input },
       { body: { model: selectedModel || undefined } }
@@ -422,6 +492,41 @@ export function ChatInterface() {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
     }
+  };
+
+  const handleConfirmTool = (toolName: string, args: any, accepted: boolean) => {
+    if (!sendMessage) return;
+    
+    if (!accepted) {
+      sendMessage(
+        { text: `No hagas el cambio. Cancela el ${toolName}.` },
+        { body: { model: selectedModel || undefined } }
+      );
+      return;
+    }
+
+    // Create a natural confirmation message that triggers the internal path
+    let confirmationText = `Sí, confirma la acción de ${toolName}.`;
+    
+    if (toolName === "updateUserConfig") {
+      const changes = [];
+      if (args.disciplinePenalty !== undefined) changes.push(`penalización a ${args.disciplinePenalty}`);
+      if (args.currency) changes.push(`moneda a ${args.currency}`);
+      confirmationText = `Confirmado: cambia ${changes.join(" y ")}.`;
+    } else if (toolName === "undoMutation") {
+      confirmationText = `Por favor, deshaz la última acción (${args.type}).`;
+    }
+
+    sendMessage(
+      { text: confirmationText },
+      { 
+        body: { 
+          model: selectedModel || undefined,
+          // We can't easily force the AI to use the obfuscated parameter from here 
+          // without it being in the schema. But we've renamed it in the schema too.
+        } 
+      }
+    );
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -616,7 +721,7 @@ export function ChatInterface() {
                       }
                       
                       if (part.type === 'tool-invocation' || part.type?.startsWith('tool-') || part.type === 'dynamic-tool' || part.type === 'tool-call') {
-                        return <ToolInvocationBlock key={i} part={part} />;
+                        return <ToolInvocationBlock key={i} part={part} onConfirm={handleConfirmTool} />;
                       }
                       return null;
                     })}
@@ -645,26 +750,24 @@ export function ChatInterface() {
             </div>
           )}
 
-          {/* Scroll anchor */}
-          <div ref={bottomRef} className="h-4" />
+        <div ref={bottomRef} className="h-4" />
         </div>
-
-        {/* Scroll to Bottom Button */}
-        {showScrollBottom && (
-          <Button
-            size="icon"
-            variant="secondary"
-            className="fixed bottom-24 right-5 sm:right-10 rounded-full shadow-2xl z-30 size-10 bg-background/80 backdrop-blur-md border border-border/40 hover:bg-background transition-all hover:-translate-y-1"
-            onClick={scrollToBottom}
-          >
-            <ChevronDown className="size-5" />
-          </Button>
-        )}
       </div>
 
       {/* ── Input Area ── sticky bottom dock (No border/footer) */}
       <div className="shrink-0 px-4 pt-2 pb-6 sm:pb-8 bg-background relative z-20">
-        <div className="max-w-4xl mx-auto group">
+        <div className="max-w-4xl mx-auto group relative">
+          {/* Scroll to Bottom Button — repositioned above dock */}
+          {showScrollBottom && (
+            <Button
+              size="icon"
+              variant="secondary"
+              className="absolute -top-12 right-0 rounded-full shadow-lg z-30 size-9 bg-background/80 backdrop-blur-md border border-border/40 hover:bg-background transition-all hover:-translate-y-0.5"
+              onClick={scrollToBottom}
+            >
+              <ChevronDown className="size-4.5" />
+            </Button>
+          )}
           <form
             onSubmit={handleSubmit}
             className="relative flex flex-col bg-muted/20 dark:bg-muted/10 border border-muted-foreground/10 rounded-[28px] shadow-[0_2px_20px_rgba(0,0,0,0.05)] dark:shadow-none transition-all duration-300 px-4 sm:px-5 py-3"
@@ -689,11 +792,14 @@ export function ChatInterface() {
                       <SelectValue placeholder="Model" />
                     </SelectTrigger>
                     <SelectContent className="rounded-xl border-border/40">
-                      {models.map(m => (
-                        <SelectItem key={m.id} value={m.id} className="text-xs font-medium rounded-lg">
-                          {m.name || m.id}
-                        </SelectItem>
-                      ))}
+                      {models.map(m => {
+                        const cost = m.id === "claude-haiku-4.5" ? 0.5 : 0.3;
+                        return (
+                          <SelectItem key={m.id} value={m.id} className="text-xs font-medium rounded-lg">
+                            {m.name} <span className="text-muted-foreground ml-1">({cost})</span>
+                          </SelectItem>
+                        );
+                      })}
                     </SelectContent>
                   </Select>
                 )}
@@ -716,7 +822,7 @@ export function ChatInterface() {
                     disabled={!input.trim()}
                     className="size-9 rounded-full shrink-0 shadow-lg bg-primary hover:bg-primary/90 transition-all active:scale-95"
                   >
-                    <Send className="size-4 ml-0.5" />
+                    <SendHorizontal className="size-4 ml-0.5" />
                   </Button>
                 )}
               </div>
