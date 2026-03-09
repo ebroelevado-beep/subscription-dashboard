@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useChat } from "@ai-sdk/react";
 import { useTranslations } from "next-intl";
 import type { UIMessage } from "ai";
-import { SendHorizontal, Bot, Loader2, Github, Copy, Check, Terminal, ChevronDown, ChevronUp, BrainCircuit, AlertCircle, MessageSquarePlus, Sparkles, Square, X, Undo2 } from "lucide-react";
+import { SendHorizontal, Bot, Loader2, Github, Copy, Check, Terminal, ChevronDown, ChevronUp, BrainCircuit, AlertCircle, MessageSquarePlus, Sparkles, Square, X, Undo2, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -125,9 +127,31 @@ function parseTextWithThinking(text: string): { type: string; content: string; i
   return parts;
 }
 
-function ToolInvocationBlock({ part, onConfirm }: { 
+// Recursively parse stringified JSON values for robust processing
+function deepParseJson(val: unknown): unknown {
+  if (typeof val === 'string') {
+    try {
+      const parsed = JSON.parse(val);
+      if (typeof parsed === 'object' && parsed !== null) return deepParseJson(parsed);
+      return parsed;
+    } catch { return val; }
+  }
+  if (Array.isArray(val)) return val.map(deepParseJson);
+  if (typeof val === 'object' && val !== null) {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(val)) out[k] = deepParseJson(v);
+    return out;
+  }
+  return val;
+}
+
+function ToolInvocationBlock({ part, onConfirm, onUndo, executedMutations, rejectedActionIds, acceptedActionIds }: { 
   part: ExtendedUIMessagePart & { toolInvocation?: { toolName?: string; state: string; result?: unknown; args?: unknown; error?: string }; errorText?: string },
-  onConfirm?: (toolName: string, args: any, accepted: boolean) => void
+  onConfirm?: (toolName: string, args: any, accepted: boolean, toolCallId?: string) => void,
+  onUndo?: (toolName: string) => void,
+  executedMutations?: Map<string, { auditLogId: string; toolName: string; undone?: boolean }>,
+  rejectedActionIds?: Set<string>,
+  acceptedActionIds?: Set<string>
 }) {
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'args' | 'output'>('output');
@@ -155,24 +179,6 @@ function ToolInvocationBlock({ part, onConfirm }: {
   const hasOutput = output !== undefined && output !== null;
   const errorText = part.errorText || part.toolInvocation?.error;
   const isError = !!errorText || state === 'error' || state === 'output-error' || part.type === 'tool-output-error';
-
-  // Recursively parse stringified JSON values for readable display
-  const deepParseJson = (val: unknown): unknown => {
-    if (typeof val === 'string') {
-      try {
-        const parsed = JSON.parse(val);
-        if (typeof parsed === 'object' && parsed !== null) return deepParseJson(parsed);
-        return parsed;
-      } catch { return val; }
-    }
-    if (Array.isArray(val)) return val.map(deepParseJson);
-    if (typeof val === 'object' && val !== null) {
-      const out: Record<string, unknown> = {};
-      for (const [k, v] of Object.entries(val)) out[k] = deepParseJson(v);
-      return out;
-    }
-    return val;
-  };
 
   const formattedArgs = deepParseJson(args);
   const formattedOutput = deepParseJson(output);
@@ -253,89 +259,150 @@ function ToolInvocationBlock({ part, onConfirm }: {
             </div>
           </div>
         )}
-
-        {/* Confirmation Footer — Always visible when finished and needs confirmation */}
         {(() => {
-          // Recursively find { status: "requires_confirmation" } at any depth
-          // The Copilot SDK wraps outputs as { content: {...}, detailedContent: {...} }
-          const findStatus = (obj: any, depth = 0): any => {
-            if (!obj || typeof obj !== 'object' || depth > 5) return null;
-            if (obj.status === "requires_confirmation") return obj;
-            for (const val of Object.values(obj)) {
-              const found = findStatus(val, depth + 1);
-              if (found) return found;
-            }
-            return null;
-          };
+           // Recursively find { status: "requires_confirmation" } at any depth
+           const findStatus = (obj: any, depth = 0): any => {
+             if (!obj || typeof obj !== 'object' || depth > 5) return null;
+             if (obj.status === "requires_confirmation") return obj;
+             for (const val of Object.values(obj)) {
+               const found = findStatus(val, depth + 1);
+               if (found) return found;
+             }
+             return null;
+           };
 
-          const confirmData = isFinished && !isError ? findStatus(formattedOutput) : null;
-          
-          console.log("[HITL-ToolBlock]", toolName, "isFinished:", isFinished, "isError:", isError, 
-            "confirmData:", confirmData, "formattedOutput keys:", formattedOutput && typeof formattedOutput === 'object' ? Object.keys(formattedOutput as object) : null);
-          
-          if (!confirmData) return null;
-          
-          return (
-            <div className="flex gap-2 px-4 pb-4 animate-in fade-in slide-in-from-bottom-1 duration-500">
-              <Button 
-                onClick={() => onConfirm?.(toolName, formattedArgs, true)}
-              className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-xl text-xs shadow-md transition-all active:scale-[0.95]"
-            >
-              <Check className="size-3.5 mr-2" />
-              Aceptar
-            </Button>
-            <Button 
-              variant="outline"
-              onClick={() => onConfirm?.(toolName, formattedArgs, false)}
-              className="flex-1 border-red-500/30 hover:bg-red-500/10 text-red-500 font-bold py-2 rounded-xl text-xs transition-all active:scale-[0.95]"
-            >
-              <X className="size-3.5 mr-2" />
-              Rechazar
-            </Button>
-            </div>
-          );
-        })()}
+           const confirmData = isFinished && !isError ? findStatus(formattedOutput) : null;
+           if (!confirmData) return null;
 
-        {/* Undo Footer — Always visible after successful mutation */}
-        {(() => {
-          // Deep search for { success: true, previousValues: {...} }
-          const findSuccess = (obj: any, depth = 0): any => {
-            if (!obj || typeof obj !== 'object' || depth > 5) return null;
-            if (obj.success && obj.previousValues) return obj;
-            for (const val of Object.values(obj)) {
-              const found = findSuccess(val, depth + 1);
-              if (found) return found;
-            }
-            return null;
-          };
-          const successData = isFinished && !isError ? findSuccess(formattedOutput) : null;
-          if (!successData) return null;
+           const callId = part.toolCallId || (part.toolInvocation as any)?.toolCallId;
+           
+           // If we've dismissed (rejected) this action, show a collapsed view
+           if (callId && rejectedActionIds?.has(callId)) {
+             return (
+                 <div className="px-4 pb-4 animate-in fade-in slide-in-from-bottom-1 duration-500">
+                   <div className="w-full bg-red-500/10 border border-red-500/20 text-red-500 font-bold py-1.5 rounded-xl text-[10px] uppercase tracking-wider text-center">
+                     ✕ Acción Rechazada
+                   </div>
+                 </div>
+             );
+           }
 
-          return (
-            <div className="px-4 pb-4 animate-in fade-in slide-in-from-bottom-1 duration-500">
-              <Button 
-                variant="secondary"
-                onClick={() => {
-                  const undoType = toolName === "updateUserConfig" ? "userConfig" : 
-                                  toolName === "updateClient" || toolName === "createClient" ? "client" : 
-                                  toolName === "logPayment" ? "payment" : 
-                                  toolName === "assignClientToSubscription" ? "clientSubscription" : "";
-                  const targetId = successData?.client?.id || 
-                                   successData?.clientSubscription?.id || 
-                                   successData?.log?.id || 
-                                   "myself";
-                  if (undoType) {
-                      onConfirm?.("undoMutation", { type: undoType, targetId, previousValues: successData.previousValues }, true);
-                  }
-                }}
-                className="w-full bg-muted/50 hover:bg-muted text-muted-foreground font-bold py-1.5 rounded-xl text-[10px] uppercase tracking-wider transition-all active:scale-[0.95] group"
-              >
-                <Undo2 className="size-3 mr-2 group-hover:-rotate-45 transition-transform" />
-                Ir Atrás (Deshacer)
-              </Button>
-            </div>
-          );
-        })()}
+           const token = confirmData?.__token as string | undefined;
+           const executionResult = token ? executedMutations?.get(token) : undefined;
+
+           // If this token has been executed, show the Undo button
+           if (executionResult) {
+             if (executionResult.undone) {
+               return (
+                 <div className="px-4 pb-4 animate-in fade-in slide-in-from-bottom-1 duration-500">
+                   <div className="w-full bg-muted/30 text-muted-foreground font-bold py-1.5 rounded-xl text-[10px] uppercase tracking-wider text-center">
+                     ✓ Acción deshecha
+                   </div>
+                 </div>
+               );
+             }
+             return (
+               <div className="px-4 pb-4 animate-in fade-in slide-in-from-bottom-1 duration-500">
+                 <Button 
+                   variant="secondary"
+                   onClick={async () => {
+                     try {
+                       const res = await fetch("/api/mutations/undo", {
+                         method: "POST",
+                         headers: { "Content-Type": "application/json" },
+                         body: JSON.stringify({ auditLogId: executionResult.auditLogId }),
+                       });
+                       const data = await res.json();
+                       if (data.success) {
+                         // Mark as undone in local state
+                         executedMutations?.set(token!, { ...executionResult, undone: true });
+                         // Force a re-render by notifying the AI
+                         onUndo?.(toolName);
+                       } else {
+                         console.error("[Undo] Error:", data.error);
+                       }
+                     } catch (err) {
+                       console.error("[Undo] Network error:", err);
+                     }
+                   }}
+                   className="w-full bg-muted/50 hover:bg-muted text-muted-foreground font-bold py-1.5 rounded-xl text-[10px] uppercase tracking-wider transition-all active:scale-[0.95] group"
+                 >
+                   <Undo2 className="size-3 mr-2 group-hover:-rotate-45 transition-transform" />
+                   Ir Atrás (Deshacer)
+                 </Button>
+               </div>
+             );
+           }
+           
+           // If accepted but not yet executed (in flight)
+           if (callId && acceptedActionIds?.has(callId)) {
+             return (
+                 <div className="px-4 pb-4 animate-in fade-in slide-in-from-bottom-1 duration-500">
+                   <div className="w-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 font-bold py-1.5 rounded-xl text-[10px] uppercase tracking-wider text-center flex items-center justify-center gap-2">
+                     <Loader2 className="size-3 animate-spin" /> Ejecutando...
+                   </div>
+                 </div>
+             );
+           }
+           
+           // Not yet executed — show Accept/Reject buttons inline (Replacing the floating panel)
+           return (
+             <div className="px-3 pb-3 pt-1 animate-in fade-in slide-in-from-bottom-1 duration-500">
+               <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 shadow-[0_0_20px_rgba(245,158,11,0.08)] p-4 flex flex-col gap-3">
+                 {/* Header */}
+                 <div className="flex items-start gap-3">
+                   <div className="size-8 rounded-xl bg-amber-500/15 flex items-center justify-center shrink-0">
+                     <Terminal className="size-4 text-amber-500" />
+                   </div>
+                   <div className="flex-1 min-w-0">
+                     <p className="text-[11px] font-bold text-amber-500 uppercase tracking-widest">Acción Requerida</p>
+                     <p className="text-sm text-foreground/90 mt-0.5 leading-snug">
+                       {confirmData.message as string || `Confirma la acción de ${toolName}`}
+                     </p>
+                   </div>
+                 </div>
+
+                 {/* Pending changes diff */}
+                 {confirmData.pendingChanges && Object.keys(confirmData.pendingChanges).length > 0 && (
+                   <div className="rounded-xl bg-muted/40 border border-border/40 px-3 py-2 font-mono text-[11px] text-muted-foreground/80 space-y-0.5 overflow-x-auto">
+                     {Object.entries(confirmData.pendingChanges).map(([k, v]) => v !== undefined && (
+                       <div key={k} className="flex gap-2">
+                         <span className="text-primary/50">+</span>
+                         <span className="text-primary/70 font-semibold">{k}:</span>
+                         <span className="truncate whitespace-pre-wrap">{String(v)}</span>
+                       </div>
+                     ))}
+                   </div>
+                 )}
+
+                 {/* Buttons */}
+                 <div className="flex gap-2 mt-1">
+                   <Button
+                     onClick={() => {
+                        const callId = part.toolCallId || (part.toolInvocation as any)?.toolCallId;
+                        onConfirm?.(toolName, { ...(confirmData.pendingChanges as Record<string, unknown> || {}), __token: confirmData?.__token }, true, callId);
+                     }}
+                     className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-sm shadow-sm transition-all active:scale-[0.97]"
+                   >
+                     <Check className="size-4 mr-2" />
+                     Aceptar
+                   </Button>
+                   <Button
+                     variant="outline"
+                     onClick={() => {
+                        const callId = part.toolCallId || (part.toolInvocation as any)?.toolCallId;
+                        onConfirm?.(toolName, confirmData.pendingChanges || formattedArgs, false, callId);
+                     }}
+                     className="flex-1 border-red-500/30 hover:bg-red-500/10 text-red-400 font-bold py-2.5 rounded-xl text-sm transition-all active:scale-[0.97]"
+                   >
+                     <X className="size-4 mr-2" />
+                     Rechazar
+                   </Button>
+                 </div>
+               </div>
+             </div>
+           );
+         })()}
       </div>
     );
   }
@@ -469,6 +536,7 @@ export function ChatInterface() {
   };
 
   const [input, setInput] = useState("");
+  const [allowDestructive, setAllowDestructive] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -482,14 +550,17 @@ export function ChatInterface() {
     toolCallId: string;
     message: string;
     pendingChanges: Record<string, unknown> | null;
+    __token?: string;
   };
-  const [hitlPending, setHitlPending] = useState<HitlPending | null>(null);
+  // Track executed mutations: token → { auditLogId, toolName, undone? }
+  const [executedMutations, setExecutedMutations] = useState<Map<string, { auditLogId: string; toolName: string; undone?: boolean }>>(new Map());
   // Track which toolCallIds we've already shown a confirmation panel for
-  const shownHitlIds = useRef<Set<string>>(new Set());
+
 
   // Helper: recursively search an object tree for { status: "requires_confirmation" }
   // Returns the matching sub-object or null
-  const findConfirmation = useCallback((obj: unknown, depth = 0): Record<string, unknown> | null => {
+  const findConfirmation = useCallback((rawObj: unknown, depth = 0): Record<string, unknown> | null => {
+    const obj = depth === 0 ? deepParseJson(rawObj) : rawObj;
     if (!obj || typeof obj !== "object" || depth > 5) return null;
     const record = obj as Record<string, unknown>;
     if (record.status === "requires_confirmation") return record;
@@ -501,77 +572,67 @@ export function ChatInterface() {
     return null;
   }, []);
 
-  // 🪝 HITL HOOK: Scan the last assistant message parts for any tool result
-  // containing status === "requires_confirmation" at ANY nesting depth.
-  useEffect(() => {
-    // Only trigger once streaming is done
-    if (status === "streaming" || status === "submitted") return;
+  const [rejectedActionIds, setRejectedActionIds] = useState<Set<string>>(new Set());
+  const [acceptedActionIds, setAcceptedActionIds] = useState<Set<string>>(new Set());
 
-    const lastMsg = messages[messages.length - 1];
-    if (!lastMsg || lastMsg.role !== "assistant") return;
+  // 🪝 HITL HOOK: Deterministically compute pending active confirmations
+  const hitlPending = useMemo(() => {
+    // We no longer block on `status === "streaming"` or `"submitted"`.
+    // The user explicitly requested the UI to lock IMMEDIATELY as soon as the tool result
+    // arrives in the array, even if the AI is still streaming its text explanation afterwards.
+    if (messages.length === 0) return null;
 
-    // Debug: log all parts of the last assistant message
-    console.log("[HITL] Scanning last assistant message parts:", 
-      JSON.stringify((lastMsg.parts ?? []).map((p: any) => ({
-        type: p.type,
-        toolName: p.toolName,
-        toolCallId: p.toolCallId,
-        hasOutput: p.output !== undefined,
-        hasResult: p.result !== undefined,
-        hasToolInvocation: p.toolInvocation !== undefined,
-        outputKeys: p.output && typeof p.output === 'object' ? Object.keys(p.output) : null,
-        resultKeys: p.result && typeof p.result === 'object' ? Object.keys(p.result) : null,
-      })), null, 2)
-    );
+    // Iterate backwards through messages until we hit a user message
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const msg = messages[i];
+      if (msg.role === "user") break; // Stop looking past the latest user prompt
 
-    // Scan all parts of the last assistant message
-    for (const part of (lastMsg.parts ?? []) as ExtendedUIMessagePart[]) {
-      // Gather ALL possible output locations
-      const candidates = [
-        (part as any).output,
-        (part as any).result,
-        (part as any).toolInvocation?.result,
-        (part as any).toolInvocation?.output,
-      ].filter(Boolean);
+      if (msg.role === "assistant") {
+        const parts = (msg.parts ?? []) as ExtendedUIMessagePart[];
+        // Scan parts backwards to get the latest tool call in the message block
+        for (let j = parts.length - 1; j >= 0; j--) {
+          const part = parts[j];
+          const candidates = [
+            (part as any).output,
+            (part as any).result,
+            (part as any).toolInvocation?.result,
+            (part as any).toolInvocation?.output,
+          ].filter(Boolean);
 
-      for (const candidate of candidates) {
-        const res = findConfirmation(candidate);
-        if (!res) continue;
+          for (const candidate of candidates) {
+            const res = findConfirmation(candidate);
+            if (!res) continue;
 
-        const toolCallId = (part as any).toolCallId ?? (part as any).toolInvocation?.toolCallId ?? crypto.randomUUID();
+            const toolCallId = (part as any).toolCallId ?? (part as any).toolInvocation?.toolCallId ?? crypto.randomUUID();
 
-        // Don't re-show a panel we've already shown for this exact tool call
-        if (shownHitlIds.current.has(toolCallId)) continue;
-        shownHitlIds.current.add(toolCallId);
+            // Optimistically hide if the user just clicked Aceptar/Rechazar 
+            if (rejectedActionIds.has(toolCallId) || acceptedActionIds.has(toolCallId)) continue;
 
-        const toolName =
-          (part as any).toolName ??
-          (part as any).toolInvocation?.toolName ??
-          (part as any).toolCall?.toolName ??
-          "tool";
+            // Hide if it's already executed successfully on the backend
+            const token = res.__token as string | undefined;
+            const isExecuted = token ? executedMutations.has(token) : false;
+            
+            if (isExecuted) continue;
 
-        console.log("[HITL] ✅ Found requires_confirmation!", { toolName, toolCallId, res });
+            const toolName =
+              (part as any).toolName ??
+              (part as any).toolInvocation?.toolName ??
+              (part as any).toolCall?.toolName ??
+              "tool";
 
-        setHitlPending({
-          toolName,
-          toolCallId,
-          message: (res.message as string) ?? `Confirm ${toolName}`,
-          pendingChanges: (res.pendingChanges as Record<string, unknown>) ?? null,
-        });
-        return; // Found one — stop scanning
+            return {
+              toolName,
+              toolCallId,
+              message: (res.message as string) ?? `Confirm ${toolName}`,
+              pendingChanges: (res.pendingChanges as Record<string, unknown>) ?? null,
+              __token: token,
+            };
+          }
+        }
       }
     }
-    console.log("[HITL] ❌ No requires_confirmation found in message parts.");
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [messages, status]);
-
-  // Clear HITL panel when user sends a new message (they replied via text)
-  useEffect(() => {
-    const lastMsg = messages[messages.length - 1];
-    if (lastMsg?.role === "user") {
-      setHitlPending(null);
-    }
-  }, [messages]);
+    return null;
+  }, [messages, status, executedMutations, findConfirmation, rejectedActionIds, acceptedActionIds]);
 
 
   const [showScrollBottom, setShowScrollBottom] = useState(false);
@@ -595,7 +656,7 @@ export function ChatInterface() {
 
   const handleSubmit = (e?: React.FormEvent) => {
     e?.preventDefault();
-    if (!input.trim() || !sendMessage) return;
+    if (hitlPending || !input.trim() || !sendMessage) return;
 
     // SaaS Usage Tracking: Increment points
     const cost = selectedModel === "claude-haiku-4.5" ? 0.5 : 0.3;
@@ -607,7 +668,7 @@ export function ChatInterface() {
 
     sendMessage(
       { text: input },
-      { body: { model: selectedModel || undefined } }
+      { body: { model: selectedModel || undefined, allowDestructive } }
     );
     setInput("");
     // Reset textarea height
@@ -616,42 +677,81 @@ export function ChatInterface() {
     }
   };
 
-  const handleConfirmTool = (toolName: string, args: any, accepted: boolean) => {
+  const handleUndoTool = (toolName: string) => {
+    if (!sendMessage) return;
+    sendMessage(
+      { text: `Ir Atrás (Deshacer) <!-- [SISTEMA] Acción de ${toolName} deshecha con éxito. El usuario ha revertido los cambios. -->` },
+      { body: { model: selectedModel || undefined, allowDestructive } }
+    );
+  };
+
+  const handleConfirmTool = async (toolName: string, args: any, accepted: boolean, toolCallId?: string) => {
+    // If the user clicks Aceptar/Rechazar while the AI is still streaming its explanation,
+    // we MUST abort the stream before injecting the confirmation message, or Vercel AI SDK will throw.
+    if (status === "streaming" || status === "submitted") stop();
+    
     if (!sendMessage) return;
     
-    // Clear the HITL pending panel — user has responded
-    setHitlPending(null);
+    const targetCallId = toolCallId || (hitlPending && hitlPending.toolName === toolName ? hitlPending.toolCallId : null);
     
     if (!accepted) {
+      if (targetCallId) setRejectedActionIds(prev => new Set(prev).add(targetCallId));
+      
+      // Just tell the AI it was rejected (no DB call needed)
       sendMessage(
-        { text: `No hagas el cambio. Cancela el ${toolName}.` },
-        { body: { model: selectedModel || undefined } }
+        { text: `Rechazar <!-- [SISTEMA] No confirmo la acción de ${toolName}. Cancelado. -->` },
+        { body: { model: selectedModel || undefined, allowDestructive } }
+      );
+      return;
+    } else {
+      if (targetCallId) setAcceptedActionIds(prev => new Set(prev).add(targetCallId));
+    }
+
+    // Extract the crypto token from the tool output
+    const token = args?.__token;
+    if (!token) {
+      // Fallback: if no token (shouldn't happen with new system), tell the AI
+      sendMessage(
+        { text: `Aceptar <!-- [SISTEMA] Sí, confirma la acción de ${toolName}. -->` },
+        { body: { model: selectedModel || undefined, allowDestructive } }
       );
       return;
     }
 
-    // Create a natural confirmation message that triggers the internal path
-    let confirmationText = `Sí, confirma la acción de ${toolName}.`;
-    
-    if (toolName === "updateUserConfig") {
-      const changes = [];
-      if (args.disciplinePenalty !== undefined) changes.push(`penalización a ${args.disciplinePenalty}`);
-      if (args.currency) changes.push(`moneda a ${args.currency}`);
-      confirmationText = `Confirmado: cambia ${changes.join(" y ")}.`;
-    } else if (toolName === "undoMutation") {
-      confirmationText = `Por favor, deshaz la última acción (${args.type}).`;
-    }
+    // === DIRECT BACKEND EXECUTION — bypasses AI entirely ===
+    try {
+      const res = await fetch("/api/mutations/execute", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token }),
+      });
+      const data = await res.json();
 
-    sendMessage(
-      { text: confirmationText },
-      { 
-        body: { 
-          model: selectedModel || undefined,
-          // We can't easily force the AI to use the obfuscated parameter from here 
-          // without it being in the schema. But we've renamed it in the schema too.
-        } 
+      if (data.success) {
+        // Track this token as executed so the ToolInvocationBlock can show Undo
+        setExecutedMutations(prev => {
+          const next = new Map(prev);
+          next.set(token, { auditLogId: data.auditLogId, toolName });
+          return next;
+        });
+        // Inform the AI post-facto so it can acknowledge in the conversation
+        sendMessage(
+          { text: `Aceptar <!-- [SISTEMA] Mutación ${toolName} ejecutada correctamente. AuditLogId: ${data.auditLogId}. Resultado: ${JSON.stringify(data.result?.message || "OK")} -->` },
+          { body: { model: selectedModel || undefined, allowDestructive } }
+        );
+      } else {
+        sendMessage(
+          { text: `Aceptar <!-- [SISTEMA] Error ejecutando ${toolName}: ${data.error} -->` },
+          { body: { model: selectedModel || undefined, allowDestructive } }
+        );
       }
-    );
+    } catch (err) {
+      console.error("[Execute] Network error:", err);
+      sendMessage(
+        { text: `Aceptar <!-- [SISTEMA] Error de red ejecutando ${toolName}. -->` },
+        { body: { model: selectedModel || undefined, allowDestructive } }
+      );
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -838,7 +938,7 @@ export function ChatInterface() {
                                   },
                                 }}
                               >
-                                {p.content}
+                                {p.content.replace(/<!--[\s\S]*?-->/g, "").trim() || "\u200B"}
                               </ReactMarkdown>
                             </div>
                           );
@@ -846,7 +946,7 @@ export function ChatInterface() {
                       }
                       
                       if (part.type === 'tool-invocation' || part.type?.startsWith('tool-') || part.type === 'dynamic-tool' || part.type === 'tool-call') {
-                        return <ToolInvocationBlock key={i} part={part} onConfirm={handleConfirmTool} />;
+                        return <ToolInvocationBlock key={i} part={part} onConfirm={handleConfirmTool} onUndo={handleUndoTool} executedMutations={executedMutations} rejectedActionIds={rejectedActionIds} acceptedActionIds={acceptedActionIds} />;
                       }
                       return null;
                     })}
@@ -879,60 +979,6 @@ export function ChatInterface() {
         </div>
       </div>
 
-      {/* ── HITL Confirmation Panel — sticky above input, appears when AI proposes a change */}
-      {hitlPending && (
-        <div className="shrink-0 px-4 py-3 bg-background z-30 border-t border-amber-500/30 animate-in slide-in-from-bottom-2 fade-in duration-300">
-          <div className="max-w-4xl mx-auto">
-            <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 shadow-[0_0_20px_rgba(245,158,11,0.08)] p-4 flex flex-col gap-3">
-              {/* Header */}
-              <div className="flex items-start gap-3">
-                <div className="size-8 rounded-xl bg-amber-500/15 flex items-center justify-center shrink-0">
-                  <Terminal className="size-4 text-amber-500" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[11px] font-bold text-amber-500 uppercase tracking-widest">Acción Requerida</p>
-                  <p className="text-sm text-foreground/90 mt-0.5 leading-snug">
-                    {hitlPending.message}
-                  </p>
-                </div>
-              </div>
-
-              {/* Pending changes diff */}
-              {hitlPending.pendingChanges && Object.keys(hitlPending.pendingChanges).length > 0 && (
-                <div className="rounded-xl bg-muted/40 border border-border/40 px-3 py-2 font-mono text-[11px] text-muted-foreground/80 space-y-0.5">
-                  {Object.entries(hitlPending.pendingChanges).map(([k, v]) => v !== undefined && (
-                    <div key={k} className="flex gap-2">
-                      <span className="text-primary/50">+</span>
-                      <span className="text-primary/70 font-semibold">{k}:</span>
-                      <span className="truncate">{String(v)}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Buttons */}
-              <div className="flex gap-2">
-                <Button
-                  onClick={() => handleConfirmTool(hitlPending.toolName, hitlPending.pendingChanges, true)}
-                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-sm shadow-sm transition-all active:scale-[0.97]"
-                >
-                  <Check className="size-4 mr-2" />
-                  Aceptar
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => handleConfirmTool(hitlPending.toolName, hitlPending.pendingChanges, false)}
-                  className="flex-1 border-red-500/30 hover:bg-red-500/10 text-red-400 font-bold py-2.5 rounded-xl text-sm transition-all active:scale-[0.97]"
-                >
-                  <X className="size-4 mr-2" />
-                  Rechazar
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* ── Input Area ── sticky bottom dock (No border/footer) */}
       <div className="shrink-0 px-4 pt-2 pb-6 sm:pb-8 bg-background relative z-20">
         <div className="max-w-4xl mx-auto group relative">
@@ -958,7 +1004,7 @@ export function ChatInterface() {
               onKeyDown={handleKeyDown}
               placeholder={t("chat.placeholder")}
               rows={1}
-              className="w-full resize-none text-[16px] sm:text-[17px] bg-transparent border-none focus:ring-0 p-0 placeholder:text-muted-foreground/50 leading-relaxed min-h-[44px] py-1 select-none outline-none"
+              className={`w-full resize-none text-[16px] sm:text-[17px] bg-transparent border-none focus:ring-0 p-0 placeholder:text-muted-foreground/50 leading-relaxed min-h-[44px] py-1 select-none outline-none`}
               style={{ maxHeight: "200px" }}
             />
             
@@ -982,15 +1028,36 @@ export function ChatInterface() {
                     </SelectContent>
                   </Select>
                 )}
+                
+                <div className="flex items-center space-x-2 ml-2 bg-red-500/10 dark:bg-red-500/5 px-2.5 py-1.5 rounded-full border border-red-500/20">
+                  <Switch 
+                    id="destructive-mode" 
+                    checked={allowDestructive} 
+                    onCheckedChange={setAllowDestructive}
+                    className="data-[state=checked]:bg-red-500 scale-90"
+                  />
+                  <Label htmlFor="destructive-mode" className="text-[10px] sm:text-xs font-bold text-red-500 flex items-center gap-1 cursor-pointer">
+                    <ShieldAlert className="size-3" /> Control Total
+                  </Label>
+                </div>
               </div>
 
               <div className="flex items-center gap-2">
-                {isLoading ? (
+                {isLoading || hitlPending ? (
                   <Button 
                     type="button"
                     size="icon"
-                    onClick={() => stop()}
-                    className="size-9 rounded-full shrink-0 shadow-lg bg-foreground hover:bg-foreground/90 transition-all active:scale-95"
+                    onClick={() => {
+                      if (isLoading) stop();
+                      if (hitlPending) {
+                        handleConfirmTool(hitlPending.toolName, hitlPending.pendingChanges, false, hitlPending.toolCallId);
+                      }
+                    }}
+                    className={`size-9 rounded-full shrink-0 shadow-lg transition-all active:scale-95 ${
+                      hitlPending 
+                        ? "bg-amber-500 hover:bg-amber-600 animate-pulse text-white" 
+                        : "bg-foreground hover:bg-foreground/90"
+                    }`}
                   >
                     <Square className="size-3.5 fill-current" />
                   </Button>
@@ -999,7 +1066,7 @@ export function ChatInterface() {
                     type="submit" 
                     size="icon" 
                     disabled={!input.trim()}
-                    className="size-9 rounded-full shrink-0 shadow-lg bg-primary hover:bg-primary/90 transition-all active:scale-95"
+                    className="size-9 rounded-full shrink-0 shadow-lg bg-primary hover:bg-primary/90 disabled:opacity-50 transition-all active:scale-95"
                   >
                     <SendHorizontal className="size-4 ml-0.5" />
                   </Button>

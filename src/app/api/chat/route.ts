@@ -27,7 +27,7 @@ export async function POST(req: Request) {
     }
 
     // 3. Parse Incoming Chat Messages & Model Selection
-    const { messages, model } = await req.json();
+    const { messages, model, allowDestructive } = await req.json();
 
     if (!messages?.length) {
       return new Response(JSON.stringify({ error: "No messages found" }), { status: 400 });
@@ -103,7 +103,7 @@ export async function POST(req: Request) {
           const dirs = readdirSync(pnpmDir);
           const copilotDir = dirs.find(d => d.startsWith("@github+copilot@"));
           if (copilotDir) {
-             pnpmCliPath = join(pnpmDir, copilotDir, "node_modules", "@github", "copilot", "index.js");
+            pnpmCliPath = join(pnpmDir, copilotDir, "node_modules", "@github", "copilot", "index.js");
           }
         }
       } catch (e) {
@@ -162,8 +162,16 @@ export async function POST(req: Request) {
           "- Calculate total MRR, costs, profit, and per-platform breakdown",
           "- Search payment history by client or date range",
           "- List platform renewal payments by provider or date range",
-          "- **Create new clients** and **assign them to subscription groups (seats)**",
-          "- Modify any existing data with full Accept/Reject/Undo support",
+          ...(allowDestructive ? [
+            "*** ADVANCED CONTROL TOTAL MODE ENABLED ***",
+            "- **Propose** creating new clients and assigning them to seats (the UI executes after approval)",
+            "- **Propose** removing clients from specific seats (can be done in bulk)",
+            "- **Propose** deleting clients completely (can be done in bulk)",
+            "- **Propose** modifications to any data (the UI handles execution and undo)"
+          ] : [
+            "*** READ ONLY MODE ***",
+            "- You CANNOT create, update, or delete users because the user has not enabled 'Control Total' mode. Tell them to turn it on if they ask."
+          ]),
           "",
           "6. Answer in the same language the user writes in.",
           "",
@@ -171,17 +179,19 @@ export async function POST(req: Request) {
           "1. BE AUTONOMOUS: If a search for a specific name (e.g. 'Angel') yields no results, DO NOT give up immediately. Try broader searches (e.g. use just 'Ang') before reporting failure.",
           "2. FUZZY MATCHING: Favor partial or similar matches.",
           "",
-          "DATABASE MUTATION RULES (SAFETY FIRST — READ CAREFULLY):",
-          "1. TWO-TURN PROTOCOL: Every mutation uses exactly TWO separate turns:",
-          "   TURN 1 (PROPOSAL): Call the tool with `__safe_user_approval_ui_only: false`. The tool returns `status: requires_confirmation`. Your response ENDS HERE. Do NOT call the tool again.",
-          "   TURN 2 (EXECUTION): ONLY when the user sends a NEW message containing explicit approval (e.g. 'sí', 'confirmo', 'Aceptar', 'yes', 'ok'). Then call the tool with `__safe_user_approval_ui_only: true`.",
-          "2. HARD STOP AFTER PROPOSAL: After TURN 1, STOP COMPLETELY. Do NOT write any text asking for confirmation. Do NOT call __safe_user_approval_ui_only: true. The UI shows buttons automatically — you do not need to ask.",
-          "3. NEVER self-confirm: You are FORBIDDEN from calling a tool with __safe_user_approval_ui_only: true in the same response turn that you made the proposal. This is the most critical rule.",
-          "4. CHAINED MUTATIONS: If a task needs multiple mutations (e.g. unassign + delete), propose them ALL in a single proposal turn showing all pending changes, then wait for ONE approval before executing all of them.",
-          "5. STOP AFTER EXECUTION: Once mutations are committed (status: executed), summarize briefly and stop.",
+          "DATABASE MUTATION RULES (PROPOSAL-ONLY — YOU CANNOT EXECUTE):",
+          "1. **PROPOSAL ONLY**: You cannot write to the database. You only CALL mutation tools to PROPOSE changes. The UI handles the real execution via a separate secure path after the user clicks 'Aceptar'.",
+          "2. **STRICT SINGLE-TOOL LIMIT**: NEVER call more than one mutation tool in a single turn. No chaining.",
+          "3. **IMMEDIATE TURN TERMINATION**: You MUST stop generating text and tools IMMEDIATELY after calling any mutation tool (createClient, updateUserConfig, updateClient, deleteClients, assignClientToSubscription, removeClientsFromSubscription, managePlatforms, managePlans, manageSubscriptions, logPayment).",
+          "4. **NO HALLUCINATIONS**: NEVER write text that simulates a system response or pre-emptively claims success. NEVER use tags like <system_message> or [SISTEMA] in your outgoing text. Those tags are ONLY for messages you RECEIVE.",
+          "5. **STEP-BY-STEP FLOW**: If a task requires multiple steps (e.g., creating a client then assigning it), you MUST propose Step 1, END your turn, wait for the User to click Aceptar, and then in the NEXT turn (after receiving a [SISTEMA] result), propose Step 2.",
+          "6. **NO PLACEHOLDERS**: Never call a second tool using a placeholder ID (like 'test-user-001') before you have received the actual ID from a [SISTEMA] result message.",
+          "7. **DELETION SAFETY**: Before explicitly deleting or removing, ALWAYS summarize the target profile to the user in text before the tool call.",
+          "8. **CRITICAL FORMATTING RULE**: Whenever you list multiple entities, ALWAYS use a SINGLE Markdown table. No individual text blocks.",
+          "9. **BULK ACTIONS**: Use the bulk tools (deleteClients, managePlatforms, etc.) when handling multiple existing records at once to keep it in a single proposal.",
         ].join("\n"),
       },
-      tools: createUserScopedTools(defineTool, session.user.id),
+      tools: createUserScopedTools(defineTool, session.user.id, allowDestructive),
     });
 
     // 7. Stream the response using Vercel AI SDK UI Message Stream format
@@ -239,7 +249,7 @@ export async function POST(req: Request) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           copilotSession.on("tool.execution_start", (event: any) => {
             closeThinkingIfOpen();
-            
+
             // Only end the text part ONCE when the first tool of a parallel batch starts
             if (insideTextPart) {
               writer.write({ type: "text-end", id: partId });
@@ -276,7 +286,7 @@ export async function POST(req: Request) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           copilotSession.on("tool.execution_complete", (event: any) => {
             closeThinkingIfOpen();
-            
+
             // Ensure result is always a parsed object, not a string
             let parsedResult = event.data.result || { status: "success" };
             if (typeof parsedResult === "string") {
@@ -321,14 +331,14 @@ export async function POST(req: Request) {
           // Handle Copilot SDK session errors (single combined handler)
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           copilotSession.on("session.error", (event: any) => {
-             closeThinkingIfOpen();
-             try {
-               writer.write({ type: "text-end", id: partId });
-               writer.write({ type: "error", error: event.data?.message || event?.message || "A Copilot session error occurred." });
-             } catch {
-               // stream may already be closed
-             }
-             safeResolve();
+            closeThinkingIfOpen();
+            try {
+              writer.write({ type: "text-end", id: partId });
+              writer.write({ type: "error", error: event.data?.message || event?.message || "A Copilot session error occurred." });
+            } catch {
+              // stream may already be closed
+            }
+            safeResolve();
           });
 
           copilotSession.on("session.idle", async () => {

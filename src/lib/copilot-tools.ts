@@ -8,6 +8,7 @@
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getDisciplineAnalytics } from "@/lib/discipline-service";
+import { createMutationToken } from "@/lib/mutation-token";
 
 // Type for defineTool — imported dynamically in route.ts
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -19,14 +20,15 @@ type DefineToolFn = (...args: any[]) => any;
 export function createUserScopedTools(
   defineTool: DefineToolFn,
   userId: string,
+  allowDestructive: boolean = false
 ) {
-  return [
+  const tools = [
     // ──────────────────────────────────────────
     // 1. listClients — Search/list clients
     // ──────────────────────────────────────────
     defineTool("listClients", {
       description:
-        "List or search the user's clients. Returns name, phone, notes, and number of active subscriptions. Use this to find clients or get an overview.",
+        "List or search the user's clients. Returns name, phone, notes, payment discipline info, and number of active subscriptions. Use this to find clients or get an overview.",
       parameters: z.object({
         search: z
           .string()
@@ -63,6 +65,10 @@ export function createUserScopedTools(
              phone: true,
              notes: true,
              createdAt: true,
+             disciplineScore: true,
+             dailyPenalty: true,
+             daysOverdue: true,
+             healthStatus: true,
              _count: { select: { clientSubscriptions: true } },
           },
           orderBy: { name: "asc" },
@@ -71,11 +77,15 @@ export function createUserScopedTools(
 
         return {
           totalFound: clients.length,
-          clients: clients.map((c) => ({
+          clients: clients.map((c: any) => ({
             id: c.id,
             name: c.name,
             phone: c.phone,
             notes: c.notes,
+            disciplineScore: c.disciplineScore ? Number(c.disciplineScore) : null,
+            dailyPenalty: c.dailyPenalty ? Number(c.dailyPenalty) : 0.5,
+            daysOverdue: c.daysOverdue,
+            healthStatus: c.healthStatus || "New",
             activeSubscriptions: c._count.clientSubscriptions,
             createdAt: c.createdAt,
           })),
@@ -88,7 +98,7 @@ export function createUserScopedTools(
     // ──────────────────────────────────────────
     defineTool("getClientDetails", {
       description:
-        "Get full details for specific clients including all their active subscriptions (seats), which platforms they're on, what they pay, and their recent payment history. Pass an array of clientIds to fetch multiple clients at once efficiently.",
+        "Get full details for specific clients including all their active subscriptions (seats), payment discipline info, which platforms they're on, what they pay, and their recent payment history. Pass an array of clientIds to fetch multiple clients at once efficiently.",
       parameters: z.object({
         clientIds: z.union([z.string(), z.array(z.string())]).describe("A single client ID or an array of client IDs to fetch in bulk"),
       }),
@@ -102,6 +112,10 @@ export function createUserScopedTools(
             phone: true,
             notes: true,
             createdAt: true,
+            disciplineScore: true,
+            dailyPenalty: true,
+            daysOverdue: true,
+            healthStatus: true,
             clientSubscriptions: {
               select: {
                 id: true,
@@ -135,13 +149,17 @@ export function createUserScopedTools(
 
         if (!clients.length) return { error: "No clients found or access denied" };
 
-        const mappedClients = clients.map(client => ({
+        const mappedClients = clients.map((client: any) => ({
           id: client.id,
           name: client.name,
           phone: client.phone,
           notes: client.notes,
+          disciplineScore: client.disciplineScore ? Number(client.disciplineScore) : null,
+          dailyPenalty: client.dailyPenalty ? Number(client.dailyPenalty) : 0.5,
+          daysOverdue: client.daysOverdue,
+          healthStatus: client.healthStatus || "New",
           createdAt: client.createdAt,
-          subscriptions: client.clientSubscriptions.map((cs) => ({
+          subscriptions: client.clientSubscriptions.map((cs: any) => ({
             seatId: cs.id,
             platform: cs.subscription.plan.platform.name,
             plan: cs.subscription.plan.name,
@@ -150,7 +168,7 @@ export function createUserScopedTools(
             pricePerMonth: Number(cs.customPrice),
             activeUntil: cs.activeUntil,
             joinedAt: cs.joinedAt,
-            recentPayments: cs.renewalLogs.map((rl) => ({
+            recentPayments: cs.renewalLogs.map((rl: any) => ({
               amount: Number(rl.amountPaid),
               periodStart: rl.periodStart,
               periodEnd: rl.periodEnd,
@@ -638,21 +656,23 @@ export function createUserScopedTools(
         };
       },
     }),
-
     // ──────────────────────────────────────────
     // 9. getDisciplineScores — Worst/Best clients
     // ──────────────────────────────────────────
     defineTool("getDisciplineScores", {
       description:
-        "Get pre-calculated payment discipline scores (0.0 to 10.0) for every client. Use this to find 'worst clients' (scores < 5.0) or 'best clients' (score = 10.0) instantly, WITHOUT downloading raw payment histories.",
+        "Get pre-calculated payment discipline scores (0.0 to 10.0) for every client. MUST use this to find 'worst clients' (scores < 5.0), 'best clients', or anyone owing money instantly, WITHOUT downloading raw payment histories.",
       parameters: z.object({}),
       handler: async () => {
-        // Fetch clients with persisted metrics
+        // Fetch detailed stats calculated by the engine
+        const analytics = await getDisciplineAnalytics(userId);
+
+        // Fetch clients with persisted metrics to map IDs to Names and Phones
         const clients = await (prisma.client as any).findMany({
             where: { userId },
-            select: { 
-                id: true, 
-                name: true, 
+            select: {
+                id: true,
+                name: true,
                 phone: true,
                 disciplineScore: true,
                 healthStatus: true,
@@ -661,15 +681,24 @@ export function createUserScopedTools(
             }
         });
 
-        const results = clients.map((c: any) => ({
-            clientId: c.id,
-            name: c.name,
-            phone: c.phone || "Unknown",
-            score: c.disciplineScore ? Number(c.disciplineScore) : null,
-            healthStatus: c.healthStatus || "New",
-            daysOverdue: c.daysOverdue,
-            dailyPenalty: c.dailyPenalty ? Number(c.dailyPenalty) : 0.5
-        }));
+        const results = clients.map((c: any) => {
+            const stats = analytics.perClient[c.id] || {};
+            return {
+                clientId: c.id,
+                name: c.name,
+                phone: c.phone || "Unknown",
+                score: c.disciplineScore ? Number(c.disciplineScore) : null,
+                healthStatus: c.healthStatus || "New",
+                daysOverdue: c.daysOverdue,
+                dailyPenalty: c.dailyPenalty ? Number(c.dailyPenalty) : 0.5,
+                avgDaysLate: stats.avgDaysLate || 0,
+                totalPayments: stats.totalPayments || 0,
+                lateCount: stats.lateCount || 0,
+                onTimeRate: stats.onTimeRate ?? 100,
+                pendingAmount: stats.pendingAmount || 0,
+                isUnpaid: stats.isUnpaid || false
+            };
+        });
 
         // Sort worst to best by default to prioritize answering "worst clients"
         results.sort((a: any, b: any) => {
@@ -681,210 +710,80 @@ export function createUserScopedTools(
         });
 
         return {
-          totalClients: results.length,
-          clientsRanking: results
+            globalStats: analytics.global,
+            totalClients: results.length,
+            clientsRanking: results
         };
       },
     }),
-    // ──────────────────────────────────────────
-    // 10. updateUserConfig — Mutation Settings
-    // ──────────────────────────────────────────
+  ];
+
+  if (!allowDestructive) {
+    tools.push(
+      defineTool("undoMutation", {
+        description: "This tool is informational only. Undo is handled directly by the UI via a secure backend endpoint. If the user asks to undo something, tell them to use the 'Ir Atrás' button shown after each executed mutation.",
+        parameters: z.object({}),
+        handler: async () => ({
+          message: "Undo is handled directly by the UI. Use the 'Ir Atrás' button that appears after each confirmed change."
+        })
+      })
+    );
+    return tools;
+  }
+
+  // ALLOW DESTRUCTIVE MODE ENABLED - Add all mutation tools
+  tools.push(
     defineTool("updateUserConfig", {
-      description:
-        "Update the user's personal configuration/settings (e.g. discipline penalty, currency). CRITICAL: This tool requires a second call with confirm:true to actually execute the change.",
+      description: "Propose an update to the user's personal configuration (e.g. discipline penalty, currency).",
       parameters: z.object({
         disciplinePenalty: z.number().min(0.1).max(2.0).describe("0.5 to 2.0").optional(),
         currency: z.string().length(3).describe("ISO code (e.g. EUR)").optional(),
-        __safe_user_approval_ui_only: z.boolean().default(false).describe("SYSTEM-ONLY: Do not use. The UI will set this when the user clicks confirm."),
       }),
-      handler: async ({ disciplinePenalty, currency, __safe_user_approval_ui_only }: { disciplinePenalty?: number, currency?: string, __safe_user_approval_ui_only: boolean }) => {
-        // Fetch previous state for undo capability
-        const user = await prisma.user.findUnique({
-          where: { id: userId },
-          select: { disciplinePenalty: true, currency: true }
-        });
+      handler: async ({ disciplinePenalty, currency }: any) => {
+        const user = await prisma.user.findUnique({ where: { id: userId }, select: { disciplinePenalty: true, currency: true }});
         if (!user) return { error: "User not found." };
-
-        if (!__safe_user_approval_ui_only) {
-          return {
-            status: "requires_confirmation",
-            message: "I am ready to update your configuration. Please confirm to proceed.",
-            pendingChanges: {
-              ...(disciplinePenalty !== undefined ? { disciplinePenalty } : {}),
-              ...(currency ? { currency } : {}),
-            }
-          };
-        }
-
-        const updated = await prisma.user.update({
-          where: { id: userId },
-          data: {
-            ...(disciplinePenalty !== undefined ? { disciplinePenalty } : {}),
-            ...(currency ? { currency } : {}),
-          },
-          select: { disciplinePenalty: true, currency: true }
-        });
-
-        return {
-            success: true,
-            status: "executed",
-            message: "Configuration updated successfully.",
-            previousValues: {
-              disciplinePenalty: user.disciplinePenalty,
-              currency: user.currency
-            },
-            config: {
-                disciplinePenalty: updated.disciplinePenalty,
-                currency: updated.currency
-            }
-        };
+        const pendingChanges = { ...(disciplinePenalty !== undefined ? { disciplinePenalty } : {}), ...(currency ? { currency } : {}) };
+        const { token } = await createMutationToken(userId, { toolName: "updateUserConfig", targetId: userId, action: "update", changes: pendingChanges, previousValues: { disciplinePenalty: user.disciplinePenalty, currency: user.currency } });
+        await prisma.mutationAuditLog.update({ where: { token }, data: { newValues: pendingChanges } });
+        return { status: "requires_confirmation", __token: token, message: "I am ready to update your configuration.", pendingChanges };
       },
     }),
 
-    // ──────────────────────────────────────────
-    // 11. updateClient — Mutation Clients
-    // ──────────────────────────────────────────
     defineTool("updateClient", {
-      description:
-        "Update a client's information (name, phone, notes). CRITICAL: Requires a second call with confirm:true.",
+      description: "Propose an update to a client's information (name, phone, notes).",
       parameters: z.object({
         clientId: z.string().describe("The ID of the client to update."),
         name: z.string().optional().describe("New name for the client."),
         phone: z.string().optional().describe("New phone number."),
         notes: z.string().optional().describe("New notes/comments."),
-        __safe_user_approval_ui_only: z.boolean().default(false).describe("SYSTEM-ONLY: Do not use."),
       }),
-      handler: async ({ clientId, name, phone, notes, __safe_user_approval_ui_only }: { clientId: string, name?: string, phone?: string, notes?: string, __safe_user_approval_ui_only: boolean }) => {
-        // Verify ownership
+      handler: async ({ clientId, name, phone, notes }: any) => {
         const client = await prisma.client.findFirst({ where: { id: clientId, userId } });
         if (!client) return { error: "Client not found or access denied." };
-
-        if (!__safe_user_approval_ui_only) {
-          return {
-            status: "requires_confirmation",
-            message: `I'm ready to update client ${client.name}. Please confirm.`,
-            pendingChanges: { name, phone, notes }
-          };
-        }
-
-        const updated = await prisma.client.update({
-          where: { id: clientId },
-          data: {
-            ...(name ? { name } : {}),
-            ...(phone ? { phone } : {}),
-            ...(notes ? { notes } : {}),
-          }
-        });
-
-        return {
-          success: true,
-          status: "executed",
-          message: `Client ${updated.name} updated successfully.`,
-          previousValues: {
-            name: client.name,
-            phone: client.phone,
-            notes: client.notes
-          },
-          client: updated
-        };
+        const pendingChanges = { name, phone, notes };
+        const { token } = await createMutationToken(userId, { toolName: "updateClient", targetId: clientId, action: "update", changes: pendingChanges, previousValues: { name: client.name, phone: client.phone, notes: client.notes } });
+        await prisma.mutationAuditLog.update({ where: { token }, data: { newValues: pendingChanges } });
+        return { status: "requires_confirmation", __token: token, message: `I'm ready to update client ${client.name}.`, pendingChanges };
       },
     }),
 
-    // ──────────────────────────────────────────
-    // 12. undoMutation — Revert Changes
-    // ──────────────────────────────────────────
-    defineTool("undoMutation", {
-      description:
-        "Revert a previous database mutation using the 'previousValues' snapshot. Use this when the user clicks 'Ir Atrás'.",
-      parameters: z.object({
-        type: z.enum(["userConfig", "client", "payment"]).describe("Type of mutation to revert."),
-        targetId: z.string().describe("ID of the record to restore."),
-        previousValues: z.any().describe("The snapshot to restore."),
-      }),
-      handler: async ({ type, targetId, previousValues }: { type: string, targetId: string, previousValues: any }) => {
-        if (type === "userConfig") {
-          await prisma.user.update({
-            where: { id: userId },
-            data: previousValues
-          });
-        } else if (type === "client") {
-          const client = await prisma.client.findFirst({ where: { id: targetId, userId } });
-          if (!client) return { error: "Client not found or unauthorized for undo." };
-          
-          // If previousValues is null/empty, it means we are UNDOING a CREATION (so delete)
-          if (!previousValues || Object.keys(previousValues).length === 0) {
-            await prisma.client.delete({ where: { id: targetId } });
-            return { success: true, message: "Client creation reverted (deleted)." };
-          }
-          
-          await prisma.client.update({ where: { id: targetId }, data: previousValues });
-        } else if (type === "clientSubscription") {
-          // Undoing a seat assignment (deletion)
-          const cs = await prisma.clientSubscription.findFirst({ 
-            where: { id: targetId, client: { userId } } 
-          });
-          if (cs) {
-            await prisma.clientSubscription.delete({ where: { id: targetId } });
-            return { success: true, message: "Assignment reverted (deleted)." };
-          }
-        } else if (type === "payment") {
-          // For payments, 'undo' means deleting the log and restoring subscription date
-          const log = await prisma.renewalLog.findFirst({
-             where: { id: targetId, clientSubscription: { subscription: { userId } } },
-             include: { clientSubscription: true }
-          });
-          if (log) {
-            await prisma.clientSubscription.update({
-              where: { id: log.clientSubscriptionId! },
-              data: { activeUntil: log.dueOn }
-            });
-            await prisma.renewalLog.delete({ where: { id: targetId } });
-          }
-        }
-
-        return { success: true, message: "Action reverted successfully." };
-      },
-    }),
-
-    // ──────────────────────────────────────────
-    // 13. createClient — Mutation
-    // ──────────────────────────────────────────
     defineTool("createClient", {
-      description: "Create a new client profile. Rejection/Undo deletes the client.",
+      description: "Propose creating a new client profile.",
       parameters: z.object({
         name: z.string().describe("The full name of the client."),
         phone: z.string().optional().describe("Optional phone number."),
         notes: z.string().optional().describe("Optional notes."),
-        __safe_user_approval_ui_only: z.boolean().default(false).describe("SYSTEM-ONLY."),
       }),
-      handler: async ({ name, phone, notes, __safe_user_approval_ui_only }: { name: string, phone?: string, notes?: string, __safe_user_approval_ui_only: boolean }) => {
-        if (!__safe_user_approval_ui_only) {
-          return {
-            status: "requires_confirmation",
-            message: `I'm ready to create a new client profile for **${name}**.`,
-            pendingChanges: { name, phone, notes }
-          };
-        }
-
-        const client = await prisma.client.create({
-          data: { userId, name, phone, notes }
-        });
-
-        return {
-          success: true,
-          status: "executed",
-          message: `Client ${client.name} created successfully.`,
-          client: client,
-          previousValues: {} // Empty previousValues indicates "delete on undo"
-        };
+      handler: async ({ name, phone, notes }: any) => {
+        const pendingChanges = { name, phone, notes };
+        const { token } = await createMutationToken(userId, { toolName: "createClient", action: "create", changes: pendingChanges, previousValues: null });
+        await prisma.mutationAuditLog.update({ where: { token }, data: { newValues: pendingChanges } });
+        return { status: "requires_confirmation", __token: token, message: `I'm ready to create a new client profile for **${name}**.`, pendingChanges };
       },
     }),
 
-    // ──────────────────────────────────────────
-    // 14. assignClientToSubscription — Mutation
-    // ──────────────────────────────────────────
     defineTool("assignClientToSubscription", {
-      description: "Assign a client to a subscription group (seat). Rejection/Undo removes the assignment.",
+      description: "Propose assigning a client to a subscription group (seat).",
       parameters: z.object({
         clientId: z.string().describe("The ID of the client."),
         subscriptionId: z.string().describe("The ID of the subscription group (instance of a plan)."),
@@ -893,118 +792,168 @@ export function createUserScopedTools(
         joinedAt: z.string().optional().describe("ISO date of joining. Defaults to today."),
         serviceUser: z.string().optional().describe("Username/Profile name in the service."),
         servicePassword: z.string().optional().describe("Password for this profile."),
-        __safe_user_approval_ui_only: z.boolean().default(false).describe("SYSTEM-ONLY."),
       }),
-      handler: async ({ clientId, subscriptionId, customPrice, activeUntil, joinedAt, serviceUser, servicePassword, __safe_user_approval_ui_only }: { 
-        clientId: string, 
-        subscriptionId: string, 
-        customPrice: number, 
-        activeUntil: string, 
-        joinedAt?: string, 
-        serviceUser?: string, 
-        servicePassword?: string, 
-        __safe_user_approval_ui_only: boolean 
-      }) => {
-        // Verify ownership
+      handler: async ({ clientId, subscriptionId, customPrice, activeUntil, joinedAt, serviceUser, servicePassword }: any) => {
         const client = await prisma.client.findFirst({ where: { id: clientId, userId } });
         const sub = await prisma.subscription.findFirst({ where: { id: subscriptionId, userId } });
         if (!client || !sub) return { error: "Client or Subscription not found." };
-
-        if (!__safe_user_approval_ui_only) {
-          return {
-            status: "requires_confirmation",
-            message: `I'm ready to assign **${client.name}** to **${sub.label}** for **${customPrice}** until **${activeUntil}**.`,
-            pendingChanges: { clientId, subscriptionId, customPrice, activeUntil, serviceUser }
-          };
-        }
-
-        const cs = await prisma.clientSubscription.create({
-          data: {
-            clientId,
-            subscriptionId,
-            customPrice,
-            activeUntil: new Date(activeUntil),
-            joinedAt: joinedAt ? new Date(joinedAt) : new Date(),
-            serviceUser,
-            servicePassword,
-            status: "active"
-          }
-        });
-
-        return {
-          success: true,
-          status: "executed",
-          message: `Successfully assigned **${client.name}** to **${sub.label}**.`,
-          clientSubscription: cs,
-          previousValues: {} // Empty previousValues for pivot table creation means "delete on undo"
-        };
+        const pendingChanges = { clientId, subscriptionId, customPrice, activeUntil, joinedAt, serviceUser, servicePassword };
+        const { token } = await createMutationToken(userId, { toolName: "assignClientToSubscription", action: "create", changes: pendingChanges, previousValues: null });
+        await prisma.mutationAuditLog.update({ where: { token }, data: { newValues: pendingChanges } });
+        return { status: "requires_confirmation", __token: token, message: `I'm ready to assign **${client.name}** to **${sub.label}**.`, pendingChanges };
       },
     }),
 
-    // ──────────────────────────────────────────
-    // 12. logPayment — Mutation Payments
-    // ──────────────────────────────────────────
     defineTool("logPayment", {
-      description:
-        "Register a new payment received from a client for a specific subscription. CRITICAL: Requires a second call with confirm:true.",
+      description: "Propose registering a new payment received from a client.",
       parameters: z.object({
         clientSubscriptionId: z.string().describe("The ID of the client's seat/subscription (Not the client ID)."),
         amountPaid: z.number().describe("The amount paid by the client."),
         monthsRenewed: z.number().default(1).describe("Number of months the payment covers."),
         paidOn: z.string().optional().describe("Date of payment (ISO format). Defaults to today."),
         notes: z.string().optional().describe("Optional notes for the payment."),
-        __safe_user_approval_ui_only: z.boolean().default(false).describe("Requires user confirmation. MUST be false on first call."),
       }),
-      handler: async ({ clientSubscriptionId, amountPaid, monthsRenewed, paidOn, notes, __safe_user_approval_ui_only }: { clientSubscriptionId: string, amountPaid: number, monthsRenewed: number, paidOn?: string, notes?: string, __safe_user_approval_ui_only: boolean }) => {
-        // Verify ownership via join
-        const cs = await prisma.clientSubscription.findFirst({
-          where: { id: clientSubscriptionId, subscription: { userId } },
-          include: { client: true, subscription: { include: { plan: { include: { platform: true } } } } }
-        });
+      handler: async ({ clientSubscriptionId, amountPaid, monthsRenewed, paidOn, notes }: any) => {
+        const cs = await prisma.clientSubscription.findFirst({ where: { id: clientSubscriptionId, subscription: { userId } }, include: { client: true, subscription: { include: { plan: { include: { platform: true } } } } } });
         if (!cs) return { error: "Client subscription not found or access denied." };
-
-        const platformName = cs.subscription.plan.platform.name;
-        
-        if (!__safe_user_approval_ui_only) {
-          return {
-            status: "requires_confirmation",
-            message: `I'm ready to register a payment of ${amountPaid}€ from ${cs.client.name} for ${platformName} (${monthsRenewed} month/s). Please confirm.`,
-            pendingChanges: { amountPaid, monthsRenewed, paidOn, notes }
-          };
-        }
-
-        // Calculate period
-        const startDate = cs.activeUntil > new Date() ? cs.activeUntil : new Date();
-        const endDate = new Date(startDate);
-        endDate.setMonth(endDate.getMonth() + monthsRenewed);
-
-        const log = await prisma.renewalLog.create({
-          data: {
-            clientSubscriptionId,
-            amountPaid,
-            expectedAmount: cs.customPrice,
-            periodStart: startDate,
-            periodEnd: endDate,
-            paidOn: paidOn ? new Date(paidOn) : new Date(),
-            dueOn: cs.activeUntil,
-            monthsRenewed,
-            notes
-          }
-        });
-
-        // Update the subscription's end date
-        await prisma.clientSubscription.update({
-          where: { id: clientSubscriptionId },
-          data: { activeUntil: endDate }
-        });
-
-        return {
-          success: true,
-          status: "executed",
-          message: `Payment of ${amountPaid}€ logged successfully for ${cs.client.name}. New expiry: ${endDate.toLocaleDateString()}.`,
-          log
-        };
+        const pendingChanges = { clientSubscriptionId, amountPaid, monthsRenewed, paidOn, notes };
+        const { token } = await createMutationToken(userId, { toolName: "logPayment", targetId: clientSubscriptionId, action: "create", changes: pendingChanges, previousValues: { activeUntil: cs.activeUntil.toISOString() } });
+        await prisma.mutationAuditLog.update({ where: { token }, data: { newValues: pendingChanges } });
+        return { status: "requires_confirmation", __token: token, message: `I'm ready to register a payment of ${amountPaid}€ from ${cs.client.name}.`, pendingChanges };
       },
     }),
-  ];
+
+    // --- BULK AND POTENTIALLY DESTRUCTIVE TOOLS ---
+    defineTool("deleteClients", {
+      description: "Propose the COMPLETE and PERMANENT deletion of one or multiple clients. MUST narrate client info before calling.",
+      parameters: z.object({
+        clientIds: z.array(z.string()).describe("An array of client IDs to delete."),
+      }),
+      handler: async ({ clientIds }: any) => {
+        const clients = await prisma.client.findMany({ where: { id: { in: clientIds }, userId }, include: { clientSubscriptions: true } });
+        if (!clients.length) return { error: "Clients not found or access denied." };
+        
+        const previousValues = clients.map(c => ({
+            id: c.id, name: c.name, phone: c.phone, notes: c.notes, createdAt: c.createdAt.toISOString(),
+            disciplineScore: c.disciplineScore, dailyPenalty: c.dailyPenalty, daysOverdue: c.daysOverdue, healthStatus: c.healthStatus
+        }));
+
+        const pendingChanges = { clientIds };
+        const { token } = await createMutationToken(userId, { toolName: "deleteClients", targetId: "bulk", action: "delete", changes: pendingChanges, previousValues: previousValues as any });
+        await prisma.mutationAuditLog.update({ where: { token }, data: { newValues: pendingChanges } });
+        return { status: "requires_confirmation", __token: token, message: `I am ready to permanently delete ${clients.length} client(s): ${clients.map((c: any) => c.name).join(", ")}.`, pendingChanges };
+      },
+    }),
+
+    defineTool("removeClientsFromSubscription", {
+      description: "Propose unassigning one or multiple clients from their seat(s).",
+      parameters: z.object({
+        clientSubscriptionIds: z.array(z.string()).describe("An array of ClientSubscription pivot record IDs to delete."),
+      }),
+      handler: async ({ clientSubscriptionIds }: any) => {
+        const css = await prisma.clientSubscription.findMany({ where: { id: { in: clientSubscriptionIds }, client: { userId } }, include: { client: true, subscription: true } });
+        if (!css.length) return { error: "Client subscriptions not found or access denied." };
+        
+        const previousValues = css.map(c => ({
+            id: c.id, clientId: c.clientId, subscriptionId: c.subscriptionId, customPrice: c.customPrice,
+            activeUntil: c.activeUntil.toISOString(), joinedAt: c.joinedAt.toISOString(), leftAt: c.leftAt?.toISOString(),
+            status: c.status, remainingDays: c.remainingDays, serviceUser: c.serviceUser, servicePassword: c.servicePassword
+        }));
+
+        const pendingChanges = { clientSubscriptionIds };
+        const { token } = await createMutationToken(userId, { toolName: "removeClientsFromSubscription", targetId: "bulk", action: "delete", changes: pendingChanges, previousValues: previousValues as any });
+        await prisma.mutationAuditLog.update({ where: { token }, data: { newValues: pendingChanges } });
+        return { status: "requires_confirmation", __token: token, message: `I am ready to remove ${css.length} seat assignment(s).`, pendingChanges };
+      },
+    }),
+
+    defineTool("managePlatforms", {
+      description: "Creates, updates, or bulk-deletes platforms based on the provided operation.",
+      parameters: z.object({
+        operation: z.enum(["create", "update", "delete"]),
+        platformIds: z.array(z.string()).optional().describe("For 'delete', provide array of platform IDs. For 'update', provide exactly 1 ID."),
+        name: z.string().optional().describe("For 'create' or 'update'."),
+      }),
+      handler: async ({ operation, platformIds, name }: any) => {
+        const pendingChanges = { operation, platformIds, name };
+        // Get previous state if updating/deleting
+        let previousValues: any = null;
+        if (operation === "delete" && platformIds) {
+            const platforms = await prisma.platform.findMany({ where: { id: { in: platformIds }, userId } });
+            previousValues = platforms.map(p => ({ id: p.id, name: p.name }));
+        } else if (operation === "update" && platformIds && platformIds[0]) {
+            const p = await prisma.platform.findFirst({ where: { id: platformIds[0], userId } });
+            previousValues = p ? [{ id: p.id, name: p.name }] : [];
+        }
+
+        const { token } = await createMutationToken(userId, { toolName: "managePlatforms", action: operation as any, changes: pendingChanges, previousValues });
+        await prisma.mutationAuditLog.update({ where: { token }, data: { newValues: pendingChanges } });
+        return { status: "requires_confirmation", __token: token, message: `I am ready to ${operation} platform(s).`, pendingChanges };
+      },
+    }),
+
+    defineTool("managePlans", {
+      description: "Creates, updates, or bulk-deletes plans.",
+      parameters: z.object({
+        operation: z.enum(["create", "update", "delete"]),
+        planIds: z.array(z.string()).optional().describe("For 'delete' array, for 'update' single ID."),
+        platformId: z.string().optional().describe("For 'create'"),
+        name: z.string().optional(),
+        cost: z.number().optional(),
+        maxSeats: z.number().optional(),
+        isActive: z.boolean().optional(),
+      }),
+      handler: async ({ operation, planIds, platformId, name, cost, maxSeats, isActive }: any) => {
+        const pendingChanges = { operation, planIds, platformId, name, cost, maxSeats, isActive };
+        let previousValues: any = null;
+        if (operation === "delete" && planIds) {
+            const plans = await prisma.plan.findMany({ where: { id: { in: planIds }, platform: { userId } }});
+            previousValues = plans;
+        } else if (operation === "update" && planIds && planIds[0]) {
+            const p = await prisma.plan.findFirst({ where: { id: planIds[0], platform: { userId } } });
+            previousValues = p ? [p] : [];
+        }
+        const { token } = await createMutationToken(userId, { toolName: "managePlans", action: operation as any, changes: pendingChanges, previousValues });
+        await prisma.mutationAuditLog.update({ where: { token }, data: { newValues: pendingChanges } });
+        return { status: "requires_confirmation", __token: token, message: `I am ready to ${operation} plan(s).`, pendingChanges };
+      },
+    }),
+
+    defineTool("manageSubscriptions", {
+      description: "Creates, updates, or bulk-deletes subscriptions.",
+      parameters: z.object({
+        operation: z.enum(["create", "update", "delete"]),
+        subscriptionIds: z.array(z.string()).optional(),
+        planId: z.string().optional(),
+        label: z.string().optional(),
+        status: z.string().optional(),
+        startDate: z.string().optional(),
+        activeUntil: z.string().optional(),
+        masterUsername: z.string().optional(),
+        masterPassword: z.string().optional(),
+      }),
+      handler: async ({ operation, subscriptionIds, planId, label, status, startDate, activeUntil, masterUsername, masterPassword }: any) => {
+        const pendingChanges = { operation, subscriptionIds, planId, label, status, startDate, activeUntil, masterUsername, masterPassword };
+        let previousValues: any = null;
+        if (operation === "delete" && subscriptionIds) {
+            const subs = await prisma.subscription.findMany({ where: { id: { in: subscriptionIds }, userId }});
+            previousValues = subs;
+        } else if (operation === "update" && subscriptionIds && subscriptionIds[0]) {
+            const p = await prisma.subscription.findFirst({ where: { id: subscriptionIds[0], userId } });
+            previousValues = p ? [p] : [];
+        }
+        const { token } = await createMutationToken(userId, { toolName: "manageSubscriptions", action: operation as any, changes: pendingChanges, previousValues });
+        await prisma.mutationAuditLog.update({ where: { token }, data: { newValues: pendingChanges } });
+        return { status: "requires_confirmation", __token: token, message: `I am ready to ${operation} subscription(s).`, pendingChanges };
+      },
+    }),
+
+    defineTool("undoMutation", {
+      description: "This tool is informational only. Undo is handled directly by the UI via a secure backend endpoint.",
+      parameters: z.object({}),
+      handler: async () => ({ message: "Undo is handled directly by the UI. Use the 'Ir Atrás' button that appears after each confirmed change." })
+    })
+  );
+
+  return tools;
 }

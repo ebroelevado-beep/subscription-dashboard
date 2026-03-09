@@ -28,10 +28,11 @@ model User {
   sessions      Session[]
   
   // User's data
-  platforms     Platform[]
-  plans         Plan[]
-  subscriptions Subscription[]
-  clients       Client[]
+  platforms          Platform[]
+  plans              Plan[]
+  subscriptions      Subscription[]
+  clients            Client[]
+  mutationAuditLogs  MutationAuditLog[]
 
   @@map("users")
 }
@@ -258,4 +259,30 @@ model PlatformRenewal {
   @@index([subscriptionId])
   @@index([paidOn])
   @@map("platform_renewals")
+}
+
+// ──────────────────────────────────────────
+// MutationAuditLog — Crypto-gated audit trail for AI mutations
+// ──────────────────────────────────────────
+
+model MutationAuditLog {
+  id             String    @id @default(uuid())
+  userId         String    @map("user_id")
+  toolName       String    @map("tool_name") @db.VarChar(100)
+  targetId       String?   @map("target_id")
+  action         String    @db.VarChar(20) // "create" | "update" | "delete" | "undo"
+  previousValues Json?     @map("previous_values")
+  newValues      Json?     @map("new_values")
+  undone         Boolean   @default(false)
+  undoneAt       DateTime? @map("undone_at")
+  token          String    @unique @db.VarChar(64)
+  expiresAt      DateTime  @map("expires_at")
+  executedAt     DateTime? @map("executed_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@map("mutation_audit_logs")
 }
