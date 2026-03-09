@@ -256,14 +256,24 @@ function ToolInvocationBlock({ part, onConfirm }: {
 
         {/* Confirmation Footer — Always visible when finished and needs confirmation */}
         {(() => {
-          const res = formattedOutput as any;
-          const isPendingConfirm = isFinished && !isError && (
-            res?.status === "requires_confirmation" || 
-            res?.pendingChanges || 
-            (typeof res === 'object' && res !== null && 'status' in res && res.status === "requires_confirmation")
-          );
+          // Recursively find { status: "requires_confirmation" } at any depth
+          // The Copilot SDK wraps outputs as { content: {...}, detailedContent: {...} }
+          const findStatus = (obj: any, depth = 0): any => {
+            if (!obj || typeof obj !== 'object' || depth > 5) return null;
+            if (obj.status === "requires_confirmation") return obj;
+            for (const val of Object.values(obj)) {
+              const found = findStatus(val, depth + 1);
+              if (found) return found;
+            }
+            return null;
+          };
+
+          const confirmData = isFinished && !isError ? findStatus(formattedOutput) : null;
           
-          if (!isPendingConfirm) return null;
+          console.log("[HITL-ToolBlock]", toolName, "isFinished:", isFinished, "isError:", isError, 
+            "confirmData:", confirmData, "formattedOutput keys:", formattedOutput && typeof formattedOutput === 'object' ? Object.keys(formattedOutput as object) : null);
+          
+          if (!confirmData) return null;
           
           return (
             <div className="flex gap-2 px-4 pb-4 animate-in fade-in slide-in-from-bottom-1 duration-500">
@@ -287,30 +297,45 @@ function ToolInvocationBlock({ part, onConfirm }: {
         })()}
 
         {/* Undo Footer — Always visible after successful mutation */}
-        {isFinished && !isError && (formattedOutput as any)?.success && (formattedOutput as any)?.previousValues && (
-          <div className="px-4 pb-4 animate-in fade-in slide-in-from-bottom-1 duration-500">
-            <Button 
-              variant="secondary"
-              onClick={() => {
-                const undoType = toolName === "updateUserConfig" ? "userConfig" : 
-                                toolName === "updateClient" || toolName === "createClient" ? "client" : 
-                                toolName === "logPayment" ? "payment" : 
-                                toolName === "assignClientToSubscription" ? "clientSubscription" : "";
-                const targetId = (formattedOutput as any)?.client?.id || 
-                                 (formattedOutput as any)?.clientSubscription?.id || 
-                                 (formattedOutput as any)?.log?.id || 
-                                 "myself";
-                if (undoType) {
-                    onConfirm?.("undoMutation", { type: undoType, targetId, previousValues: (formattedOutput as any).previousValues }, true);
-                }
-              }}
-              className="w-full bg-muted/50 hover:bg-muted text-muted-foreground font-bold py-1.5 rounded-xl text-[10px] uppercase tracking-wider transition-all active:scale-[0.95] group"
-            >
-              <Undo2 className="size-3 mr-2 group-hover:-rotate-45 transition-transform" />
-              Ir Atrás (Deshacer)
-            </Button>
-          </div>
-        )}
+        {(() => {
+          // Deep search for { success: true, previousValues: {...} }
+          const findSuccess = (obj: any, depth = 0): any => {
+            if (!obj || typeof obj !== 'object' || depth > 5) return null;
+            if (obj.success && obj.previousValues) return obj;
+            for (const val of Object.values(obj)) {
+              const found = findSuccess(val, depth + 1);
+              if (found) return found;
+            }
+            return null;
+          };
+          const successData = isFinished && !isError ? findSuccess(formattedOutput) : null;
+          if (!successData) return null;
+
+          return (
+            <div className="px-4 pb-4 animate-in fade-in slide-in-from-bottom-1 duration-500">
+              <Button 
+                variant="secondary"
+                onClick={() => {
+                  const undoType = toolName === "updateUserConfig" ? "userConfig" : 
+                                  toolName === "updateClient" || toolName === "createClient" ? "client" : 
+                                  toolName === "logPayment" ? "payment" : 
+                                  toolName === "assignClientToSubscription" ? "clientSubscription" : "";
+                  const targetId = successData?.client?.id || 
+                                   successData?.clientSubscription?.id || 
+                                   successData?.log?.id || 
+                                   "myself";
+                  if (undoType) {
+                      onConfirm?.("undoMutation", { type: undoType, targetId, previousValues: successData.previousValues }, true);
+                  }
+                }}
+                className="w-full bg-muted/50 hover:bg-muted text-muted-foreground font-bold py-1.5 rounded-xl text-[10px] uppercase tracking-wider transition-all active:scale-[0.95] group"
+              >
+                <Undo2 className="size-3 mr-2 group-hover:-rotate-45 transition-transform" />
+                Ir Atrás (Deshacer)
+              </Button>
+            </div>
+          );
+        })()}
       </div>
     );
   }
@@ -448,22 +473,8 @@ export function ChatInterface() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  // Vercel AI SDK v4 — useChat with sendMessage API
-  const { messages, sendMessage, status, setMessages, stop } = useChat({
-    // 🪝 HITL HOOK: The backend emits a `data` stream annotation (__hitl_required)
-    // when a mutation tool proposes a change. The SDK calls onData for each DataUIPart.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    onData: (dataPart: any) => {
-      if (dataPart?.__hitl_required) {
-        setHitlPending({
-          toolName: dataPart.toolName,
-          toolCallId: dataPart.toolCallId,
-          message: dataPart.message,
-          pendingChanges: dataPart.pendingChanges ?? null,
-        });
-      }
-    },
-  });
+  // Vercel AI SDK — useChat
+  const { messages, sendMessage, status, setMessages, stop } = useChat({});
 
   // HITL (Human-in-the-Loop) state — driven by backend data annotations
   type HitlPending = {
@@ -473,6 +484,95 @@ export function ChatInterface() {
     pendingChanges: Record<string, unknown> | null;
   };
   const [hitlPending, setHitlPending] = useState<HitlPending | null>(null);
+  // Track which toolCallIds we've already shown a confirmation panel for
+  const shownHitlIds = useRef<Set<string>>(new Set());
+
+  // Helper: recursively search an object tree for { status: "requires_confirmation" }
+  // Returns the matching sub-object or null
+  const findConfirmation = useCallback((obj: unknown, depth = 0): Record<string, unknown> | null => {
+    if (!obj || typeof obj !== "object" || depth > 5) return null;
+    const record = obj as Record<string, unknown>;
+    if (record.status === "requires_confirmation") return record;
+    // Search all values (handles content, detailedContent, result, output, etc.)
+    for (const val of Object.values(record)) {
+      const found = findConfirmation(val, depth + 1);
+      if (found) return found;
+    }
+    return null;
+  }, []);
+
+  // 🪝 HITL HOOK: Scan the last assistant message parts for any tool result
+  // containing status === "requires_confirmation" at ANY nesting depth.
+  useEffect(() => {
+    // Only trigger once streaming is done
+    if (status === "streaming" || status === "submitted") return;
+
+    const lastMsg = messages[messages.length - 1];
+    if (!lastMsg || lastMsg.role !== "assistant") return;
+
+    // Debug: log all parts of the last assistant message
+    console.log("[HITL] Scanning last assistant message parts:", 
+      JSON.stringify((lastMsg.parts ?? []).map((p: any) => ({
+        type: p.type,
+        toolName: p.toolName,
+        toolCallId: p.toolCallId,
+        hasOutput: p.output !== undefined,
+        hasResult: p.result !== undefined,
+        hasToolInvocation: p.toolInvocation !== undefined,
+        outputKeys: p.output && typeof p.output === 'object' ? Object.keys(p.output) : null,
+        resultKeys: p.result && typeof p.result === 'object' ? Object.keys(p.result) : null,
+      })), null, 2)
+    );
+
+    // Scan all parts of the last assistant message
+    for (const part of (lastMsg.parts ?? []) as ExtendedUIMessagePart[]) {
+      // Gather ALL possible output locations
+      const candidates = [
+        (part as any).output,
+        (part as any).result,
+        (part as any).toolInvocation?.result,
+        (part as any).toolInvocation?.output,
+      ].filter(Boolean);
+
+      for (const candidate of candidates) {
+        const res = findConfirmation(candidate);
+        if (!res) continue;
+
+        const toolCallId = (part as any).toolCallId ?? (part as any).toolInvocation?.toolCallId ?? crypto.randomUUID();
+
+        // Don't re-show a panel we've already shown for this exact tool call
+        if (shownHitlIds.current.has(toolCallId)) continue;
+        shownHitlIds.current.add(toolCallId);
+
+        const toolName =
+          (part as any).toolName ??
+          (part as any).toolInvocation?.toolName ??
+          (part as any).toolCall?.toolName ??
+          "tool";
+
+        console.log("[HITL] ✅ Found requires_confirmation!", { toolName, toolCallId, res });
+
+        setHitlPending({
+          toolName,
+          toolCallId,
+          message: (res.message as string) ?? `Confirm ${toolName}`,
+          pendingChanges: (res.pendingChanges as Record<string, unknown>) ?? null,
+        });
+        return; // Found one — stop scanning
+      }
+    }
+    console.log("[HITL] ❌ No requires_confirmation found in message parts.");
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages, status]);
+
+  // Clear HITL panel when user sends a new message (they replied via text)
+  useEffect(() => {
+    const lastMsg = messages[messages.length - 1];
+    if (lastMsg?.role === "user") {
+      setHitlPending(null);
+    }
+  }, [messages]);
+
 
   const [showScrollBottom, setShowScrollBottom] = useState(false);
 

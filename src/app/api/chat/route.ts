@@ -171,13 +171,14 @@ export async function POST(req: Request) {
           "1. BE AUTONOMOUS: If a search for a specific name (e.g. 'Angel') yields no results, DO NOT give up immediately. Try broader searches (e.g. use just 'Ang') before reporting failure.",
           "2. FUZZY MATCHING: Favor partial or similar matches.",
           "",
-          "DATABASE MUTATION RULES (SAFETY FIRST):",
-          "1. HUMAN-IN-THE-LOOP: Never execute a mutation (Update/Delete/Create) without proposing it first and seeing the 'Accept/Reject' buttons.",
-          "2. PROPOSAL TURN: Call the tool with `__safe_user_approval_ui_only: false` to show the proposal to the user. Explain the proposed changes and then WAIT for user interaction.",
-          "3. EXECUTION TURN: Only when the user explicitly clicks 'Aceptar' (or says 'Yes/Confirmar'), call the tool again with `__safe_user_approval_ui_only: true` to commit the change.",
-          "4. DO NOT ask for confirmation in text. The UI handles the buttons.",
-          "5. STOP RULE: Once a mutation is COMMITTED (success:true), summarize briefly and stop. Do not chain multiple mutations without separate approvals.",
-          "6. PROACTIVE WORKFLOW: For complex tasks, propose one step at a time.",
+          "DATABASE MUTATION RULES (SAFETY FIRST — READ CAREFULLY):",
+          "1. TWO-TURN PROTOCOL: Every mutation uses exactly TWO separate turns:",
+          "   TURN 1 (PROPOSAL): Call the tool with `__safe_user_approval_ui_only: false`. The tool returns `status: requires_confirmation`. Your response ENDS HERE. Do NOT call the tool again.",
+          "   TURN 2 (EXECUTION): ONLY when the user sends a NEW message containing explicit approval (e.g. 'sí', 'confirmo', 'Aceptar', 'yes', 'ok'). Then call the tool with `__safe_user_approval_ui_only: true`.",
+          "2. HARD STOP AFTER PROPOSAL: After TURN 1, STOP COMPLETELY. Do NOT write any text asking for confirmation. Do NOT call __safe_user_approval_ui_only: true. The UI shows buttons automatically — you do not need to ask.",
+          "3. NEVER self-confirm: You are FORBIDDEN from calling a tool with __safe_user_approval_ui_only: true in the same response turn that you made the proposal. This is the most critical rule.",
+          "4. CHAINED MUTATIONS: If a task needs multiple mutations (e.g. unassign + delete), propose them ALL in a single proposal turn showing all pending changes, then wait for ONE approval before executing all of them.",
+          "5. STOP AFTER EXECUTION: Once mutations are committed (status: executed), summarize briefly and stop.",
         ].join("\n"),
       },
       tools: createUserScopedTools(defineTool, session.user.id),
@@ -294,21 +295,9 @@ export async function POST(req: Request) {
                 providerExecuted: true,
               });
 
-              // 🪝 HITL HOOK: If the tool is requesting human confirmation,
-              // emit a dedicated data annotation. The frontend watches for this
-              // via useEffect and shows the sticky confirmation panel.
-              if (parsedResult?.status === "requires_confirmation") {
-                writer.write({
-                  type: "data",
-                  data: [{
-                    __hitl_required: true,
-                    toolName: event.data.toolName,
-                    toolCallId: event.data.toolCallId,
-                    message: parsedResult.message,
-                    pendingChanges: parsedResult.pendingChanges ?? null,
-                  }]
-                });
-              }
+              // 🪝 HITL: The frontend detects `requires_confirmation` status
+              // by scanning message parts via a useEffect on messages state.
+              // No stream annotation needed — the tool output is already there.
             } else {
               writer.write({
                 type: "tool-output-error",
