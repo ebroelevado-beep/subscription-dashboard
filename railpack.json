@@ -9,9 +9,11 @@
     "build": {
       "commands": [
         "bun install",
+        "bunx prisma generate",
         "bun run build",
         "cp -r public .next/standalone/public",
-        "cp -r .next/static .next/standalone/.next/static"
+        "cp -r .next/static .next/standalone/.next/static",
+        "cp -r node_modules/@github/copilot .next/standalone/copilot-cli"
       ],
       "variables": {
         "NEXT_CPU_COUNT": "4"
