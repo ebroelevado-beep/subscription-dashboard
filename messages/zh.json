@@ -508,13 +508,36 @@
     "costMin": "成本必须 ≥ 0",
     "atLeast1Month": "至少需要1个月"
   },
+  "time": {
+    "now": "刚刚",
+    "minsAgo": "{count}分钟前",
+    "hoursAgo": "{count}小时前",
+    "daysAgo": "{count}天前"
+  },
   "chat": {
     "placeholder": "询问有关您的客户...",
     "emptyTitle": "今天我能帮您什么？",
     "emptyDescription": "您可以询问有关客户、活跃订阅、收入指标或其他业务相关的任何问题。",
     "disclaimer": "AI 可能会犯错。请验证重要的财务数据。",
     "subtitle": "由 GitHub Models 驱动",
-    "analyzing": "正在分析您的问题..."
+    "analyzing": "正在分析您的问题...",
+    "accept": "接受",
+    "reject": "拒绝",
+    "querying": "查询中...",
+    "fullControlTitle": "完全控制",
+    "undo": "撤销",
+    "undoing": "撤销中...",
+    "modifying": "修改中...",
+    "storedInR2": "存储于 Cloudflare R2",
+    "searchConversations": "搜索对话...",
+    "noConversationsFound": "尚未保存对话",
+    "noSearchResults": "无结果",
+    "connectCopilot": "连接 GitHub Copilot",
+    "copilotDesc": "Pearfect AI 安全地使用您的 GitHub Copilot 订阅来回答问题和分析收入。",
+    "connectDeviceFlow": "通过设备流程连接",
+    "openVerificationLink": "1. 打开验证链接：",
+    "enterCode": "2. 输入此代码：",
+    "waitingAuth": "等待授权..."
   },
   "metadata": {
     "title": "Pearfect S.L. — 专业订阅管理",

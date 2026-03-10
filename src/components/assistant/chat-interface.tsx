@@ -154,6 +154,7 @@ function ToolInvocationBlock({ part, onConfirm, onUndo, executedMutations, rejec
   rejectedActionIds?: Set<string>,
   acceptedActionIds?: Set<string>
 }) {
+  const t = useTranslations();
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'args' | 'output'>('output');
   const toolName = part.toolName || part.toolInvocation?.toolName || part.toolCall?.toolName || part.type.replace('tool-', '') || 'tool';
@@ -386,7 +387,7 @@ function ToolInvocationBlock({ part, onConfirm, onUndo, executedMutations, rejec
                      className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-sm shadow-sm transition-all active:scale-[0.97]"
                    >
                      <Check className="size-4 mr-2" />
-                     Aceptar
+                      {t("chat.accept")}
                    </Button>
                    <Button
                      variant="outline"
@@ -397,7 +398,7 @@ function ToolInvocationBlock({ part, onConfirm, onUndo, executedMutations, rejec
                      className="flex-1 border-red-500/30 hover:bg-red-500/10 text-red-400 font-bold py-2.5 rounded-xl text-sm transition-all active:scale-[0.97]"
                    >
                      <X className="size-4 mr-2" />
-                     Rechazar
+                      {t("chat.reject")}
                    </Button>
                  </div>
                </div>
@@ -417,7 +418,7 @@ function ToolInvocationBlock({ part, onConfirm, onUndo, executedMutations, rejec
       <div className="flex flex-col min-w-0">
         <div className="flex items-center gap-1.5">
           <span className="text-foreground animate-pulse font-bold tracking-tight uppercase text-[11px]">{toolName}</span>
-          <span className="text-[10px] opacity-70">Consultando...</span>
+          <span className="text-[10px] opacity-70">{t("chat.querying")}</span>
         </div>
       </div>
     </div>
@@ -757,7 +758,7 @@ export function ChatInterface() {
       await new Promise(r => setTimeout(r, 80));
     }
     sendMessage(
-      { text: `Ir Atrás (Deshacer) <!-- [SISTEMA] Acción de ${toolName} deshecha con éxito. El usuario ha revertido los cambios. -->` },
+      { text: `${t("chat.undo")} <!-- [SISTEMA] Acción de ${toolName} deshecha con éxito. El usuario ha revertido los cambios. -->` },
       { body: { model: selectedModel || undefined, allowDestructive } }
     );
   };
@@ -779,7 +780,7 @@ export function ChatInterface() {
       
       // Just tell the AI it was rejected (no DB call needed)
       sendMessage(
-        { text: `Rechazar <!-- [SISTEMA] No confirmo la acción de ${toolName}. Cancelado. -->` },
+        { text: `${t("chat.reject")} <!-- [SISTEMA] No confirmo la acción de ${toolName}. Cancelado. -->` },
         { body: { model: selectedModel || undefined, allowDestructive } }
       );
       return;
@@ -792,7 +793,7 @@ export function ChatInterface() {
     if (!token) {
       // Fallback: if no token (shouldn't happen with new system), tell the AI
       sendMessage(
-        { text: `Aceptar <!-- [SISTEMA] Sí, confirma la acción de ${toolName}. -->` },
+        { text: `${t("chat.accept")} <!-- [SISTEMA] Sí, confirma la acción de ${toolName}. -->` },
         { body: { model: selectedModel || undefined, allowDestructive } }
       );
       return;
@@ -816,19 +817,19 @@ export function ChatInterface() {
         });
         // Inform the AI post-facto so it can acknowledge in the conversation
         sendMessage(
-          { text: `Aceptar <!-- [SISTEMA] Mutación ${toolName} ejecutada correctamente. AuditLogId: ${data.auditLogId}. Resultado: ${JSON.stringify(data.result?.message || "OK")} -->` },
+          { text: `${t("chat.accept")} <!-- [SISTEMA] Mutación ${toolName} ejecutada correctamente. AuditLogId: ${data.auditLogId}. Resultado: ${JSON.stringify(data.result?.message || "OK")} -->` },
           { body: { model: selectedModel || undefined, allowDestructive } }
         );
       } else {
         sendMessage(
-          { text: `Aceptar <!-- [SISTEMA] Error ejecutando ${toolName}: ${data.error} -->` },
+          { text: `${t("chat.accept")} <!-- [SISTEMA] Error ejecutando ${toolName}: ${data.error} -->` },
           { body: { model: selectedModel || undefined, allowDestructive } }
         );
       }
     } catch (err) {
       console.error("[Execute] Network error:", err);
       sendMessage(
-        { text: `Aceptar <!-- [SISTEMA] Error de red ejecutando ${toolName}. -->` },
+        { text: `${t("chat.accept")} <!-- [SISTEMA] Error de red ejecutando ${toolName}. -->` },
         { body: { model: selectedModel || undefined, allowDestructive } }
       );
     }
@@ -927,7 +928,7 @@ export function ChatInterface() {
             size="icon"
             onClick={() => setHistoryOpen(true)}
             className="text-muted-foreground hover:text-foreground size-8 sm:size-9 shrink-0"
-            title="Historial"
+            title={t("nav.history")}
           >
             <Clock className="size-4" />
           </Button>
@@ -1130,7 +1131,7 @@ export function ChatInterface() {
                     className="data-[state=checked]:bg-red-500 scale-90"
                   />
                   <Label htmlFor="destructive-mode" className="text-[10px] sm:text-xs font-bold text-red-500 flex items-center gap-1 cursor-pointer">
-                    <ShieldAlert className="size-3" /> Control Total
+                    <ShieldAlert className="size-3" /> {t("chat.fullControlTitle")}
                   </Label>
                 </div>
               </div>

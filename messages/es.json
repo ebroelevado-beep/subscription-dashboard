@@ -519,13 +519,36 @@
     "costMin": "El coste debe ser ≥ 0",
     "atLeast1Month": "Debe ser al menos 1 mes"
   },
+  "time": {
+    "now": "ahora",
+    "minsAgo": "hace {count}m",
+    "hoursAgo": "hace {count}h",
+    "daysAgo": "hace {count}d"
+  },
   "chat": {
     "placeholder": "Pregunta sobre tus clientes...",
     "emptyTitle": "¿En qué puedo ayudarte hoy?",
     "emptyDescription": "Pregúntame sobre tus clientes, suscripciones activas, métricas de ingresos o cualquier cosa sobre tu negocio.",
     "disclaimer": "La IA puede cometer errores. Verifica los datos financieros importantes.",
     "subtitle": "Impulsado por GitHub Models",
-    "analyzing": "Analizando tu consulta..."
+    "analyzing": "Analizando tu consulta...",
+    "accept": "Aceptar",
+    "reject": "Rechazar",
+    "querying": "Consultando...",
+    "fullControlTitle": "Control Total",
+    "undo": "Ir Atrás",
+    "undoing": "Deshaciendo...",
+    "modifying": "Modificando...",
+    "storedInR2": "Almacenado en Cloudflare R2",
+    "searchConversations": "Buscar conversación...",
+    "noConversationsFound": "Aún no hay conversaciones guardadas",
+    "noSearchResults": "Sin resultados",
+    "connectCopilot": "Conectar GitHub Copilot",
+    "copilotDesc": "Pearfect AI usa tu suscripción de GitHub Copilot para responder preguntas y analizar tus ingresos de forma segura.",
+    "connectDeviceFlow": "Conectar vía Device Flow",
+    "openVerificationLink": "1. Abre el enlace de verificación:",
+    "enterCode": "2. Introduce este código:",
+    "waitingAuth": "Esperando autorización..."
   },
   "metadata": {
     "title": "Pearfect S.L. — Gestión Profesional de Suscripciones",

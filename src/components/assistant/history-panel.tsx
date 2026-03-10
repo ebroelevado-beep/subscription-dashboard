@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Trash2, MessageSquare, Clock, Search, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useTranslations, useLocale } from "next-intl";
 
 interface ConversationMeta {
   id: string;
@@ -21,21 +22,24 @@ interface HistoryPanelProps {
   currentConversationId: string | null;
 }
 
-function timeAgo(dateStr: string): string {
-  const now = new Date();
-  const date = new Date(dateStr);
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  if (diffMins < 1) return "ahora";
-  if (diffMins < 60) return `hace ${diffMins}m`;
-  const diffHours = Math.floor(diffMins / 60);
-  if (diffHours < 24) return `hace ${diffHours}h`;
-  const diffDays = Math.floor(diffHours / 24);
-  if (diffDays < 7) return `hace ${diffDays}d`;
-  return date.toLocaleDateString("es-ES", { day: "numeric", month: "short" });
-}
-
 export default function HistoryPanel({ open, onClose, onLoad, onDelete, currentConversationId }: HistoryPanelProps) {
+  const t = useTranslations();
+  const locale = useLocale();
+
+  const timeAgo = useCallback((dateStr: string) => {
+    const now = new Date();
+    const date = new Date(dateStr);
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    if (diffMins < 1) return t("time.now");
+    if (diffMins < 60) return t("time.minsAgo", { count: diffMins });
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return t("time.hoursAgo", { count: diffHours });
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays < 7) return t("time.daysAgo", { count: diffDays });
+    return date.toLocaleDateString(locale, { day: "numeric", month: "short" });
+  }, [t, locale]);
+
   const [conversations, setConversations] = useState<ConversationMeta[]>([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
@@ -116,7 +120,7 @@ export default function HistoryPanel({ open, onClose, onLoad, onDelete, currentC
                 <div className="flex items-center justify-center size-7 rounded-full bg-primary/10 text-primary">
                   <Clock className="size-3.5" />
                 </div>
-                <h3 className="text-sm font-bold tracking-tight">Historial</h3>
+                <h3 className="text-sm font-bold tracking-tight">{t("nav.history")}</h3>
                 {conversations.length > 0 && (
                   <span className="text-[10px] font-bold text-muted-foreground/60 bg-muted/40 px-1.5 py-0.5 rounded-full">
                     {conversations.length}
@@ -141,7 +145,7 @@ export default function HistoryPanel({ open, onClose, onLoad, onDelete, currentC
                   type="text"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Buscar conversación..."
+                  placeholder={t("chat.searchConversations")}
                   className="w-full pl-9 pr-3 py-2 text-xs bg-muted/30 border border-border/20 rounded-lg
                     placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/30
                     focus:border-primary/30 transition-all"
@@ -161,7 +165,7 @@ export default function HistoryPanel({ open, onClose, onLoad, onDelete, currentC
                     <MessageSquare className="size-5 text-muted-foreground/30" />
                   </div>
                   <p className="text-xs text-muted-foreground/50 font-medium">
-                    {search ? "Sin resultados" : "Aún no hay conversaciones guardadas"}
+                    {search ? t("chat.noSearchResults") : t("chat.noConversationsFound")}
                   </p>
                 </div>
               ) : (
@@ -239,7 +243,7 @@ export default function HistoryPanel({ open, onClose, onLoad, onDelete, currentC
             {/* Footer */}
             <div className="px-5 py-3 border-t border-border/10">
               <p className="text-[10px] text-muted-foreground/30 text-center font-medium">
-                Almacenado en Cloudflare R2
+                {t("chat.storedInR2")}
               </p>
             </div>
           </motion.div>

@@ -515,13 +515,36 @@
     "costMin": "Cost must be ≥ 0",
     "atLeast1Month": "Must be at least 1 month"
   },
+  "time": {
+    "now": "now",
+    "minsAgo": "{count}m ago",
+    "hoursAgo": "{count}h ago",
+    "daysAgo": "{count}d ago"
+  },
   "chat": {
     "placeholder": "Ask about your clients...",
     "emptyTitle": "How can I help you today?",
     "emptyDescription": "Ask me about your clients, active subscriptions, revenue metrics, or anything else about your business.",
     "disclaimer": "AI can make mistakes. Verify important financial data.",
     "subtitle": "Powered by GitHub Models",
-    "analyzing": "Analyzing your query..."
+    "analyzing": "Analyzing your query...",
+    "accept": "Accept",
+    "reject": "Reject",
+    "querying": "Querying...",
+    "fullControlTitle": "Full Control",
+    "undo": "Undo",
+    "undoing": "Undoing...",
+    "modifying": "Modifying...",
+    "storedInR2": "Stored in Cloudflare R2",
+    "searchConversations": "Search conversations...",
+    "noConversationsFound": "No conversations saved yet",
+    "noSearchResults": "No results",
+    "connectCopilot": "Connect GitHub Copilot",
+    "copilotDesc": "Pearfect AI uses your existing GitHub Copilot subscription to answer questions and analyze your revenue securely.",
+    "connectDeviceFlow": "Connect via Device Flow",
+    "openVerificationLink": "1. Open the verification link:",
+    "enterCode": "2. Enter this code:",
+    "waitingAuth": "Waiting for authorization..."
   },
   "metadata": {
     "title": "Pearfect S.L. — Professional Subscription Management",
