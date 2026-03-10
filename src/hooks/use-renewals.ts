@@ -27,8 +27,9 @@ export function useRenewClient() {
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.allSubscriptions });
-      qc.invalidateQueries({ queryKey: queryKeys.clients });
       qc.invalidateQueries({ queryKey: queryKeys.dashboardStats });
+      qc.invalidateQueries({ queryKey: queryKeys.analyticsClientsDiscipline });
+      qc.invalidateQueries({ queryKey: queryKeys.analyticsDiscipline({}) });
       toast.success("Client renewed successfully");
     },
     onError: (err: Error) => toast.error(err.message),
@@ -55,8 +56,9 @@ export function useRenewBulkClients() {
       }),
     onSuccess: (result, variables) => {
       qc.invalidateQueries({ queryKey: queryKeys.allSubscriptions });
-      qc.invalidateQueries({ queryKey: queryKeys.clients });
       qc.invalidateQueries({ queryKey: queryKeys.dashboardStats });
+      qc.invalidateQueries({ queryKey: queryKeys.analyticsClientsDiscipline });
+      qc.invalidateQueries({ queryKey: queryKeys.analyticsDiscipline({}) });
       toast.success(
         `Successfully renewed ${result.renewed} service${result.renewed !== 1 ? "s" : ""} for ${variables.clientName}`
       );

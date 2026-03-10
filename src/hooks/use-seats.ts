@@ -26,8 +26,9 @@ export function useCreateSeat() {
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.allSubscriptions });
-      qc.invalidateQueries({ queryKey: queryKeys.clients });
       qc.invalidateQueries({ queryKey: queryKeys.dashboardStats });
+      qc.invalidateQueries({ queryKey: queryKeys.analyticsClientsDiscipline });
+      qc.invalidateQueries({ queryKey: queryKeys.analyticsDiscipline({}) });
       toast.success("Seat assigned");
     },
     onError: (err: Error) => toast.error(err.message),
@@ -56,8 +57,9 @@ export function useUpdateSeat() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.allSubscriptions });
-      qc.invalidateQueries({ queryKey: queryKeys.clients });
       qc.invalidateQueries({ queryKey: queryKeys.dashboardStats });
+      qc.invalidateQueries({ queryKey: queryKeys.analyticsClientsDiscipline });
+      qc.invalidateQueries({ queryKey: queryKeys.analyticsDiscipline({}) });
       toast.success("Seat updated");
     },
     onError: (err: Error) => toast.error(err.message),
@@ -76,6 +78,8 @@ export function usePauseSeat() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.allSubscriptions });
       qc.invalidateQueries({ queryKey: queryKeys.dashboardStats });
+      qc.invalidateQueries({ queryKey: queryKeys.analyticsClientsDiscipline });
+      qc.invalidateQueries({ queryKey: queryKeys.analyticsDiscipline({}) });
       toast.success("Seat paused");
     },
     onError: (err: Error) => toast.error(err.message),
@@ -93,8 +97,9 @@ export function useResumeSeat() {
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.allSubscriptions });
-      qc.invalidateQueries({ queryKey: queryKeys.clients });
       qc.invalidateQueries({ queryKey: queryKeys.dashboardStats });
+      qc.invalidateQueries({ queryKey: queryKeys.analyticsClientsDiscipline });
+      qc.invalidateQueries({ queryKey: queryKeys.analyticsDiscipline({}) });
       toast.success("Seat reactivated — remaining paid days restored");
     },
     onError: (err: Error) => toast.error(err.message),
@@ -110,8 +115,9 @@ export function useCancelSeat() {
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.allSubscriptions });
-      qc.invalidateQueries({ queryKey: queryKeys.clients });
       qc.invalidateQueries({ queryKey: queryKeys.dashboardStats });
+      qc.invalidateQueries({ queryKey: queryKeys.analyticsClientsDiscipline });
+      qc.invalidateQueries({ queryKey: queryKeys.analyticsDiscipline({}) });
       toast.success("Seat removed (hard delete)");
     },
     onError: (err: Error) => toast.error(err.message),

@@ -115,6 +115,8 @@ export function useUpdateClient() {
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.clients });
+      qc.invalidateQueries({ queryKey: queryKeys.analyticsClientsDiscipline });
+      qc.invalidateQueries({ queryKey: queryKeys.analyticsDiscipline({}) });
       toast.success("Client updated");
     },
     onError: (err: Error) => toast.error(err.message),
@@ -130,6 +132,8 @@ export function useDeleteClient() {
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.clients });
+      qc.invalidateQueries({ queryKey: queryKeys.analyticsClientsDiscipline });
+      qc.invalidateQueries({ queryKey: queryKeys.analyticsDiscipline({}) });
       toast.success("Client deleted");
     },
     onError: (err: Error) => toast.error(err.message),
