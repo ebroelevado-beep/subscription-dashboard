@@ -381,9 +381,9 @@ function ToolInvocationBlock({ part, onConfirm, onUndo, executedMutations, rejec
                  )}
 
                  {/* Buttons or Expiry msg */}
-                 <div className="flex gap-2 mt-1">
+                 <div className="grid grid-cols-2 gap-2 mt-1">
                    {isExpired ? (
-                     <div className="w-full bg-red-500/10 border border-red-500/20 text-red-500 font-bold py-2 rounded-xl text-[10px] uppercase tracking-wider text-center flex items-center justify-center gap-2">
+                     <div className="col-span-2 w-full bg-red-500/10 border border-red-500/20 text-red-500 font-bold py-2 rounded-xl text-[10px] uppercase tracking-wider text-center flex items-center justify-center gap-2">
                        <Clock className="size-3" /> {t("chat.expired")}
                      </div>
                    ) : (
@@ -1100,7 +1100,7 @@ export function ChatInterface() {
           )}
           <form
             onSubmit={handleSubmit}
-            className="relative flex flex-col bg-muted/20 dark:bg-muted/10 border border-muted-foreground/10 rounded-[28px] shadow-[0_2px_20px_rgba(0,0,0,0.05)] dark:shadow-none transition-all duration-300 px-4 sm:px-5 py-3"
+            className="relative flex flex-col bg-muted/20 dark:bg-muted/10 border border-muted-foreground/10 rounded-[20px] shadow-[0_2px_15px_rgba(0,0,0,0.05)] dark:shadow-none transition-all duration-300 px-4 sm:px-5 py-2"
           >
             <textarea
               ref={textareaRef}
@@ -1109,11 +1109,11 @@ export function ChatInterface() {
               onKeyDown={handleKeyDown}
               placeholder={t("chat.placeholder")}
               rows={1}
-              className={`w-full resize-none text-[16px] sm:text-[17px] bg-transparent border-none focus:ring-0 p-0 placeholder:text-muted-foreground/50 leading-relaxed min-h-[44px] py-1 select-none outline-none`}
+              className={`w-full resize-none text-[15px] sm:text-[16px] bg-transparent border-none focus:ring-0 p-0 placeholder:text-muted-foreground/50 leading-snug min-h-[32px] py-1 select-none outline-none`}
               style={{ maxHeight: "200px" }}
             />
             
-            <div className="flex items-center justify-between mt-2 pt-2">
+            <div className="flex items-center justify-between mt-1 pt-1 border-t border-muted-foreground/5">
               <div className="flex items-center gap-1.5">
                 {/* Model Selector within dock */}
                 {hasCopilot && models.length > 0 && (
