@@ -5,6 +5,7 @@ type DecimalValue = {
 };
 
 type DecimalLike = DecimalValue | number | string | null;
+type RequiredDecimalLike = DecimalValue | number | string;
 
 type DeletionSnapshotSource = {
   id: string;
@@ -20,7 +21,7 @@ type DeletionSnapshotSource = {
     id: string;
     clientId: string;
     subscriptionId: string;
-    customPrice: DecimalLike;
+    customPrice: RequiredDecimalLike;
     activeUntil: Date;
     joinedAt: Date;
     leftAt: Date | null;
@@ -30,8 +31,8 @@ type DeletionSnapshotSource = {
     servicePassword: string | null;
     renewalLogs: Array<{
       id: string;
-      amountPaid: DecimalLike;
-      expectedAmount: DecimalLike;
+      amountPaid: RequiredDecimalLike;
+      expectedAmount: RequiredDecimalLike;
       periodStart: Date;
       periodEnd: Date;
       paidOn: Date;
@@ -60,7 +61,7 @@ export type DeletedClientSnapshot = {
     id: string;
     clientId: string;
     subscriptionId: string;
-    customPrice: string | null;
+    customPrice: string;
     activeUntil: string;
     joinedAt: string;
     leftAt: string | null;
@@ -70,8 +71,8 @@ export type DeletedClientSnapshot = {
     servicePassword: string | null;
     renewalLogs: Array<{
       id: string;
-      amountPaid: string | null;
-      expectedAmount: string | null;
+      amountPaid: string;
+      expectedAmount: string;
       periodStart: string;
       periodEnd: string;
       paidOn: string;
@@ -101,7 +102,7 @@ export function serializeDeletedClients(
       id: clientSubscription.id,
       clientId: clientSubscription.clientId,
       subscriptionId: clientSubscription.subscriptionId,
-      customPrice: decimalToString(clientSubscription.customPrice),
+      customPrice: decimalToRequiredString(clientSubscription.customPrice),
       activeUntil: clientSubscription.activeUntil.toISOString(),
       joinedAt: clientSubscription.joinedAt.toISOString(),
       leftAt: clientSubscription.leftAt?.toISOString() ?? null,
@@ -111,8 +112,8 @@ export function serializeDeletedClients(
       servicePassword: clientSubscription.servicePassword,
       renewalLogs: clientSubscription.renewalLogs.map((renewalLog) => ({
         id: renewalLog.id,
-        amountPaid: decimalToString(renewalLog.amountPaid),
-        expectedAmount: decimalToString(renewalLog.expectedAmount),
+        amountPaid: decimalToRequiredString(renewalLog.amountPaid),
+        expectedAmount: decimalToRequiredString(renewalLog.expectedAmount),
         periodStart: renewalLog.periodStart.toISOString(),
         periodEnd: renewalLog.periodEnd.toISOString(),
         paidOn: renewalLog.paidOn.toISOString(),
@@ -155,7 +156,7 @@ export function buildDeletedClientRestoreData(
         id: clientSubscription.id,
         clientId: clientSubscription.clientId,
         subscriptionId: clientSubscription.subscriptionId,
-        customPrice: clientSubscription.customPrice ?? "0",
+        customPrice: clientSubscription.customPrice,
         activeUntil: new Date(clientSubscription.activeUntil),
         joinedAt: new Date(clientSubscription.joinedAt),
         leftAt: clientSubscription.leftAt ? new Date(clientSubscription.leftAt) : null,
@@ -171,8 +172,8 @@ export function buildDeletedClientRestoreData(
       clientSubscription.renewalLogs.map((renewalLog) => ({
         id: renewalLog.id,
         clientSubscriptionId: clientSubscription.id,
-        amountPaid: renewalLog.amountPaid ?? "0",
-        expectedAmount: renewalLog.expectedAmount ?? "0",
+        amountPaid: renewalLog.amountPaid,
+        expectedAmount: renewalLog.expectedAmount,
         periodStart: new Date(renewalLog.periodStart),
         periodEnd: new Date(renewalLog.periodEnd),
         paidOn: new Date(renewalLog.paidOn),
@@ -204,6 +205,14 @@ function decimalToString(value: DecimalLike): string | null {
     return null;
   }
 
+  if (typeof value === "number" || typeof value === "string") {
+    return String(value);
+  }
+
+  return value.toString();
+}
+
+function decimalToRequiredString(value: RequiredDecimalLike): string {
   if (typeof value === "number" || typeof value === "string") {
     return String(value);
   }
