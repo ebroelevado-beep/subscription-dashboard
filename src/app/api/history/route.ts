@@ -35,7 +35,7 @@ export async function POST(req: Request) {
     const now = new Date().toISOString();
     const data: ConversationData = {
       id,
-      title: title || "Sin título",
+      title: title || "Untitled",
       messages,
       createdAt: body.createdAt || now,
       updatedAt: now,

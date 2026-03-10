@@ -70,9 +70,9 @@ export async function POST(req: Request) {
       },
     });
 
-    return Response.json({ success: true, message: "Acción deshecha correctamente." });
+    return Response.json({ success: true, message: "Action undone successfully." });
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Error deshaciendo mutación";
+    const message = err instanceof Error ? err.message : "Error undoing mutation";
     console.error("[Mutations/Undo]", message);
     return Response.json({ error: message }, { status: 400 });
   }

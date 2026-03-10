@@ -30,7 +30,7 @@ export interface MutationPayload {
 export async function createMutationToken(
   userId: string,
   payload: MutationPayload
-): Promise<{ token: string; auditLogId: string }> {
+): Promise<{ token: string; auditLogId: string; expiresAt: Date }> {
   const token = randomBytes(32).toString("hex"); // 64-char hex string
   const expiresAt = new Date(Date.now() + TOKEN_TTL_MINUTES * 60 * 1000);
 
@@ -47,7 +47,7 @@ export async function createMutationToken(
     },
   });
 
-  return { token, auditLogId: auditLog.id };
+  return { token, auditLogId: auditLog.id, expiresAt };
 }
 
 /**
@@ -68,19 +68,19 @@ export async function validateAndConsumeMutationToken(
   });
 
   if (!auditLog) {
-    throw new Error("Token inválido o no encontrado.");
+    throw new Error("Invalid or not found token.");
   }
 
   if (auditLog.userId !== userId) {
-    throw new Error("Token no pertenece a este usuario.");
+    throw new Error("Token does not belong to this user.");
   }
 
   if (auditLog.executedAt) {
-    throw new Error("Este cambio ya fue ejecutado.");
+    throw new Error("This change has already been executed.");
   }
 
   if (new Date() > auditLog.expiresAt) {
-    throw new Error("El token ha expirado. Propón el cambio de nuevo.");
+    throw new Error("Token has expired. Propose the change again.");
   }
 
   // Mark as consumed

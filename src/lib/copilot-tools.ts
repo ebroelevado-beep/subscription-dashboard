@@ -743,9 +743,9 @@ export function createUserScopedTools(
         const user = await prisma.user.findUnique({ where: { id: userId }, select: { disciplinePenalty: true, currency: true }});
         if (!user) return { error: "User not found." };
         const pendingChanges = { ...(disciplinePenalty !== undefined ? { disciplinePenalty } : {}), ...(currency ? { currency } : {}) };
-        const { token } = await createMutationToken(userId, { toolName: "updateUserConfig", targetId: userId, action: "update", changes: pendingChanges, previousValues: { disciplinePenalty: user.disciplinePenalty, currency: user.currency } });
+        const { token, expiresAt } = await createMutationToken(userId, { toolName: "updateUserConfig", targetId: userId, action: "update", changes: pendingChanges, previousValues: { disciplinePenalty: user.disciplinePenalty, currency: user.currency } });
         await prisma.mutationAuditLog.update({ where: { token }, data: { newValues: pendingChanges } });
-        return { status: "requires_confirmation", __token: token, message: "I am ready to update your configuration.", pendingChanges };
+        return { status: "requires_confirmation", __token: token, expiresAt, message: "I am ready to update your configuration.", pendingChanges };
       },
     }),
 
@@ -761,9 +761,9 @@ export function createUserScopedTools(
         const client = await prisma.client.findFirst({ where: { id: clientId, userId } });
         if (!client) return { error: "Client not found or access denied." };
         const pendingChanges = { name, phone, notes };
-        const { token } = await createMutationToken(userId, { toolName: "updateClient", targetId: clientId, action: "update", changes: pendingChanges, previousValues: { name: client.name, phone: client.phone, notes: client.notes } });
+        const { token, expiresAt } = await createMutationToken(userId, { toolName: "updateClient", targetId: clientId, action: "update", changes: pendingChanges, previousValues: { name: client.name, phone: client.phone, notes: client.notes } });
         await prisma.mutationAuditLog.update({ where: { token }, data: { newValues: pendingChanges } });
-        return { status: "requires_confirmation", __token: token, message: `I'm ready to update client ${client.name}.`, pendingChanges };
+        return { status: "requires_confirmation", __token: token, expiresAt, message: `I'm ready to update client ${client.name}.`, pendingChanges };
       },
     }),
 
@@ -776,9 +776,9 @@ export function createUserScopedTools(
       }),
       handler: async ({ name, phone, notes }: any) => {
         const pendingChanges = { name, phone, notes };
-        const { token } = await createMutationToken(userId, { toolName: "createClient", action: "create", changes: pendingChanges, previousValues: null });
+        const { token, expiresAt } = await createMutationToken(userId, { toolName: "createClient", action: "create", changes: pendingChanges, previousValues: null });
         await prisma.mutationAuditLog.update({ where: { token }, data: { newValues: pendingChanges } });
-        return { status: "requires_confirmation", __token: token, message: `I'm ready to create a new client profile for **${name}**.`, pendingChanges };
+        return { status: "requires_confirmation", __token: token, expiresAt, message: `I'm ready to create a new client profile for **${name}**.`, pendingChanges };
       },
     }),
 
@@ -798,9 +798,9 @@ export function createUserScopedTools(
         const sub = await prisma.subscription.findFirst({ where: { id: subscriptionId, userId } });
         if (!client || !sub) return { error: "Client or Subscription not found." };
         const pendingChanges = { clientId, subscriptionId, customPrice, activeUntil, joinedAt, serviceUser, servicePassword };
-        const { token } = await createMutationToken(userId, { toolName: "assignClientToSubscription", action: "create", changes: pendingChanges, previousValues: null });
+        const { token, expiresAt } = await createMutationToken(userId, { toolName: "assignClientToSubscription", action: "create", changes: pendingChanges, previousValues: null });
         await prisma.mutationAuditLog.update({ where: { token }, data: { newValues: pendingChanges } });
-        return { status: "requires_confirmation", __token: token, message: `I'm ready to assign **${client.name}** to **${sub.label}**.`, pendingChanges };
+        return { status: "requires_confirmation", __token: token, expiresAt, message: `I'm ready to assign **${client.name}** to **${sub.label}**.`, pendingChanges };
       },
     }),
 
@@ -817,9 +817,9 @@ export function createUserScopedTools(
         const cs = await prisma.clientSubscription.findFirst({ where: { id: clientSubscriptionId, subscription: { userId } }, include: { client: true, subscription: { include: { plan: { include: { platform: true } } } } } });
         if (!cs) return { error: "Client subscription not found or access denied." };
         const pendingChanges = { clientSubscriptionId, amountPaid, monthsRenewed, paidOn, notes };
-        const { token } = await createMutationToken(userId, { toolName: "logPayment", targetId: clientSubscriptionId, action: "create", changes: pendingChanges, previousValues: { activeUntil: cs.activeUntil.toISOString() } });
+        const { token, expiresAt } = await createMutationToken(userId, { toolName: "logPayment", action: "create", changes: pendingChanges, previousValues: { activeUntil: cs.activeUntil.toISOString() } });
         await prisma.mutationAuditLog.update({ where: { token }, data: { newValues: pendingChanges } });
-        return { status: "requires_confirmation", __token: token, message: `I'm ready to register a payment of ${amountPaid}€ from ${cs.client.name}.`, pendingChanges };
+        return { status: "requires_confirmation", __token: token, expiresAt, message: `I'm ready to register a payment of ${amountPaid}€ from ${cs.client.name}.`, pendingChanges };
       },
     }),
 
@@ -839,9 +839,9 @@ export function createUserScopedTools(
         }));
 
         const pendingChanges = { clientIds };
-        const { token } = await createMutationToken(userId, { toolName: "deleteClients", targetId: "bulk", action: "delete", changes: pendingChanges, previousValues: previousValues as any });
+        const { token, expiresAt } = await createMutationToken(userId, { toolName: "deleteClients", targetId: "bulk", action: "delete", changes: pendingChanges, previousValues: previousValues as any });
         await prisma.mutationAuditLog.update({ where: { token }, data: { newValues: pendingChanges } });
-        return { status: "requires_confirmation", __token: token, message: `I am ready to permanently delete ${clients.length} client(s): ${clients.map((c: any) => c.name).join(", ")}.`, pendingChanges };
+        return { status: "requires_confirmation", __token: token, expiresAt, message: `I am ready to permanently delete ${clients.length} client(s): ${clients.map((c: any) => c.name).join(", ")}.`, pendingChanges };
       },
     }),
 
@@ -861,9 +861,9 @@ export function createUserScopedTools(
         }));
 
         const pendingChanges = { clientSubscriptionIds };
-        const { token } = await createMutationToken(userId, { toolName: "removeClientsFromSubscription", targetId: "bulk", action: "delete", changes: pendingChanges, previousValues: previousValues as any });
+        const { token, expiresAt } = await createMutationToken(userId, { toolName: "removeClientsFromSubscription", targetId: "bulk", action: "delete", changes: pendingChanges, previousValues: previousValues as any });
         await prisma.mutationAuditLog.update({ where: { token }, data: { newValues: pendingChanges } });
-        return { status: "requires_confirmation", __token: token, message: `I am ready to remove ${css.length} seat assignment(s).`, pendingChanges };
+        return { status: "requires_confirmation", __token: token, expiresAt, message: `I am ready to remove ${css.length} seat assignment(s).`, pendingChanges };
       },
     }),
 
@@ -886,9 +886,9 @@ export function createUserScopedTools(
             previousValues = p ? [{ id: p.id, name: p.name }] : [];
         }
 
-        const { token } = await createMutationToken(userId, { toolName: "managePlatforms", action: operation as any, changes: pendingChanges, previousValues });
+        const { token, expiresAt } = await createMutationToken(userId, { toolName: "managePlatforms", action: operation as any, changes: pendingChanges, previousValues });
         await prisma.mutationAuditLog.update({ where: { token }, data: { newValues: pendingChanges } });
-        return { status: "requires_confirmation", __token: token, message: `I am ready to ${operation} platform(s).`, pendingChanges };
+        return { status: "requires_confirmation", __token: token, expiresAt, message: `I am ready to ${operation} platform(s).`, pendingChanges };
       },
     }),
 
@@ -913,9 +913,9 @@ export function createUserScopedTools(
             const p = await prisma.plan.findFirst({ where: { id: planIds[0], platform: { userId } } });
             previousValues = p ? [p] : [];
         }
-        const { token } = await createMutationToken(userId, { toolName: "managePlans", action: operation as any, changes: pendingChanges, previousValues });
+        const { token, expiresAt } = await createMutationToken(userId, { toolName: "managePlans", action: operation as any, changes: pendingChanges, previousValues });
         await prisma.mutationAuditLog.update({ where: { token }, data: { newValues: pendingChanges } });
-        return { status: "requires_confirmation", __token: token, message: `I am ready to ${operation} plan(s).`, pendingChanges };
+        return { status: "requires_confirmation", __token: token, expiresAt, message: `I am ready to ${operation} plan(s).`, pendingChanges };
       },
     }),
 
@@ -942,9 +942,9 @@ export function createUserScopedTools(
             const p = await prisma.subscription.findFirst({ where: { id: subscriptionIds[0], userId } });
             previousValues = p ? [p] : [];
         }
-        const { token } = await createMutationToken(userId, { toolName: "manageSubscriptions", action: operation as any, changes: pendingChanges, previousValues });
+        const { token, expiresAt } = await createMutationToken(userId, { toolName: "manageSubscriptions", action: operation as any, changes: pendingChanges, previousValues });
         await prisma.mutationAuditLog.update({ where: { token }, data: { newValues: pendingChanges } });
-        return { status: "requires_confirmation", __token: token, message: `I am ready to ${operation} subscription(s).`, pendingChanges };
+        return { status: "requires_confirmation", __token: token, expiresAt, message: `I am ready to ${operation} subscription(s).`, pendingChanges };
       },
     }),
 

@@ -63,6 +63,7 @@ function CopyButton({ text }: { text: string }) {
 }
 
 function ReasonerBlock({ text, isThinking }: { text: string, isThinking?: boolean }) {
+  const t = useTranslations();
   const [open, setOpen] = useState(false);
   if (!text && !isThinking) return null;
 
@@ -80,7 +81,7 @@ function ReasonerBlock({ text, isThinking }: { text: string, isThinking?: boolea
             <Sparkles className="size-3" />
           )}
         </div>
-        <span>{isThinking ? "Viendo datos..." : "Ver razonamiento"}</span>
+        <span>{isThinking ? t("chat.viewingData") : t("chat.viewReasoning")}</span>
         <ChevronDown className={`size-3.5 transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
       </button>
       
@@ -199,11 +200,11 @@ function ToolInvocationBlock({ part, onConfirm, onUndo, executedMutations, rejec
             </div>
             <div className="flex flex-col min-w-0">
               <span className="text-[13px] text-foreground font-semibold truncate leading-tight uppercase tracking-tight opacity-90">{toolName}</span>
-              <span className="text-[10px] text-muted-foreground/60 font-normal">Base de datos • {isError ? 'Fallido' : 'Listo'}</span>
+              <span className="text-[10px] text-muted-foreground/60 font-normal">{t("chat.database")} • {isError ? t("chat.failed") : t("chat.ready")}</span>
             </div>
           </div>
           <div className="flex items-center gap-1.5 shrink-0 bg-background/50 border px-2 py-1 rounded-md text-[10px] font-bold text-primary/80 uppercase shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
-            <span>{open ? "Cerrar" : "Logs"}</span>
+            <span>{open ? t("chat.close") : t("chat.logs")}</span>
             {open ? <ChevronUp className="size-3 opacity-60" /> : <ChevronDown className="size-3 opacity-60" />}
           </div>
         </button>
@@ -220,7 +221,7 @@ function ToolInvocationBlock({ part, onConfirm, onUndo, executedMutations, rejec
                     : 'text-muted-foreground/60 hover:text-foreground hover:bg-muted/30'
                 }`}
               >
-                Parámetros {hasArgs && <span className="ml-1 opacity-40">[]</span>}
+                {t("chat.parameters")} {hasArgs && <span className="ml-1 opacity-40">[]</span>}
               </button>
               <button
                 type="button"
@@ -231,7 +232,7 @@ function ToolInvocationBlock({ part, onConfirm, onUndo, executedMutations, rejec
                     : 'text-muted-foreground/60 hover:text-foreground hover:bg-muted/30'
                 }`}
               >
-                Respuesta {isError && <span className="ml-1 text-red-500">✕</span>}
+                {t("chat.response")} {isError && <span className="ml-1 text-red-500">✕</span>}
               </button>
             </div>
             {/* Tab content */}
@@ -242,20 +243,20 @@ function ToolInvocationBlock({ part, onConfirm, onUndo, executedMutations, rejec
                     {JSON.stringify(formattedArgs, null, 2)}
                   </pre>
                 ) : (
-                  <div className="text-[11px] text-muted-foreground/60 font-medium italic py-2">Sin parámetros de entrada.</div>
+                  <div className="text-[11px] text-muted-foreground/60 font-medium italic py-2">{t("chat.noParameters")}</div>
                 )
               )}
               {activeTab === 'output' && (
                 isError ? (
                   <div className="text-[11px] font-mono text-red-400 bg-red-500/5 p-3 rounded-lg border border-red-500/20 overflow-x-auto whitespace-pre-wrap break-words">
-                    {errorText || 'Error desconocido'}
+                    {errorText || t("chat.unknownError")}
                   </div>
                 ) : hasOutput ? (
                   <pre className="text-[11px] font-mono text-muted-foreground/80 bg-muted/40 p-3 rounded-lg border border-border/40 overflow-x-auto whitespace-pre-wrap break-words max-h-[250px] overflow-y-auto custom-scrollbar">
                     {typeof formattedOutput === 'string' ? formattedOutput : JSON.stringify(formattedOutput, null, 2)}
                   </pre>
                 ) : (
-                  <div className="text-[11px] text-muted-foreground/60 font-medium italic py-2">Sin resultado disponible.</div>
+                  <div className="text-[11px] text-muted-foreground/60 font-medium italic py-2">{t("chat.noResult")}</div>
                 )
               )}
             </div>
@@ -283,7 +284,7 @@ function ToolInvocationBlock({ part, onConfirm, onUndo, executedMutations, rejec
              return (
                  <div className="px-4 pb-4 animate-in fade-in slide-in-from-bottom-1 duration-500">
                    <div className="w-full bg-red-500/10 border border-red-500/20 text-red-500 font-bold py-1.5 rounded-xl text-[10px] uppercase tracking-wider text-center">
-                     ✕ Acción Rechazada
+                     ✕ {t("chat.actionRejected")}
                    </div>
                  </div>
              );
@@ -291,6 +292,8 @@ function ToolInvocationBlock({ part, onConfirm, onUndo, executedMutations, rejec
 
            const token = confirmData?.__token as string | undefined;
            const executionResult = token ? executedMutations?.get(token) : undefined;
+           const expiresAt = confirmData?.expiresAt ? new Date(confirmData.expiresAt as string) : null;
+           const isExpired = expiresAt && expiresAt < new Date() && !executionResult && !acceptedActionIds?.has(callId);
 
            // If this token has been executed, show the Undo button
            if (executionResult) {
@@ -298,7 +301,7 @@ function ToolInvocationBlock({ part, onConfirm, onUndo, executedMutations, rejec
                return (
                  <div className="px-4 pb-4 animate-in fade-in slide-in-from-bottom-1 duration-500">
                    <div className="w-full bg-muted/30 text-muted-foreground font-bold py-1.5 rounded-xl text-[10px] uppercase tracking-wider text-center">
-                     ✓ Acción deshecha
+                     ✓ {t("chat.actionUndone")}
                    </div>
                  </div>
                );
@@ -330,7 +333,7 @@ function ToolInvocationBlock({ part, onConfirm, onUndo, executedMutations, rejec
                    className="w-full bg-muted/50 hover:bg-muted text-muted-foreground font-bold py-1.5 rounded-xl text-[10px] uppercase tracking-wider transition-all active:scale-[0.95] group"
                  >
                    <Undo2 className="size-3 mr-2 group-hover:-rotate-45 transition-transform" />
-                   Ir Atrás (Deshacer)
+                   {t("chat.undo")}
                  </Button>
                </div>
              );
@@ -341,7 +344,7 @@ function ToolInvocationBlock({ part, onConfirm, onUndo, executedMutations, rejec
              return (
                  <div className="px-4 pb-4 animate-in fade-in slide-in-from-bottom-1 duration-500">
                    <div className="w-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 font-bold py-1.5 rounded-xl text-[10px] uppercase tracking-wider text-center flex items-center justify-center gap-2">
-                     <Loader2 className="size-3 animate-spin" /> Ejecutando...
+                     <Loader2 className="size-3 animate-spin" /> {t("chat.executing")}
                    </div>
                  </div>
              );
@@ -357,9 +360,9 @@ function ToolInvocationBlock({ part, onConfirm, onUndo, executedMutations, rejec
                      <Terminal className="size-4 text-amber-500" />
                    </div>
                    <div className="flex-1 min-w-0">
-                     <p className="text-[11px] font-bold text-amber-500 uppercase tracking-widest">Acción Requerida</p>
+                     <p className="text-[11px] font-bold text-amber-500 uppercase tracking-widest">{t("chat.actionRequired")}</p>
                      <p className="text-sm text-foreground/90 mt-0.5 leading-snug">
-                       {confirmData.message as string || `Confirma la acción de ${toolName}`}
+                       {confirmData.message as string || t("chat.querying")}
                      </p>
                    </div>
                  </div>
@@ -377,29 +380,37 @@ function ToolInvocationBlock({ part, onConfirm, onUndo, executedMutations, rejec
                    </div>
                  )}
 
-                 {/* Buttons */}
+                 {/* Buttons or Expiry msg */}
                  <div className="flex gap-2 mt-1">
-                   <Button
-                     onClick={() => {
-                        const callId = part.toolCallId || (part.toolInvocation as any)?.toolCallId;
-                        onConfirm?.(toolName, { ...(confirmData.pendingChanges as Record<string, unknown> || {}), __token: confirmData?.__token }, true, callId);
-                     }}
-                     className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-sm shadow-sm transition-all active:scale-[0.97]"
-                   >
-                     <Check className="size-4 mr-2" />
-                      {t("chat.accept")}
-                   </Button>
-                   <Button
-                     variant="outline"
-                     onClick={() => {
-                        const callId = part.toolCallId || (part.toolInvocation as any)?.toolCallId;
-                        onConfirm?.(toolName, confirmData.pendingChanges || formattedArgs, false, callId);
-                     }}
-                     className="flex-1 border-red-500/30 hover:bg-red-500/10 text-red-400 font-bold py-2.5 rounded-xl text-sm transition-all active:scale-[0.97]"
-                   >
-                     <X className="size-4 mr-2" />
-                      {t("chat.reject")}
-                   </Button>
+                   {isExpired ? (
+                     <div className="w-full bg-red-500/10 border border-red-500/20 text-red-500 font-bold py-2 rounded-xl text-[10px] uppercase tracking-wider text-center flex items-center justify-center gap-2">
+                       <Clock className="size-3" /> {t("chat.expired")}
+                     </div>
+                   ) : (
+                     <>
+                       <Button
+                         onClick={() => {
+                            const callId = part.toolCallId || (part.toolInvocation as any)?.toolCallId;
+                            onConfirm?.(toolName, { ...(confirmData.pendingChanges as Record<string, unknown> || {}), __token: confirmData?.__token }, true, callId);
+                         }}
+                         className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-sm shadow-sm transition-all active:scale-[0.97]"
+                       >
+                         <Check className="size-4 mr-2" />
+                          {t("chat.accept")}
+                       </Button>
+                       <Button
+                         variant="outline"
+                         onClick={() => {
+                            const callId = part.toolCallId || (part.toolInvocation as any)?.toolCallId;
+                            onConfirm?.(toolName, confirmData.pendingChanges || formattedArgs, false, callId);
+                         }}
+                         className="flex-1 border-red-500/30 hover:bg-red-500/10 text-red-400 font-bold py-2.5 rounded-xl text-sm transition-all active:scale-[0.97]"
+                       >
+                         <X className="size-4 mr-2" />
+                          {t("chat.reject")}
+                       </Button>
+                     </>
+                   )}
                  </div>
                </div>
              </div>
@@ -592,7 +603,7 @@ export function ChatInterface() {
     const firstUserMsg = messages.find((m) => m.role === "user");
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const titleRaw = (firstUserMsg?.parts?.find((p: any) => p.type === "text") as any)?.text
-      || (firstUserMsg as any)?.content || "Sin título";
+      || (firstUserMsg as any)?.content || "Untitled";
     const title = titleRaw.slice(0, 60) + (titleRaw.length > 60 ? "..." : "");
 
     fetch("/api/history", {
@@ -758,7 +769,7 @@ export function ChatInterface() {
       await new Promise(r => setTimeout(r, 80));
     }
     sendMessage(
-      { text: `${t("chat.undo")} <!-- [SISTEMA] Acción de ${toolName} deshecha con éxito. El usuario ha revertido los cambios. -->` },
+      { text: `${t("chat.undo")} <!-- [SYSTEM] Action ${toolName} undone successfully. User has reverted changes. -->` },
       { body: { model: selectedModel || undefined, allowDestructive } }
     );
   };
@@ -780,7 +791,7 @@ export function ChatInterface() {
       
       // Just tell the AI it was rejected (no DB call needed)
       sendMessage(
-        { text: `${t("chat.reject")} <!-- [SISTEMA] No confirmo la acción de ${toolName}. Cancelado. -->` },
+        { text: `${t("chat.reject")} <!-- [SYSTEM] I do not confirm the action: ${toolName}. Cancelled. -->` },
         { body: { model: selectedModel || undefined, allowDestructive } }
       );
       return;
@@ -793,7 +804,7 @@ export function ChatInterface() {
     if (!token) {
       // Fallback: if no token (shouldn't happen with new system), tell the AI
       sendMessage(
-        { text: `${t("chat.accept")} <!-- [SISTEMA] Sí, confirma la acción de ${toolName}. -->` },
+        { text: `${t("chat.accept")} <!-- [SYSTEM] Yes, confirm the action: ${toolName}. -->` },
         { body: { model: selectedModel || undefined, allowDestructive } }
       );
       return;
@@ -817,19 +828,19 @@ export function ChatInterface() {
         });
         // Inform the AI post-facto so it can acknowledge in the conversation
         sendMessage(
-          { text: `${t("chat.accept")} <!-- [SISTEMA] Mutación ${toolName} ejecutada correctamente. AuditLogId: ${data.auditLogId}. Resultado: ${JSON.stringify(data.result?.message || "OK")} -->` },
+          { text: `${t("chat.accept")} <!-- [SYSTEM] Mutation ${toolName} executed successfully. AuditLogId: ${data.auditLogId}. Result: ${JSON.stringify(data.result?.message || "OK")} -->` },
           { body: { model: selectedModel || undefined, allowDestructive } }
         );
       } else {
         sendMessage(
-          { text: `${t("chat.accept")} <!-- [SISTEMA] Error ejecutando ${toolName}: ${data.error} -->` },
+          { text: `${t("chat.accept")} <!-- [SYSTEM] Error executing ${toolName}: ${data.error} -->` },
           { body: { model: selectedModel || undefined, allowDestructive } }
         );
       }
     } catch (err) {
       console.error("[Execute] Network error:", err);
       sendMessage(
-        { text: `${t("chat.accept")} <!-- [SISTEMA] Error de red ejecutando ${toolName}. -->` },
+        { text: `${t("chat.accept")} <!-- [SYSTEM] Network error executing ${toolName}. -->` },
         { body: { model: selectedModel || undefined, allowDestructive } }
       );
     }
