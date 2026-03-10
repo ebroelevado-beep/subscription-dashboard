@@ -30,7 +30,7 @@ A high-performance, modern dashboard built with **Next.js 16**, **Prisma**, and 
 ### Prerequisites
 
 - Node.js >= 22.12.0
-- pnpm (recommended)
+- bun (recommended)
 
 ### Installation
 
@@ -44,7 +44,7 @@ A high-performance, modern dashboard built with **Next.js 16**, **Prisma**, and 
 2. Install dependencies:
 
    ```bash
-   pnpm install
+   bun install
    ```
 
 3. Set up environment variables:
@@ -52,8 +52,8 @@ A high-performance, modern dashboard built with **Next.js 16**, **Prisma**, and 
 
 4. Initialize the database:
    ```bash
-   pnpm dlx prisma generate
-   pnpm dlx prisma migrate dev
+   bun x prisma generate
+   bun x prisma migrate dev
    ```
 
 ### Development
@@ -61,18 +61,18 @@ A high-performance, modern dashboard built with **Next.js 16**, **Prisma**, and 
 Run the development server:
 
 ```bash
-pnpm dev
+bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
 ## 📜 Scripts
 
-- `pnpm dev`: Starts the development server.
-- `pnpm build`: Builds the application for production.
-- `pnpm start`: Starts the production server.
-- `pnpm lint`: Runs ESLint for code quality checks.
-- `pnpm postinstall`: Automatically generates Prisma client.
+- `bun dev`: Starts the development server.
+- `bun build`: Builds the application for production.
+- `bun start`: Starts the production server.
+- `bun lint`: Runs ESLint for code quality checks.
+- `bun postinstall`: Automatically generates Prisma client.
 
 ## 🤝 Contributing
 
