@@ -88,6 +88,7 @@ export function ClientDetailSheet({ clientId, open, onOpenChange }: ClientDetail
   } | null>(null);
   const [renewAmount, setRenewAmount] = useState(0);
   const [renewMonths, setRenewMonths] = useState(1);
+  const [renewPaidOn, setRenewPaidOn] = useState<string>(format(new Date(), "yyyy-MM-dd"));
   const [renewNotes, setRenewNotes] = useState("");
 
   const copyToClipboard = (text: string, label: string) => {
@@ -106,6 +107,7 @@ export function ClientDetailSheet({ clientId, open, onOpenChange }: ClientDetail
     });
     setRenewAmount(Number(seat.customPrice));
     setRenewMonths(1);
+    setRenewPaidOn(format(new Date(), "yyyy-MM-dd"));
     setRenewNotes("");
   };
 
@@ -125,7 +127,7 @@ export function ClientDetailSheet({ clientId, open, onOpenChange }: ClientDetail
     e.preventDefault();
     if (!renewSeat) return;
     renewMut.mutate(
-      { seatId: renewSeat.id, amountPaid: renewAmount, months: renewMonths, notes: renewNotes || null },
+      { seatId: renewSeat.id, amountPaid: renewAmount, months: renewMonths, paidOn: renewPaidOn, notes: renewNotes || null },
       { onSuccess: () => setRenewSeat(null) }
     );
   };
@@ -503,6 +505,15 @@ export function ClientDetailSheet({ clientId, open, onOpenChange }: ClientDetail
               <p className="text-xs text-muted-foreground">
                 {tc("renewMonthsHint")}
               </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="renew-paidon">{tc("paymentDate")}</Label>
+              <Input
+                id="renew-paidon"
+                type="date"
+                value={renewPaidOn}
+                onChange={(e) => setRenewPaidOn(e.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="renew-notes">{tc("notes")} ({tc("optional")})</Label>

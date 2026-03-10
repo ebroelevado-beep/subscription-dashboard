@@ -31,6 +31,7 @@ export function RenewPlatformDialog({
 }: RenewPlatformDialogProps) {
   const renewMut = useRenewPlatform();
   const [amount, setAmount] = useState(0);
+  const [paidOn, setPaidOn] = useState<string>(format(new Date(), "yyyy-MM-dd"));
   const [notes, setNotes] = useState("");
   const t = useTranslations("subscriptions");
   const tc = useTranslations("common");
@@ -48,6 +49,7 @@ export function RenewPlatformDialog({
       {
         subscriptionId: subscription.id,
         amountPaid: amount,
+        paidOn,
         notes: notes || null,
       },
       {
@@ -61,6 +63,7 @@ export function RenewPlatformDialog({
   const handleOpenChange = (isOpen: boolean) => {
     if (isOpen && subscription) {
       setAmount(Number(subscription.plan.cost));
+      setPaidOn(format(new Date(), "yyyy-MM-dd"));
       setNotes("");
     }
     onOpenChange(isOpen);
@@ -94,6 +97,18 @@ export function RenewPlatformDialog({
               min={0}
               value={amount}
               onChange={(e) => setAmount(Number(e.target.value))}
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="platformPaidOn">
+              {tc("paymentDate")}
+            </Label>
+            <Input
+              id="platformPaidOn"
+              type="date"
+              value={paidOn}
+              onChange={(e) => setPaidOn(e.target.value)}
             />
           </div>
 

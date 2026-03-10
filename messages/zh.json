@@ -20,6 +20,7 @@
     "password": "密码",
     "changeLanguage": "切换语言",
     "amountPaid": "实付金额",
+    "paymentDate": "付款日期",
     "autoCalculated": "自动计算",
     "renewMonthsHint": "正数 = 延长，负数 = 更正",
     "optional": "可选",
@@ -378,7 +379,15 @@
     "scoreBelowAverage": "差 (经常迟交)",
     "scorePoor": "极差 (非常不守时)",
     "avgDaysLateLabel": "平均延迟",
-    "onTimeRateLabel": "准时率"
+    "onTimeRateLabel": "准时率",
+    "healthLabel": "健康状态",
+    "overdueLabel": "当前延迟",
+    "healthStatusExcellent": "极好",
+    "healthStatusGood": "良好",
+    "healthStatusLate": "延迟",
+    "healthStatusOverdue": "逾期",
+    "healthStatusCritical": "严重",
+    "healthStatusNew": "新"
   },
   "history": {
     "title": "续约历史",
@@ -433,7 +442,9 @@
     "noDataAvailable": "此期间没有可用数据。",
     "arpu": "ARPU",
     "cogs": "COGS",
-    "netMargin": "净利润率"
+    "netMargin": "净利润率",
+    "disciplineScore": "付款信誉得分",
+    "totalPayments": "总计付款"
   },
   "settings": {
     "title": "设置",

@@ -40,9 +40,9 @@ export function PlansTable({ plans, isLoading }: PlansTableProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>{tc("name")}</TableHead>
-              <TableHead>{tc("platform")}</TableHead>
-              <TableHead className="text-right">{t("myCost")}</TableHead>
+              <TableHead className="text-center">{tc("name")}</TableHead>
+              <TableHead className="text-center">{tc("platform")}</TableHead>
+              <TableHead className="text-center">{t("myCost")}</TableHead>
               <TableHead className="text-center">{t("maxSeats")}</TableHead>
               <TableHead className="text-center">{tc("status")}</TableHead>
               <TableHead className="text-right">{tc("actions")}</TableHead>
@@ -51,9 +51,9 @@ export function PlansTable({ plans, isLoading }: PlansTableProps) {
           <TableBody>
             {Array.from({ length: 5 }).map((_, i) => (
               <TableRow key={i}>
-                <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                <TableCell className="text-right"><Skeleton className="h-4 w-16 ml-auto" /></TableCell>
+                <TableCell className="text-center"><Skeleton className="h-4 w-24 mx-auto" /></TableCell>
+                <TableCell className="text-center"><Skeleton className="h-4 w-20 mx-auto" /></TableCell>
+                <TableCell className="text-center"><Skeleton className="h-4 w-16 mx-auto" /></TableCell>
                 <TableCell className="text-center"><Skeleton className="h-4 w-8 mx-auto" /></TableCell>
                 <TableCell className="text-center"><Skeleton className="h-5 w-14 mx-auto rounded-full" /></TableCell>
                 <TableCell className="text-right">
@@ -90,9 +90,9 @@ export function PlansTable({ plans, isLoading }: PlansTableProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>{tc("name")}</TableHead>
-              <TableHead>{tc("platform")}</TableHead>
-              <TableHead className="text-right">{t("myCost")}</TableHead>
+              <TableHead className="text-center">{tc("name")}</TableHead>
+              <TableHead className="text-center">{tc("platform")}</TableHead>
+              <TableHead className="text-center">{t("myCost")}</TableHead>
               <TableHead className="text-center">{t("maxSeats")}</TableHead>
               <TableHead className="text-center">{tc("status")}</TableHead>
               <TableHead className="text-right">{tc("actions")}</TableHead>
@@ -101,11 +101,11 @@ export function PlansTable({ plans, isLoading }: PlansTableProps) {
           <TableBody>
             {plans.map((plan) => (
               <TableRow key={plan.id}>
-                <TableCell className="font-medium">{plan.name}</TableCell>
-                <TableCell className="text-muted-foreground">
+                <TableCell className="text-center font-medium">{plan.name}</TableCell>
+                <TableCell className="text-center text-muted-foreground">
                   {plan.platform.name}
                 </TableCell>
-                <TableCell className="text-right font-mono tabular-nums">
+                <TableCell className="text-center font-mono tabular-nums">
                   {formatCurrencyVal(Number(plan.cost))}
                 </TableCell>
                 <TableCell className="text-center">

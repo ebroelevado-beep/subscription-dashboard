@@ -28,8 +28,9 @@ export async function renewClientSubscription({
   clientSubscriptionId,
   amountPaid,
   months = 1,
+  paidOn,
   notes = null,
-}: RenewClientParams) {
+}: RenewClientParams & { paidOn?: string }) {
   return prisma.$transaction(async (tx: TxClient) => {
     // 1. Fetch the seat with its current state
     const seat = await tx.clientSubscription.findUniqueOrThrow({
@@ -38,7 +39,7 @@ export async function renewClientSubscription({
 
     // Seats are now only active or paused (cancelled was removed from schema)
 
-    const today = startOfDay(new Date());
+    const today = startOfDay(paidOn ? new Date(paidOn) : new Date());
     const currentExpiry = startOfDay(new Date(seat.activeUntil));
     const customPrice = Number(seat.customPrice);
 
@@ -102,6 +103,7 @@ interface BulkRenewItem {
   clientSubscriptionId: string;
   amountPaid?: number; // defaults to custom_price * months
   months?: number;     // per-item override; falls back to global
+  paidOn?: string;
   notes?: string | null;
 }
 
@@ -113,9 +115,10 @@ interface BulkRenewParams {
 export async function renewBulkClientSubscriptions({
   items,
   months,
-}: BulkRenewParams) {
+  paidOn,
+}: BulkRenewParams & { paidOn?: string }) {
   return prisma.$transaction(async (tx: TxClient) => {
-    const today = startOfDay(new Date());
+    const defaultToday = startOfDay(paidOn ? new Date(paidOn) : new Date());
     const results: { seat: Awaited<ReturnType<typeof tx.clientSubscription.update>>; log: Awaited<ReturnType<typeof tx.renewalLog.create>> }[] = [];
 
     for (const item of items) {
@@ -125,6 +128,7 @@ export async function renewBulkClientSubscriptions({
       });
 
       const seatMonths = item.months ?? months; // per-item override or global
+      const itemToday = item.paidOn ? startOfDay(new Date(item.paidOn)) : defaultToday;
       const currentExpiry = startOfDay(new Date(seat.activeUntil));
       const customPrice = Number(seat.customPrice);
 
@@ -149,7 +153,7 @@ export async function renewBulkClientSubscriptions({
           expectedAmount: customPrice * seatMonths,
           periodStart,
           periodEnd,
-          paidOn: today,
+          paidOn: itemToday,
           dueOn: currentExpiry,
           monthsRenewed: seatMonths,
           notes: finalNotes,
@@ -188,7 +192,9 @@ interface RenewPlatformParams {
 export async function renewPlatformSubscription({
   subscriptionId,
   amountPaid,
-}: RenewPlatformParams) {
+  paidOn,
+  notes,
+}: RenewPlatformParams & { paidOn?: string }) {
   return prisma.$transaction(async (tx: TxClient) => {
     // 1. Fetch subscription with its plan cost
     const subscription = await tx.subscription.findUniqueOrThrow({
@@ -198,7 +204,7 @@ export async function renewPlatformSubscription({
 
     // Subscriptions are now only active or paused (cancelled was removed from schema)
 
-    const today = startOfDay(new Date());
+    const today = startOfDay(paidOn ? new Date(paidOn) : new Date());
     const currentExpiry = startOfDay(new Date(subscription.activeUntil));
     const planCost = Number(subscription.plan.cost);
 

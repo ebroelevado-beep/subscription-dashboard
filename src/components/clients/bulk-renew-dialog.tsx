@@ -70,6 +70,7 @@ export function BulkRenewDialog({
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [globalMonths, setGlobalMonths] = useState(1);
+  const [globalPaidOn, setGlobalPaidOn] = useState<string>(format(new Date(), "yyyy-MM-dd"));
   const [seatConfigs, setSeatConfigs] = useState<Record<string, SeatConfig>>({});
   const [showNotes, setShowNotes] = useState(false);
   const [notes, setNotes] = useState("");
@@ -87,6 +88,7 @@ export function BulkRenewDialog({
     for (const s of renewableSeats) configs[s.id] = makeSeatConfig(Number(s.customPrice), 1);
     setSeatConfigs(configs);
     setGlobalMonths(1);
+    setGlobalPaidOn(format(new Date(), "yyyy-MM-dd"));
     setShowNotes(false);
     setNotes("");
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -203,7 +205,7 @@ export function BulkRenewDialog({
       notes: notes || null,
     }));
     bulkMut.mutate(
-      { items, months: globalMonths, clientName },
+      { items, months: globalMonths, paidOn: globalPaidOn, clientName },
       { onSuccess: () => onOpenChange(false) }
     );
   };
@@ -237,6 +239,20 @@ export function BulkRenewDialog({
             className="w-20"
           />
           <p className="text-xs text-muted-foreground">{tc("renewMonthsHint")}</p>
+        </div>
+
+        {/* Global Payment Date */}
+        <div className="flex items-center gap-3">
+          <Label htmlFor="bulk-paidon" className="shrink-0 text-sm">
+            {tc("paymentDate")}
+          </Label>
+          <Input
+            id="bulk-paidon"
+            type="date"
+            value={globalPaidOn}
+            onChange={(e) => setGlobalPaidOn(e.target.value)}
+            className="w-[160px]"
+          />
         </div>
 
         {/* Shared expiry summary when all dates match */}

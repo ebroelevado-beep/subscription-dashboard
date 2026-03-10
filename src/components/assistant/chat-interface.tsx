@@ -980,9 +980,9 @@ export function ChatInterface() {
             </div>
           ) : (
             <>
-            {messages.map((m: UIMessage) => (
+            {messages.map((m: UIMessage, index: number) => (
               <div
-                key={m.id}
+                key={`${m.id}-${index}`}
                 className={`flex gap-3 sm:gap-6 animate-in fade-in slide-in-from-bottom-2 duration-300 ${m.role === "user" ? "justify-end" : "justify-start"}`}
               >
                 {/* Message Content Container */}
@@ -1085,8 +1085,8 @@ export function ChatInterface() {
       </div>
 
       {/* ── Input Area ── sticky bottom dock (No border/footer) */}
-      <div className="shrink-0 px-4 pt-2 pb-6 sm:pb-8 bg-background relative z-20">
-        <div className="max-w-4xl mx-auto group relative">
+      <div className="shrink-0 px-4 pt-2 pb-6 sm:pb-8 bg-background relative z-20 flex justify-center w-full">
+        <div className="w-full max-w-4xl group relative">
           {/* Scroll to Bottom Button — repositioned above dock */}
           {showScrollBottom && (
             <Button
@@ -1113,7 +1113,7 @@ export function ChatInterface() {
               style={{ maxHeight: "200px" }}
             />
             
-            <div className="flex items-center justify-between mt-1 pt-1 border-t border-muted-foreground/5">
+            <div className="flex items-center justify-between mt-1 pt-1">
               <div className="flex items-center gap-1.5">
                 {/* Model Selector within dock */}
                 {hasCopilot && models.length > 0 && (

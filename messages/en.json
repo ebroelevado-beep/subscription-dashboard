@@ -20,6 +20,7 @@
     "password": "Password",
     "changeLanguage": "Change Language",
     "amountPaid": "Amount Paid",
+    "paymentDate": "Payment Date",
     "autoCalculated": "Auto-calculated",
     "renewMonthsHint": "Positive = extend, negative = correction",
     "optional": "optional",
@@ -385,7 +386,15 @@
     "scoreBelowAverage": "Below Average (Often late)",
     "scorePoor": "Poor (Very unpunctual)",
     "avgDaysLateLabel": "Avg. delay",
-    "onTimeRateLabel": "On-time rate"
+    "onTimeRateLabel": "On-time rate",
+    "healthLabel": "Health status",
+    "overdueLabel": "Current delay",
+    "healthStatusExcellent": "Excellent",
+    "healthStatusGood": "Good",
+    "healthStatusLate": "Late",
+    "healthStatusOverdue": "Overdue",
+    "healthStatusCritical": "Critical",
+    "healthStatusNew": "New"
   },
   "history": {
     "title": "Renewal History",
@@ -440,7 +449,9 @@
     "noDataAvailable": "No data available for this period.",
     "arpu": "ARPU",
     "cogs": "COGS",
-    "netMargin": "Net Margin"
+    "netMargin": "Net Margin",
+    "disciplineScore": "Discipline Score",
+    "totalPayments": "Total Payments"
   },
   "settings": {
     "title": "Settings",

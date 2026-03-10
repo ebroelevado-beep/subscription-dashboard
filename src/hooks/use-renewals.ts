@@ -14,6 +14,7 @@ export function useRenewClient() {
       seatId: string;
       amountPaid?: number;
       months?: number;
+      paidOn?: string;
       notes?: string | null;
     }) =>
       fetchApi(`/api/client-subscriptions/${data.seatId}/renew`, {
@@ -22,6 +23,7 @@ export function useRenewClient() {
         body: JSON.stringify({
           amountPaid: data.amountPaid,
           months: data.months,
+          paidOn: data.paidOn,
           notes: data.notes,
         }),
       }),
@@ -42,8 +44,9 @@ export function useRenewBulkClients() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (data: {
-      items: { clientSubscriptionId: string; amountPaid?: number; months?: number; notes?: string | null }[];
+      items: { clientSubscriptionId: string; amountPaid?: number; months?: number; paidOn?: string; notes?: string | null }[];
       months: number; // global default
+      paidOn?: string;
       clientName: string; // for toast only
     }) =>
       fetchApi<{ renewed: number }>(`/api/client-subscriptions/bulk-renew`, {
@@ -52,6 +55,7 @@ export function useRenewBulkClients() {
         body: JSON.stringify({
           items: data.items,
           months: data.months,
+          paidOn: data.paidOn,
         }),
       }),
     onSuccess: (result, variables) => {
@@ -75,6 +79,7 @@ export function useRenewPlatform() {
     mutationFn: (data: {
       subscriptionId: string;
       amountPaid?: number;
+      paidOn?: string;
       notes?: string | null;
     }) =>
       fetchApi(`/api/subscriptions/${data.subscriptionId}/renew`, {
@@ -82,6 +87,7 @@ export function useRenewPlatform() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           amountPaid: data.amountPaid,
+          paidOn: data.paidOn,
           notes: data.notes,
         }),
       }),

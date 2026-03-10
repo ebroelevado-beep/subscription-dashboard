@@ -106,9 +106,9 @@ export function ClientsTable({ clients, isLoading }: ClientsTableProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>{tc("name")}</TableHead>
-              <TableHead>{t("phone")}</TableHead>
-              <TableHead>{tc("platform")}</TableHead>
+              <TableHead className="text-center">{tc("name")}</TableHead>
+              <TableHead className="text-center">{t("phone")}</TableHead>
+              <TableHead className="text-center">{tc("platform")}</TableHead>
               <TableHead className="text-center">{t("disciplineScore")}</TableHead>
               <TableHead className="text-center">{t("activeSeats")}</TableHead>
               <TableHead className="text-center">{tc("status")}</TableHead>
@@ -118,9 +118,9 @@ export function ClientsTable({ clients, isLoading }: ClientsTableProps) {
           <TableBody>
             {Array.from({ length: 5 }).map((_, i) => (
               <TableRow key={i}>
-                <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                <TableCell className="text-center"><Skeleton className="h-4 w-24 mx-auto" /></TableCell>
+                <TableCell className="text-center"><Skeleton className="h-4 w-24 mx-auto" /></TableCell>
+                <TableCell className="text-center"><Skeleton className="h-4 w-24 mx-auto" /></TableCell>
                 <TableCell className="text-center"><Skeleton className="h-5 w-12 mx-auto rounded-full" /></TableCell>
                 <TableCell className="text-center"><Skeleton className="h-5 w-8 mx-auto rounded-full" /></TableCell>
                 <TableCell className="text-center"><Skeleton className="h-5 w-14 mx-auto rounded-full" /></TableCell>
@@ -156,9 +156,9 @@ export function ClientsTable({ clients, isLoading }: ClientsTableProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>{tc("name")}</TableHead>
-              <TableHead>{t("phone")}</TableHead>
-              <TableHead>{tc("platform")}</TableHead>
+              <TableHead className="text-center">{tc("name")}</TableHead>
+              <TableHead className="text-center">{t("phone")}</TableHead>
+              <TableHead className="text-center">{tc("platform")}</TableHead>
               <TableHead className="text-center">{t("disciplineScore")}</TableHead>
               <TableHead className="text-center">{t("activeSeats")}</TableHead>
               <TableHead className="text-center">{tc("status")}</TableHead>
@@ -185,12 +185,14 @@ export function ClientsTable({ clients, isLoading }: ClientsTableProps) {
                   className="cursor-pointer"
                   onClick={() => setSheetClientId(c.id)}
                 >
-                  <TableCell className="font-medium">{c.name}</TableCell>
-                  <TableCell className="text-muted-foreground">
+                  <TableCell className="text-center font-medium">{c.name}</TableCell>
+                  <TableCell className="text-center text-muted-foreground">
                     {c.phone ?? "—"}
                   </TableCell>
-                  <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">
-                    {services}
+                  <TableCell className="text-center text-sm text-muted-foreground">
+                    <div className="max-w-[180px] mx-auto whitespace-normal break-words leading-tight">
+                      {services}
+                    </div>
                   </TableCell>
                   <TableCell className="text-center">
                     {score !== null ? (

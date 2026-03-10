@@ -90,6 +90,7 @@ export type CreateClientSubscriptionInput = z.infer<
 export const renewClientSubscriptionSchema = z.object({
   amountPaid: z.number().optional(), // defaults to custom_price; can be 0 for corrections
   months: z.coerce.number().int().refine((v) => v !== 0, { message: "Months cannot be zero" }).optional().default(1),
+  paidOn: z.string().date().optional(),
   notes: z.string().nullable().optional(),
 });
 
@@ -108,6 +109,7 @@ export const renewBulkClientSubscriptionsSchema = z.object({
         clientSubscriptionId: z.string().uuid(),
         amountPaid: z.number().min(0).optional(),
         months: z.coerce.number().int().min(1).max(12).optional(), // per-seat override
+        paidOn: z.string().date().optional(),
         notes: z.string().nullable().optional(),
       })
     )
@@ -119,6 +121,7 @@ export const renewBulkClientSubscriptionsSchema = z.object({
     .min(1)
     .max(12)
     .default(1), // global default, used when item.months is not set
+  paidOn: z.string().date().optional(),
 });
 
 export type RenewBulkClientSubscriptionsInput = z.infer<
@@ -131,6 +134,7 @@ export type RenewBulkClientSubscriptionsInput = z.infer<
 
 export const renewPlatformSubscriptionSchema = z.object({
   amountPaid: z.number().min(0).optional(), // defaults to plan cost
+  paidOn: z.string().date().optional(),
   notes: z.string().nullable().optional(),
 });
 

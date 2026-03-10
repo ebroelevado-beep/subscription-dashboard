@@ -59,24 +59,24 @@ export function SubscriptionsTable({ subscriptions, isLoading }: SubscriptionsTa
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>{t("label")}</TableHead>
-              <TableHead>{tc("platform")} → {tc("plan")}</TableHead>
+              <TableHead className="text-center">{t("label")}</TableHead>
+              <TableHead className="text-center">{tc("platform")} → {tc("plan")}</TableHead>
               <TableHead className="text-center">{t("seats")}</TableHead>
               <TableHead className="text-center">{tc("status")}</TableHead>
-              <TableHead>{t("nextRenewal")}</TableHead>
-              <TableHead>{t("cost")}</TableHead>
+              <TableHead className="text-center">{t("nextRenewal")}</TableHead>
+              <TableHead className="text-center">{t("cost")}</TableHead>
               <TableHead className="text-right">{tc("actions")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {Array.from({ length: 5 }).map((_, i) => (
               <TableRow key={i}>
-                <TableCell><Skeleton className="h-4 w-28" /></TableCell>
-                <TableCell><Skeleton className="h-4 w-36" /></TableCell>
+                <TableCell className="text-center"><Skeleton className="h-4 w-28 mx-auto" /></TableCell>
+                <TableCell className="text-center"><Skeleton className="h-4 w-36 mx-auto" /></TableCell>
                 <TableCell className="text-center"><Skeleton className="h-5 w-12 mx-auto rounded-full" /></TableCell>
                 <TableCell className="text-center"><Skeleton className="h-5 w-14 mx-auto rounded-full" /></TableCell>
-                <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                <TableCell className="text-center"><Skeleton className="h-4 w-20 mx-auto" /></TableCell>
+                <TableCell className="text-center"><Skeleton className="h-4 w-16 mx-auto" /></TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-1">
                     <Skeleton className="size-8 rounded-md" />
@@ -110,13 +110,13 @@ export function SubscriptionsTable({ subscriptions, isLoading }: SubscriptionsTa
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>{t("label")}</TableHead>
-              <TableHead>{tc("platform")} → {tc("plan")}</TableHead>
-              <TableHead className="text-center">{t("seats")}</TableHead>
-              <TableHead className="text-center">{tc("status")}</TableHead>
-              <TableHead>{t("nextRenewal")}</TableHead>
-              <TableHead>{t("cost")}</TableHead>
-              <TableHead className="text-right">{tc("actions")}</TableHead>
+              <TableHead className="text-center whitespace-nowrap">{t("label")}</TableHead>
+              <TableHead className="text-center whitespace-nowrap">{tc("platform")} → {tc("plan")}</TableHead>
+              <TableHead className="text-center whitespace-nowrap">{t("seats")}</TableHead>
+              <TableHead className="text-center whitespace-nowrap">{tc("status")}</TableHead>
+              <TableHead className="text-center whitespace-nowrap">{t("nextRenewal")}</TableHead>
+              <TableHead className="text-center whitespace-nowrap">{t("cost")}</TableHead>
+              <TableHead className="text-right whitespace-nowrap">{tc("actions")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -131,15 +131,15 @@ export function SubscriptionsTable({ subscriptions, isLoading }: SubscriptionsTa
                   className="cursor-pointer"
                   onClick={() => router.push(`/dashboard/subscriptions/${sub.id}`)}
                 >
-                  <TableCell className="font-medium">{sub.label}</TableCell>
-                  <TableCell className="text-muted-foreground">
+                  <TableCell className="text-center font-medium">{sub.label}</TableCell>
+                  <TableCell className="text-center text-muted-foreground">
                     {sub.plan.platform.name} → {sub.plan.name}
                   </TableCell>
                   <TableCell className="text-center">
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger>
-                          <Badge variant={isFull ? "destructive" : "secondary"}>
+                          <Badge variant={isFull ? "destructive" : "secondary"} className="whitespace-nowrap">
                             {occupied} / {max ?? "∞"}
                           </Badge>
                         </TooltipTrigger>
@@ -168,14 +168,14 @@ export function SubscriptionsTable({ subscriptions, isLoading }: SubscriptionsTa
                         
                         return (
                           <>
-                            <Badge variant={variant}>
+                            <Badge variant={variant} className="whitespace-nowrap truncate max-w-[140px]">
                               {label}
                             </Badge>
                             {sub.isAutopayable && (
                               <TooltipProvider>
                                 <Tooltip>
                                   <TooltipTrigger asChild>
-                                    <div className="flex items-center gap-1 text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
+                                    <div className="flex items-center gap-1 text-[10px] text-muted-foreground font-medium uppercase tracking-wider whitespace-nowrap">
                                       <RefreshCw className="size-2.5 text-primary animate-spin-slow" />
                                       {t("isAutopayable")}
                                     </div>
@@ -191,10 +191,10 @@ export function SubscriptionsTable({ subscriptions, isLoading }: SubscriptionsTa
                       })()}
                     </div>
                   </TableCell>
-                  <TableCell className="text-muted-foreground whitespace-nowrap">
+                  <TableCell className="text-center text-muted-foreground whitespace-nowrap">
                     {formatDate(sub.activeUntil)}
                   </TableCell>
-                  <TableCell className="font-medium whitespace-nowrap">
+                  <TableCell className="text-center font-medium whitespace-nowrap">
                     {formatCurrency(sub.plan.cost, currency)}
                   </TableCell>
                   <TableCell className="text-right">

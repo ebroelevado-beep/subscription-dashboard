@@ -12,6 +12,7 @@ import { addMonths, subMonths, startOfDay, format } from "date-fns";
 import { AlertTriangle } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { CURRENCIES, formatCurrency } from "@/lib/currency";
+import { useTranslations } from "next-intl";
 
 interface RenewClientDialogProps {
   seat: {
@@ -26,8 +27,10 @@ interface RenewClientDialogProps {
 
 export function RenewClientDialog({ seat, open, onOpenChange }: RenewClientDialogProps) {
   const renewMut = useRenewClient();
+  const tc = useTranslations("common");
   const [amount, setAmount] = useState(0);
   const [months, setMonths] = useState(1);
+  const [paidOn, setPaidOn] = useState<string>(format(new Date(), "yyyy-MM-dd"));
   const [notes, setNotes] = useState("");
 
   const price = seat ? Number(seat.customPrice) : 0;
@@ -70,6 +73,7 @@ export function RenewClientDialog({ seat, open, onOpenChange }: RenewClientDialo
         seatId: seat.id,
         amountPaid: amount,
         months,
+        paidOn,
         notes: notes || null,
       },
       {
@@ -84,6 +88,7 @@ export function RenewClientDialog({ seat, open, onOpenChange }: RenewClientDialo
     if (isOpen && seat) {
       setAmount(Number(seat.customPrice));
       setMonths(1);
+      setPaidOn(format(new Date(), "yyyy-MM-dd"));
       setNotes("");
     }
     onOpenChange(isOpen);
@@ -132,6 +137,16 @@ export function RenewClientDialog({ seat, open, onOpenChange }: RenewClientDialo
             <p className="text-xs text-muted-foreground">
               Positive = extend, negative = correction
             </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="paidOn">{tc("paymentDate")}</Label>
+            <Input
+              id="paidOn"
+              type="date"
+              value={paidOn}
+              onChange={(e) => setPaidOn(e.target.value)}
+            />
           </div>
 
           <div className="space-y-2">

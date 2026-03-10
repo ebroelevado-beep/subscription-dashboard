@@ -37,18 +37,18 @@ export function PlatformsTable({ platforms, isLoading }: PlatformsTableProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>{tc("name")}</TableHead>
+              <TableHead className="text-center">{tc("name")}</TableHead>
               <TableHead className="text-center">{t("plans")}</TableHead>
-              <TableHead>{tc("created")}</TableHead>
+              <TableHead className="text-center">{tc("created")}</TableHead>
               <TableHead className="text-right">{tc("actions")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {Array.from({ length: 5 }).map((_, i) => (
               <TableRow key={i}>
-                <TableCell><Skeleton className="h-4 w-28" /></TableCell>
+                <TableCell className="text-center"><Skeleton className="h-4 w-28 mx-auto" /></TableCell>
                 <TableCell className="text-center"><Skeleton className="h-5 w-8 mx-auto rounded-full" /></TableCell>
-                <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                <TableCell className="text-center"><Skeleton className="h-4 w-24 mx-auto" /></TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-1">
                     <Skeleton className="size-8 rounded-md" />
@@ -81,20 +81,20 @@ export function PlatformsTable({ platforms, isLoading }: PlatformsTableProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>{tc("name")}</TableHead>
+              <TableHead className="text-center">{tc("name")}</TableHead>
               <TableHead className="text-center">{t("plans")}</TableHead>
-              <TableHead>{tc("created")}</TableHead>
+              <TableHead className="text-center">{tc("created")}</TableHead>
               <TableHead className="text-right">{tc("actions")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {platforms.map((p) => (
               <TableRow key={p.id}>
-                <TableCell className="font-medium">{p.name}</TableCell>
+                <TableCell className="text-center font-medium">{p.name}</TableCell>
                 <TableCell className="text-center">
                   <Badge variant="secondary">{p.plans.length}</Badge>
                 </TableCell>
-                <TableCell className="text-muted-foreground text-sm">
+                <TableCell className="text-center text-muted-foreground text-sm">
                   {format(new Date(p.createdAt), "MMM d, yyyy")}
                 </TableCell>
                 <TableCell className="text-right">

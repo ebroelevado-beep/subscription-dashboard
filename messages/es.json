@@ -20,6 +20,7 @@
     "password": "Contraseña",
     "changeLanguage": "Cambiar idioma",
     "amountPaid": "Importe Pagado",
+    "paymentDate": "Fecha de Pago",
     "autoCalculated": "Auto-calculado",
     "renewMonthsHint": "Positivo = extender, negativo = corrección",
     "optional": "opcional",
