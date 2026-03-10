@@ -291,7 +291,8 @@
     "masterUsername": "Usuario Maestro",
     "masterPassword": "Contraseña Maestra",
     "owner": "Propietario (Cliente)",
-    "noOwner": "Sin propietario"
+    "noOwner": "Sin propietario",
+    "paymentDueImmediately": "Pago pendiente inmediatamente"
   },
   "clients": {
     "title": "Clientes",
@@ -362,10 +363,12 @@
     "usernameEmail": "Usuario / Email",
     "assigning": "Asignando…",
     "status": {
-      "paid": "Pagado",
+      "paid": "Al día",
       "due": "Por vencer",
       "expired": "Vencido",
-      "none": "Sin asientos"
+      "none": "Sin asientos",
+      "overdue": "Atrasado",
+      "critical": "Crítico"
     },
     "paymentDueImmediately": "Pago pendiente inmediatamente",
     "customizeRenewal": "Personalizar",

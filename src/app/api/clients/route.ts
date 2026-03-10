@@ -55,7 +55,7 @@ export async function GET() {
           id: cs.id,
           status: cs.status,
           customPrice: Number(cs.customPrice || 0),
-          activeUntil: cs.subscription?.activeUntil || client.createdAt,
+          activeUntil: cs.activeUntil || cs.subscription?.activeUntil || client.createdAt,
           subscription: cs.subscription ? {
             id: cs.subscription.id,
             label: cs.subscription.label,

@@ -23,31 +23,39 @@ import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { cn, getScoreColor, getScoreLabel } from "@/lib/utils";
 
-type ClientStatus = "paid" | "due" | "expired" | "none";
+type ClientStatus = "paid" | "due" | "overdue" | "expired" | "critical" | "none";
 
 function getClientStatus(client: Client): ClientStatus {
   const activeSeats = client.clientSubscriptions.filter((cs) => cs.status === "active");
   if (activeSeats.length === 0) return "none";
 
   const today = startOfDay(new Date());
-  let hasExpired = false;
-  let hasDue = false;
+  let maxDaysOverdue = 0;
+  let minDaysLeft = Infinity;
 
   for (const seat of activeSeats) {
     const diff = differenceInDays(startOfDay(new Date(seat.activeUntil)), today);
-    if (diff < 0) hasExpired = true;
-    else if (diff <= 3) hasDue = true;
+    if (diff < 0) {
+      const overdue = Math.abs(diff);
+      if (overdue > maxDaysOverdue) maxDaysOverdue = overdue;
+    } else {
+      if (diff < minDaysLeft) minDaysLeft = diff;
+    }
   }
 
-  if (hasExpired) return "expired";
-  if (hasDue) return "due";
+  if (maxDaysOverdue > 30) return "critical";
+  if (maxDaysOverdue > 14) return "expired";
+  if (maxDaysOverdue > 0) return "overdue";
+  if (minDaysLeft <= 3) return "due";
   return "paid";
 }
 
 const statusConfig = (t: (key: string, values?: Record<string, string | number>) => string) => ({
   paid: { label: t("status.paid"), variant: "default" as const },
   due: { label: t("status.due"), variant: "secondary" as const },
+  overdue: { label: t("status.overdue"), variant: "destructive" as const },
   expired: { label: t("status.expired"), variant: "destructive" as const },
+  critical: { label: t("status.critical"), variant: "destructive" as const },
   none: { label: t("status.none"), variant: "outline" as const },
 });
 

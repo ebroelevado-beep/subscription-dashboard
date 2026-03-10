@@ -295,7 +295,8 @@
     "masterUsername": "Master Username",
     "masterPassword": "Master Password",
     "owner": "Owner (Client)",
-    "noOwner": "No owner"
+    "noOwner": "No owner",
+    "paymentDueImmediately": "Payment due immediately"
   },
   "clients": {
     "title": "Clients",
@@ -366,10 +367,12 @@
     "usernameEmail": "Username / Email",
     "assigning": "Assigning…",
     "status": {
-      "paid": "Paid",
-      "due": "Due",
+      "paid": "Up to date",
+      "due": "Due soon",
       "expired": "Expired",
-      "none": "No seats"
+      "none": "No seats",
+      "overdue": "Overdue",
+      "critical": "Critical"
     },
     "paymentDueImmediately": "Payment due immediately",
     "customizeRenewal": "Customize",
