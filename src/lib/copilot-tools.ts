@@ -8,6 +8,7 @@
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getDisciplineAnalytics } from "@/lib/discipline-service";
+import { serializeDeletedClients } from "@/lib/client-deletion-snapshot";
 import { createMutationToken } from "@/lib/mutation-token";
 
 // Type for defineTool — imported dynamically in route.ts
@@ -830,13 +831,24 @@ export function createUserScopedTools(
         clientIds: z.array(z.string()).describe("An array of client IDs to delete."),
       }),
       handler: async ({ clientIds }: any) => {
-        const clients = await prisma.client.findMany({ where: { id: { in: clientIds }, userId }, include: { clientSubscriptions: true } });
+        const clients = await prisma.client.findMany({
+          where: { id: { in: clientIds }, userId },
+          include: {
+            clientSubscriptions: {
+              include: {
+                renewalLogs: true,
+              },
+            },
+            ownedSubscriptions: {
+              select: {
+                id: true,
+              },
+            },
+          },
+        });
         if (!clients.length) return { error: "Clients not found or access denied." };
-        
-        const previousValues = clients.map(c => ({
-            id: c.id, name: c.name, phone: c.phone, notes: c.notes, createdAt: c.createdAt.toISOString(),
-            disciplineScore: c.disciplineScore, dailyPenalty: c.dailyPenalty, daysOverdue: c.daysOverdue, healthStatus: c.healthStatus
-        }));
+
+        const previousValues = serializeDeletedClients(clients);
 
         const pendingChanges = { clientIds };
         const { token, expiresAt } = await createMutationToken(userId, { toolName: "deleteClients", targetId: "bulk", action: "delete", changes: pendingChanges, previousValues: previousValues as any });

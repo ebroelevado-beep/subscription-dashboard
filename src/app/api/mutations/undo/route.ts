@@ -10,6 +10,10 @@
  */
 
 import { auth } from "@/lib/auth";
+import {
+  buildDeletedClientRestoreData,
+  parseDeletedClientSnapshots,
+} from "@/lib/client-deletion-snapshot";
 import { prisma } from "@/lib/prisma";
 import { markAuditLogUndone } from "@/lib/mutation-token";
 import { randomBytes } from "crypto";
@@ -188,23 +192,37 @@ async function undoMutation(
     }
 
     case "deleteClients": {
-      const items = previousValues as any;
+      const items = parseDeletedClientSnapshots(previousValues);
       if (!items || !items.length) break;
+      const restoreData = buildDeletedClientRestoreData(userId, items);
       await prisma.$transaction(async (tx) => {
-        await tx.client.createMany({
-          data: items.map((previousValue: any) => ({
-            id: previousValue.id as string,
-            userId,
-            name: previousValue.name as string,
-            phone: previousValue.phone as string | null,
-            notes: previousValue.notes as string | null,
-            createdAt: new Date(previousValue.createdAt as string),
-            disciplineScore: previousValue.disciplineScore as any,
-            dailyPenalty: previousValue.dailyPenalty as any,
-            daysOverdue: previousValue.daysOverdue as number,
-            healthStatus: previousValue.healthStatus as string | null,
-          })),
-        });
+        await tx.client.createMany({ data: restoreData.clients });
+
+        if (restoreData.clientSubscriptions.length > 0) {
+          await tx.clientSubscription.createMany({
+            data: restoreData.clientSubscriptions,
+          });
+        }
+
+        for (const renewalLog of restoreData.renewalLogs) {
+          await tx.renewalLog.upsert({
+            where: { id: renewalLog.id },
+            update: renewalLog,
+            create: renewalLog,
+          });
+        }
+
+        for (const ownerRestore of restoreData.subscriptionOwners) {
+          await tx.subscription.updateMany({
+            where: {
+              id: { in: ownerRestore.subscriptionIds },
+              userId,
+            },
+            data: {
+              ownerId: ownerRestore.clientId,
+            },
+          });
+        }
       });
       break;
     }
