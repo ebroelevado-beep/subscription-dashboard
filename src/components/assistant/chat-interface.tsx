@@ -104,29 +104,63 @@ function ReasonerBlock({ text, isThinking }: { text: string, isThinking?: boolea
 function parseTextWithThinking(text: string): { type: string; content: string; isComplete?: boolean }[] {
   const parts: { type: string; content: string; isComplete?: boolean }[] = [];
   let remaining = text;
-  
+
   while (remaining.length > 0) {
-    const thinkStart = remaining.indexOf("<think>");
-    if (thinkStart === -1) {
-      if (remaining.trim()) parts.push({ type: "text", content: remaining });
+    // Find the earliest opening tag among <think> and <tool>
+    const thinkStart = remaining.indexOf('<think>');
+    const toolStart = remaining.indexOf('<tool>');
+
+    let nextTagStart = -1;
+    let nextTagType: 'thinking' | 'tool' | null = null;
+
+    if (thinkStart !== -1 && (toolStart === -1 || thinkStart <= toolStart)) {
+      nextTagStart = thinkStart;
+      nextTagType = 'thinking';
+    } else if (toolStart !== -1) {
+      nextTagStart = toolStart;
+      nextTagType = 'tool';
+    }
+
+    if (nextTagStart === -1) {
+      // No more tags — rest is plain text
+      if (remaining.trim()) parts.push({ type: 'text', content: remaining });
       break;
     }
-    
-    if (thinkStart > 0) {
-      const textBefore = remaining.slice(0, thinkStart);
-      if (textBefore.trim()) parts.push({ type: "text", content: textBefore });
+
+    // Text before the tag
+    if (nextTagStart > 0) {
+      const textBefore = remaining.slice(0, nextTagStart);
+      if (textBefore.trim()) parts.push({ type: 'text', content: textBefore });
     }
-    
-    const thinkEnd = remaining.indexOf("</think>", thinkStart);
-    if (thinkEnd === -1) {
-      parts.push({ type: "thinking", content: remaining.slice(thinkStart + 7), isComplete: false });
-      break;
+
+    if (nextTagType === 'thinking') {
+      const openLen = '<think>'.length;
+      const closeTag = '</think>';
+      const thinkEnd = remaining.indexOf(closeTag, nextTagStart);
+      if (thinkEnd === -1) {
+        // Unclosed — still streaming
+        parts.push({ type: 'thinking', content: remaining.slice(nextTagStart + openLen), isComplete: false });
+        break;
+      } else {
+        parts.push({ type: 'thinking', content: remaining.slice(nextTagStart + openLen, thinkEnd), isComplete: true });
+        remaining = remaining.slice(thinkEnd + closeTag.length);
+      }
     } else {
-      parts.push({ type: "thinking", content: remaining.slice(thinkStart + 7, thinkEnd), isComplete: true });
-      remaining = remaining.slice(thinkEnd + 8);
+      // <tool> tag
+      const openLen = '<tool>'.length;
+      const closeTag = '</tool>';
+      const toolEnd = remaining.indexOf(closeTag, nextTagStart);
+      if (toolEnd === -1) {
+        // Unclosed — still streaming, show as live loading phrase
+        parts.push({ type: 'tool', content: remaining.slice(nextTagStart + openLen), isComplete: false });
+        break;
+      } else {
+        parts.push({ type: 'tool', content: remaining.slice(nextTagStart + openLen, toolEnd), isComplete: true });
+        remaining = remaining.slice(toolEnd + closeTag.length);
+      }
     }
   }
-  
+
   return parts;
 }
 
@@ -1151,6 +1185,23 @@ export function ChatInterface() {
                         return parsed.map((p: { type: string; content: string; isComplete?: boolean }, j: number) => {
                           if (p.type === "thinking") {
                             return <ReasonerBlock key={`${i}-${j}`} text={p.content.trim()} isThinking={!p.isComplete} />;
+                          }
+                          if (p.type === "tool") {
+                            // <tool> stream annotation — show as live loading state identical to
+                            // the ToolInvocationBlock loader, but driven by the text stream.
+                            // Completed tags (tool call already dispatched) are hidden visually.
+                            if (p.isComplete) return null;
+                            const toolLabel = p.content.trim() || (t.raw('chat.thinkingPhrases') as string[])[0];
+                            return (
+                              <div key={`${i}-${j}`} className="my-3 flex items-center gap-3 animate-in fade-in slide-in-from-left-1 duration-300">
+                                <div className="relative size-5 shrink-0">
+                                  <span className="absolute inset-0 rounded-full bg-gradient-to-tr from-primary/60 via-violet-500/50 to-sky-400/60 animate-spin" style={{ animationDuration: '2s' }} />
+                                  <span className="absolute inset-[3px] rounded-full bg-background" />
+                                  <span className="absolute inset-[5px] rounded-full bg-primary/30" />
+                                </div>
+                                <span className="text-[12px] text-muted-foreground font-medium">{toolLabel}</span>
+                              </div>
+                            );
                           }
                           return (
                             <div key={`${i}-${j}`} className="prose prose-sm sm:prose-base dark:prose-invert max-w-none break-words leading-relaxed last:mb-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_code]:bg-muted/40 [&_code]:p-1 [&_code]:rounded-md [&_p]:mb-4 last:[&_p]:mb-0">
