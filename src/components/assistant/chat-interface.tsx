@@ -1367,9 +1367,8 @@ export function ChatInterface() {
               style={{ maxHeight: "200px" }}
             />
             
-            <div className="flex items-center justify-between mt-1 pt-1">
-              <div className="flex items-center gap-1.5">
-                {/* Model Selector within dock */}
+            <div className="flex items-center justify-end mt-1 pt-1 gap-3">
+              <div className="flex items-center">
                 {hasCopilot && (
                   <Select value={selectedModel || undefined} onValueChange={setSelectedModel} disabled={isLoading || models.length === 0}>
                     <SelectTrigger className="w-auto h-8 bg-muted/40 border-none px-3 rounded-full text-[11px] sm:text-xs font-bold hover:bg-muted/60 transition-colors shadow-none focus:ring-0 min-w-[120px]">
@@ -1396,21 +1395,21 @@ export function ChatInterface() {
                     )}
                   </Select>
                 )}
-                
-                <div className="flex items-center space-x-2 ml-2 bg-red-500/10 dark:bg-red-500/5 px-2.5 py-1.5 rounded-full border border-red-500/20">
-                  <Switch 
-                    id="destructive-mode" 
-                    checked={allowDestructive} 
-                    onCheckedChange={setAllowDestructive}
-                    className="data-[state=checked]:bg-red-500 scale-90"
-                  />
-                  <Label htmlFor="destructive-mode" className="text-[10px] sm:text-xs font-bold text-red-500 flex items-center gap-1 cursor-pointer">
-                    <ShieldAlert className="size-3" /> {t("chat.fullControlTitle")}
-                  </Label>
-                </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center space-x-2 bg-red-500/10 dark:bg-red-500/5 px-2.5 py-1.5 rounded-full border border-red-500/20">
+                <Switch 
+                  id="destructive-mode" 
+                  checked={allowDestructive} 
+                  onCheckedChange={setAllowDestructive}
+                  className="data-[state=checked]:bg-red-500 scale-90"
+                />
+                <Label htmlFor="destructive-mode" className="text-[10px] sm:text-xs font-bold text-red-500 flex items-center gap-1 cursor-pointer">
+                  <ShieldAlert className="size-3" /> {t("chat.fullControlTitle")}
+                </Label>
+              </div>
+
+              <div className="flex items-center">
                 {isLoading || hitlPending ? (
                   <Button 
                     type="button"
