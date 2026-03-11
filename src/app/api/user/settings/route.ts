@@ -8,7 +8,7 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { currency, disciplinePenalty } = await req.json();
+  const { currency, disciplinePenalty, companyName } = await req.json();
 
   const data: any = {};
 
@@ -26,6 +26,13 @@ export async function PATCH(req: Request) {
     data.disciplinePenalty = disciplinePenalty;
   }
 
+  if (companyName !== undefined) {
+    if (companyName && companyName.length > 100) {
+      return NextResponse.json({ error: "Company name too long" }, { status: 400 });
+    }
+    data.companyName = companyName || null;
+  }
+
   try {
     const user = await prisma.user.update({
       where: { id: session.user.id },
@@ -37,7 +44,8 @@ export async function PATCH(req: Request) {
       data: {
         success: true, 
         currency: user.currency,
-        disciplinePenalty: user.disciplinePenalty
+        disciplinePenalty: user.disciplinePenalty,
+        companyName: user.companyName
       }
     });
   } catch (error) {

@@ -924,6 +924,13 @@ export function createUserScopedTools(
         if (!client) return { error: "Client not found or access denied." };
         if (!client.phone) return { error: `${client.name} does not have a phone number registered. Add one first.` };
 
+        const me = await prisma.user.findUnique({
+          where: { id: userId },
+          select: { companyName: true, name: true }
+        });
+        const myName = me?.companyName || me?.name || "";
+        const introPhrase = myName ? `Hola, somos ${myName}. ` : "Hola. ";
+
         // Normalize phone: strip spaces, dashes; if not starting with +, add +34 (Spain default)
         const rawPhone = client.phone.replace(/[\s\-()]/g, "");
         const phone = rawPhone.startsWith("+") ? rawPhone.replace("+", "") : `34${rawPhone}`;
@@ -933,18 +940,18 @@ export function createUserScopedTools(
         if (customMessage) {
           messageBody = customMessage;
         } else if (messageType === "payment_reminder") {
-          const amountStr = amountDue != null ? `${amountDue} EUR` : "the pending amount";
-          const dueDateStr = dueDate ? ` before ${new Date(dueDate).toLocaleDateString("es-ES")}` : "";
-          const platformStr = platform ? ` for ${platform}` : "";
-          messageBody = `Hello ${client.name}, this is a reminder that your payment of ${amountStr}${platformStr} is pending${dueDateStr}. Please arrange the payment at your earliest convenience.`;
+          const amountStr = amountDue != null ? `${amountDue} EUR` : "la cantidad pendiente";
+          const dueDateStr = dueDate ? ` antes del ${new Date(dueDate).toLocaleDateString("es-ES")}` : "";
+          const platformStr = platform ? ` de ${platform}` : "";
+          messageBody = `${introPhrase}${client.name}, te recordamos que tu pago de ${amountStr}${platformStr} está pendiente${dueDateStr}. Por favor, realiza el pago lo antes posible.`;
         } else if (messageType === "credentials_update") {
-          const platformStr = platform ? ` for ${platform}` : "";
-          const userLine = newUsername ? `Username: ${newUsername}` : "";
-          const passLine = newPassword ? `Password: ${newPassword}` : "";
+          const platformStr = platform ? ` para ${platform}` : "";
+          const userLine = newUsername ? `Usuario: ${newUsername}` : "";
+          const passLine = newPassword ? `Contraseña: ${newPassword}` : "";
           const credLines = [userLine, passLine].filter(Boolean).join("\n");
-          messageBody = `Hello ${client.name}, your access credentials${platformStr} have been updated.\n${credLines}\nPlease update these in your device. Contact me if you need help.`;
+          messageBody = `${introPhrase}${client.name}, tus credenciales de acceso${platformStr} han sido actualizadas.\n${credLines}\nPor favor, actualízalas en tu dispositivo. Contáctanos si necesitas ayuda.`;
         } else {
-          messageBody = `Hello ${client.name}.`;
+          messageBody = `${introPhrase}${client.name}.`;
         }
 
         // Encode for URL
@@ -977,6 +984,7 @@ export function createUserScopedTools(
             createdAt: true,
             currency: true,
             disciplinePenalty: true,
+            companyName: true,
             usageCredits: true,
             _count: {
               select: {
@@ -999,6 +1007,7 @@ export function createUserScopedTools(
           settings: {
             currency: user.currency,
             dailyDisciplinePenalty: Number(user.disciplinePenalty),
+            companyName: user.companyName,
           },
           usage: {
             availableCredits: Number(user.usageCredits),
@@ -1034,6 +1043,43 @@ export function createUserScopedTools(
           columnCount: Object.keys(data[0] || {}).length,
         };
       },
+    }),
+
+    // ──────────────────────────────────────────
+    // 15. updateUserConfig — Modifying User Account Settings
+    // ──────────────────────────────────────────
+    defineTool("updateUserConfig", {
+      description: "Update the authenticated user's own account configurations, specifically the currency, discipline strictness (penalty), and the company name. This is a mutation and requires user confirmation.",
+      parameters: z.object({
+        currency: z.enum(['EUR', 'USD', 'GBP', 'CNY']).optional().describe("The base currency for all monetary displays."),
+        disciplinePenalty: z.number().min(0).max(5).optional().describe("The daily monetary penalty charged to clients who pay late."),
+        companyName: z.string().max(100).optional().describe("The name of the user's company or business, used in WhatsApp messages."),
+      }),
+      handler: async (args: any) => {
+        if (!args.currency && args.disciplinePenalty === undefined && !args.companyName) {
+          return { error: "No configuration fields provided to update." };
+        }
+
+        // We do NOT mutate immediately. Instead we set it up as a pending mutation for the HITL flow.
+        const auditLogId = `userconfig_${Date.now()}`;
+        
+        return {
+          __hitl_required: true,
+          auditLogId,
+          mutations: [
+            {
+              model: "user",
+              action: "update",
+              where: { id: userId },
+              data: args,
+            }
+          ],
+          preview: {
+            message: "You are about to modify your core account settings.",
+            changes: args
+          }
+        };
+      }
     }),
   ];
 

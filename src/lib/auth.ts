@@ -73,6 +73,7 @@ const nextAuth = NextAuth({
         if (session.image !== undefined) token.image = session.image;
         if (session.currency !== undefined) token.currency = session.currency;
         if (session.disciplinePenalty !== undefined) token.disciplinePenalty = session.disciplinePenalty;
+        if (session.companyName !== undefined) token.companyName = session.companyName;
       }
       
       // Always fetch the latest critical settings from DB if we have the user ID.
@@ -82,7 +83,7 @@ const nextAuth = NextAuth({
         try {
           const dbUser = await prisma.user.findUnique({
             where: { id: token.id as string },
-            select: { name: true, image: true, password: true, accounts: { select: { provider: true } }, currency: true, disciplinePenalty: true },
+            select: { name: true, image: true, password: true, accounts: { select: { provider: true } }, currency: true, disciplinePenalty: true, companyName: true },
           });
           
           if (dbUser) {
@@ -92,6 +93,7 @@ const nextAuth = NextAuth({
             token.isOAuth = dbUser.accounts?.some((acc: { provider: string }) => acc.provider !== "credentials") || false;
             token.currency = dbUser.currency || "EUR";
             token.disciplinePenalty = dbUser.disciplinePenalty ?? 0.5;
+            token.companyName = dbUser.companyName ?? null;
           }
         } catch (e) {
           console.error("[Auth] Error reading user from DB:", e);

@@ -71,6 +71,7 @@ function ProfileTab() {
 
   const [name, setName] = useState(user?.name ?? "");
   const [image, setImage] = useState(user?.image ?? "");
+  const [companyName, setCompanyName] = useState((user as any)?.companyName ?? "");
   const hasPassword = user?.hasPassword;
 
   const [currentPassword, setCurrentPassword] = useState("");
@@ -124,6 +125,8 @@ function ProfileTab() {
     }
   };
 
+  const updateSettings = useUpdateSettings();
+
   const handleSave = () => {
     updateProfile.mutate(
       {
@@ -132,8 +135,19 @@ function ProfileTab() {
       },
       {
         onSuccess: () => {
-          toast.success(t("profileUpdated"));
-          updateSession({ name, image });
+          // Only update settings if company name actually changed to save API calls
+          if (companyName !== ((user as any)?.companyName ?? "")) {
+            updateSettings.mutate({ companyName: companyName || null }, {
+              onSuccess: () => {
+                toast.success(t("profileUpdated"));
+                updateSession({ name, image, companyName });
+              },
+              onError: (err: any) => toast.error(err.message),
+            });
+          } else {
+            toast.success(t("profileUpdated"));
+            updateSession({ name, image });
+          }
         },
         onError: (err: any) => toast.error(err.message),
       },
@@ -188,6 +202,20 @@ function ProfileTab() {
               onChange={(e) => setImage(e.target.value)}
             />
           </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="companyName">{t("companyName", { fallback: "Company Name" })}</Label>
+          <Input
+            id="companyName"
+            placeholder={t("companyNamePlaceholder", { fallback: "e.g. Acme Corp" })}
+            value={companyName}
+            onChange={(e) => setCompanyName(e.target.value)}
+            maxLength={100}
+          />
+          <p className="text-[0.8rem] text-muted-foreground">
+            {t("companyNameDescription", { fallback: "Used in automated WhatsApp messages." })}
+          </p>
         </div>
 
         <div className="space-y-2">

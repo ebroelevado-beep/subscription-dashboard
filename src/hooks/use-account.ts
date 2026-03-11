@@ -22,7 +22,7 @@ export function useUpdateSettings() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: (data: { currency?: string; disciplinePenalty?: number }) =>
+    mutationFn: (data: { currency?: string; disciplinePenalty?: number; companyName?: string | null }) =>
       fetchApi("/api/user/settings", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },

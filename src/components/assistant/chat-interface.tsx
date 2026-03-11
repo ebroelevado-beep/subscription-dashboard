@@ -448,6 +448,57 @@ function ToolInvocationBlock({ part, onConfirm, onUndo, executedMutations, rejec
              );
            }
 
+           // === WHATSAPP BLOCK (Non-blocking) ===
+           const getWhatsappData = (obj: any, depth = 0): any => {
+             if (!obj || typeof obj !== 'object' || depth > 5) return null;
+             if (obj.whatsappLink) return obj;
+             for (const val of Object.values(obj)) {
+               const found = getWhatsappData(val, depth + 1);
+               if (found) return found;
+             }
+             return null;
+           };
+
+           const whatsappData = isFinished && !isError ? getWhatsappData(formattedOutput) : null;
+           if (whatsappData) {
+             return (
+               <div className="px-3 pb-3 pt-1 animate-in fade-in slide-in-from-bottom-1 duration-500">
+                 <div className="rounded-xl border border-[#25D366]/30 bg-[#25D366]/5 shadow-[0_0_20px_rgba(37,211,102,0.08)] p-4 flex flex-col gap-3">
+                   <div className="flex items-start gap-3">
+                     <div className="size-8 rounded-xl bg-[#25D366]/15 flex items-center justify-center shrink-0">
+                       <Terminal className="size-4 text-[#25D366]" />
+                     </div>
+                     <div className="flex-1 min-w-0">
+                       <p className="text-[11px] font-bold text-[#25D366] uppercase tracking-widest">{t("chat.whatsappReady", { fallback: "WhatsApp Ready" })}</p>
+                       <p className="text-sm text-foreground/90 mt-0.5 leading-snug">
+                         {t("chat.whatsappDesc", { fallback: "Message generated securely. Review it before sending." })}
+                       </p>
+                     </div>
+                   </div>
+
+                   <div className="rounded-xl bg-muted/40 border border-border/40 p-3 text-[12px] text-muted-foreground/90 space-y-2 relative overflow-hidden">
+                      <div className="absolute top-0 right-0 w-8 h-full bg-gradient-to-l from-muted/40 to-transparent pointer-events-none" />
+                      <div className="flex items-center gap-2 mb-2 pb-2 border-b border-border/50">
+                        <span className="font-semibold text-foreground">{whatsappData.clientName}</span>
+                        <span className="text-[10px] font-mono opacity-60">+{whatsappData.phone}</span>
+                      </div>
+                      <p className="whitespace-pre-wrap leading-relaxed max-h-[150px] overflow-y-auto custom-scrollbar pr-2">
+                        {whatsappData.messageBody}
+                      </p>
+                   </div>
+
+                   <Button
+                     onClick={() => window.open(whatsappData.whatsappLink, "_blank")}
+                     className="w-full bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold py-2.5 rounded-xl text-sm shadow-sm transition-all active:scale-[0.97]"
+                   >
+                     <Check className="size-4 mr-2" />
+                     {t("chat.sendWhatsapp", { fallback: "Enviar WhatsApp" })}
+                   </Button>
+                 </div>
+               </div>
+             );
+           }
+
            if (!confirmData) return null;
 
            const callId = part.toolCallId || (part.toolInvocation as any)?.toolCallId;
