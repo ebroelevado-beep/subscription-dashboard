@@ -130,19 +130,31 @@ function parseTextWithThinking(text: string): { type: string; content: string; i
   return parts;
 }
 
-// Recursively parse stringified JSON values for robust processing
-function deepParseJson(val: unknown): unknown {
+// Recursively parse stringified JSON values for robust processing.
+// IMPORTANT: bail out for large arrays (e.g. csvData with hundreds of rows) to avoid
+// blocking the main thread, which can strand backdrop animations mid-exit.
+function deepParseJson(val: unknown, depth = 0): unknown {
+  if (depth > 6) return val;
   if (typeof val === 'string') {
     try {
       const parsed = JSON.parse(val);
-      if (typeof parsed === 'object' && parsed !== null) return deepParseJson(parsed);
+      if (typeof parsed === 'object' && parsed !== null) return deepParseJson(parsed, depth + 1);
       return parsed;
     } catch { return val; }
   }
-  if (Array.isArray(val)) return val.map(deepParseJson);
+  // Skip deep recursion into large arrays — CSV csvData can have 1000s of rows.
+  // Rows are plain objects already, no need to JSON.parse their string fields.
+  if (Array.isArray(val)) {
+    if (val.length > 30) return val; // bail-out: treat as already-parsed
+    return val.map((item) => deepParseJson(item, depth + 1));
+  }
   if (typeof val === 'object' && val !== null) {
     const out: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(val)) out[k] = deepParseJson(v);
+    for (const [k, v] of Object.entries(val as Record<string, unknown>)) {
+      // Never recurse into csvData — it's always a plain array of row objects
+      if (k === 'csvData') { out[k] = v; continue; }
+      out[k] = deepParseJson(v, depth + 1);
+    }
     return out;
   }
   return val;
@@ -289,11 +301,13 @@ function ToolInvocationBlock({ part, onConfirm, onUndo, executedMutations, rejec
           </div>
         )}
         {(() => {
-           // Recursively find { status: "requires_confirmation" } at any depth
+           // Recursively find { status: "requires_confirmation" } at any depth.
+           // Skip csvData arrays to avoid O(n) traversal on large exports.
            const findStatus = (obj: any, depth = 0): any => {
              if (!obj || typeof obj !== 'object' || depth > 5) return null;
              if (obj.status === "requires_confirmation") return obj;
-             for (const val of Object.values(obj)) {
+             for (const [key, val] of Object.entries(obj)) {
+               if (key === 'csvData') continue; // never recurse into CSV rows
                const found = findStatus(val, depth + 1);
                if (found) return found;
              }
@@ -303,11 +317,13 @@ function ToolInvocationBlock({ part, onConfirm, onUndo, executedMutations, rejec
            const confirmData = isFinished && !isError ? findStatus(formattedOutput) : null;
            
            // === DOWNLOAD BLOCK (Non-blocking) ===
-           // Recursively find { status: "download_available" } at any depth (Copilot SDK wraps results in content/detailedContent)
+           // Recursively find { status: "download_available" } at any depth.
+           // When found, return immediately — do NOT recurse into csvData.
            const findDownloadData = (obj: any, depth = 0): any => {
              if (!obj || typeof obj !== 'object' || depth > 5) return null;
              if (obj.status === "download_available" && obj.csvData) return obj;
-             for (const val of Object.values(obj)) {
+             for (const [key, val] of Object.entries(obj)) {
+               if (key === 'csvData') continue; // skip large arrays
                const found = findDownloadData(val, depth + 1);
                if (found) return found;
              }

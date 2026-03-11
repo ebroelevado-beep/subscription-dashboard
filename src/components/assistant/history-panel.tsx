@@ -97,16 +97,18 @@ export default function HistoryPanel({ open, onClose, onLoad, onDelete, currentC
         <>
           {/* Backdrop */}
           <motion.div
+            key="history-backdrop"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: 0.15 }}
             className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
             onClick={onClose}
           />
 
           {/* Panel */}
           <motion.div
+            key="history-panel"
             initial={{ x: "-100%" }}
             animate={{ x: 0 }}
             exit={{ x: "-100%" }}
