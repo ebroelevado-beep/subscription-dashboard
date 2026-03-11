@@ -152,22 +152,22 @@ export default function SubscriptionDetailPage({
 
   return (
     <div className="space-y-6 pb-20">
-      {/* Sticky Header */}
-      <div className="sticky top-0 z-30 -mx-4 lg:-mx-6 px-4 lg:px-6 py-3 bg-background/80 backdrop-blur-md border-b border-border/10 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between transition-all">
-        <div className="flex items-center gap-3 min-w-0">
-          <Button asChild variant="ghost" size="icon" className="shrink-0">
+      {/* Header */}
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
+          <Button asChild variant="ghost" size="icon">
             <Link href="/dashboard/subscriptions">
               <ArrowLeft className="size-5" />
             </Link>
           </Button>
-          <div className="min-w-0">
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight truncate">{sub.label}</h1>
-            <p className="text-xs sm:text-sm text-muted-foreground truncate">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">{sub.label}</h1>
+            <p className="text-sm text-muted-foreground">
               {sub.plan.platform.name} · {sub.plan.name}
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2">
           <Badge variant={sub.status === "active" ? "default" : "secondary"} className="h-7">
             {tc(sub.status)}
           </Badge>
