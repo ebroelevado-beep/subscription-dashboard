@@ -1099,6 +1099,35 @@ export function ChatInterface() {
   }
 
 
+  // Determine if we should show the bottom generic analyzing orb
+  // We show it if we are loading and waiting for the first assistant token,
+  // OR if the assistant is streaming but currently visually "silent" (e.g. between tools).
+  let showBottomOrb = isLoading && messages[messages.length - 1]?.role === "user";
+  
+  if (status === 'streaming' && messages.length > 0) {
+    const lastMsg = messages[messages.length - 1];
+    if (lastMsg.role === 'assistant') {
+      let isVisiblyActive = false;
+      if (lastMsg.parts && lastMsg.parts.length > 0) {
+        const lastPart = lastMsg.parts[lastMsg.parts.length - 1];
+        if (lastPart.type === 'tool-invocation' || lastPart.type?.startsWith('tool-')) {
+          const tState = (lastPart as any).toolInvocation?.state || (lastPart as any).state;
+          if (tState !== 'result' && tState !== 'error') isVisiblyActive = true;
+        } else if (lastPart.type === 'text') {
+          const parsed = parseTextWithThinking(lastPart.text || "");
+          const lastP = parsed[parsed.length - 1];
+          if (lastP) {
+            if (lastP.type === 'thinking' && !lastP.isComplete) isVisiblyActive = true;
+            if (lastP.type === 'tool') isVisiblyActive = true; // Still streaming the tool tag, no tool block after it yet
+          }
+        }
+      }
+      if (!isVisiblyActive) {
+        showBottomOrb = true;
+      }
+    }
+  }
+
   const chatContent = (
     <div className="flex flex-col h-full bg-background overflow-hidden">
       {/* ── Header ── simplified (No border) */}
@@ -1194,14 +1223,14 @@ export function ChatInterface() {
                             // FIX: The AI emits the COMPLETE <tool>text</tool> in one stream batch
                             // so the first React render sees isComplete=true.
                             // We should keep it visible ONLY until the actual tool call part
-                            // arrives in the message. Once the tool call part is in m.parts,
-                            // we hide this text annotation because the real ToolInvocationBlock takes over.
-                            const hasToolCalls = m.parts.some(p => p.type === 'tool-invocation' || p.type.startsWith('tool-'));
+                            // arrives in the message AFTER this text part. Once a tool block is in
+                            // m.parts after this text block (index > i), we hide this text annotation.
+                            const hasToolCallAfterThis = m.parts.slice(i + 1).some(p => p.type === 'tool-invocation' || p.type.startsWith('tool-'));
                             const isActiveMessage = index === messages.length - 1 && (status === 'streaming' || status === 'submitted');
                             
-                            // If the tag is closed AND we already have a tool call part in the message,
+                            // If the tag is closed AND we already have a tool call part after it,
                             // or it's not the active message anymore, hide it.
-                            if (p.isComplete && (!isActiveMessage || hasToolCalls)) return null;
+                            if (p.isComplete && (!isActiveMessage || hasToolCallAfterThis)) return null;
                             const toolLabel = p.content.trim() || (t.raw('chat.thinkingPhrases') as string[])[0];
                             return (
                               <div key={`${i}-${j}`} className="my-3 flex items-center gap-3 animate-in fade-in slide-in-from-left-1 duration-300">
@@ -1277,7 +1306,7 @@ export function ChatInterface() {
             </>
           )}
           
-          {isLoading && messages[messages.length - 1]?.role === "user" && (
+          {showBottomOrb && (
             <div className="flex animate-in fade-in slide-in-from-bottom-2 duration-300">
               <div className="flex items-center gap-3 bg-muted/5 rounded-2xl px-4 py-2.5 border border-border/20">
                 {/* Animated gradient orb — same as tool loader */}
