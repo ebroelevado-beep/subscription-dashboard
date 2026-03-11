@@ -541,6 +541,7 @@
       "Procesando tu solicitud…"
     ],
     "toolLoading": {
+      "getAccountDetails": ["Consultando los datos de tu cuenta…", "Obteniendo información del perfil y uso…", "Calculando créditos y límites…"],
       "listClients": ["Buscando clientes…", "Revisando la base de datos de clientes…", "Filtrando resultados…"],
       "getClientDetails": ["Cargando perfil del cliente…", "Obteniendo historial de pagos…", "Revisando asientos activos…"],
       "listPlatforms": ["Cargando tus plataformas…", "Revisando Netflix, Spotify y más…", "Obteniendo estadísticas de planes…"],

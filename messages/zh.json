@@ -540,6 +540,7 @@
       "处理您的请求…"
     ],
     "toolLoading": {
+      "getAccountDetails": ["正在获取您的账户详情…", "检索个人资料和使用信息…", "计算可用积分…"],
       "listClients": ["搜索客户…", "扫描客户数据库…", "筛选结果…"],
       "getClientDetails": ["加载客户档案…", "获取付款历史…", "检查活跃席位…"],
       "listPlatforms": ["加载您的平台…", "检查 Netflix、Spotify 等…", "获取计划统计…"],

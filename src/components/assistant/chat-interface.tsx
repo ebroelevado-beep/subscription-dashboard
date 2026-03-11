@@ -75,11 +75,17 @@ function ReasonerBlock({ text, isThinking }: { text: string, isThinking?: boolea
         onClick={() => setOpen(!open)}
         className="flex items-center gap-2 text-primary hover:text-primary/70 font-medium text-[13px] transition-colors group"
       >
-        <div className="flex items-center justify-center size-5 rounded-full bg-primary/10 transition-transform group-hover:scale-110">
+        <div className="flex items-center justify-center size-5 rounded-full transition-transform group-hover:scale-110">
           {isThinking ? (
-            <Loader2 className="size-3 animate-spin" />
+            <div className="relative size-5 shrink-0">
+              <span className="absolute inset-0 rounded-full bg-gradient-to-tr from-primary/60 via-violet-500/50 to-sky-400/60 animate-spin" style={{ animationDuration: '2s' }} />
+              <span className="absolute inset-[3px] rounded-full bg-background" />
+              <span className="absolute inset-[5px] rounded-full bg-primary/30" />
+            </div>
           ) : (
-            <Sparkles className="size-3" />
+            <div className="flex items-center justify-center size-full rounded-full bg-primary/10">
+              <Sparkles className="size-3" />
+            </div>
           )}
         </div>
         <span>{isThinking ? t("chat.viewingData") : t("chat.viewReasoning")}</span>

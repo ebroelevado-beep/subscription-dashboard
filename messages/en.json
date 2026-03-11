@@ -547,6 +547,7 @@
       "Processing your request…"
     ],
     "toolLoading": {
+      "getAccountDetails": ["Fetching your account details…", "Retrieving profile and usage info…", "Calculating available credits…"],
       "listClients": ["Searching clients…", "Scanning the client database…", "Filtering results…"],
       "getClientDetails": ["Loading client profile…", "Fetching payment history…", "Checking active seats…"],
       "listPlatforms": ["Loading your platforms…", "Checking Netflix, Spotify and more…", "Fetching plan statistics…"],

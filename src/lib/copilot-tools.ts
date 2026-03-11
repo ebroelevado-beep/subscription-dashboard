@@ -963,6 +963,54 @@ export function createUserScopedTools(
     }),
 
     // ──────────────────────────────────────────
+    // 13. getAccountDetails — Get user's own profile and credits
+    // ──────────────────────────────────────────
+    defineTool("getAccountDetails", {
+      description: "Get the authenticated user's own account details, including their usage credits, discipline penalty settings, currency, email, and total counts of clients/subscriptions. Use this if the user asks about their own account, credits, or settings.",
+      parameters: z.object({}),
+      handler: async () => {
+        const user = await prisma.user.findUnique({
+          where: { id: userId },
+          select: {
+            name: true,
+            email: true,
+            createdAt: true,
+            currency: true,
+            disciplinePenalty: true,
+            usageCredits: true,
+            _count: {
+              select: {
+                clients: true,
+                subscriptions: true,
+                platforms: true
+              }
+            }
+          }
+        });
+        
+        if (!user) return { error: "User account not found." };
+        
+        return {
+          profile: {
+            name: user.name,
+            email: user.email,
+            memberSince: user.createdAt,
+          },
+          settings: {
+            currency: user.currency,
+            dailyDisciplinePenalty: Number(user.disciplinePenalty),
+          },
+          usage: {
+            availableCredits: Number(user.usageCredits),
+            totalClients: user._count.clients,
+            totalSubscriptions: user._count.subscriptions,
+            totalPlatforms: user._count.platforms,
+          }
+        };
+      }
+    }),
+
+    // ──────────────────────────────────────────
     // 13. generateCsvExport — Generic JSON → CSV download (client-side conversion)
     // ──────────────────────────────────────────
     defineTool("generateCsvExport", {
