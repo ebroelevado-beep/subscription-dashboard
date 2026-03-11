@@ -1031,6 +1031,75 @@ export function createUserScopedTools(
       },
     }),
 
+    defineTool("managePayments", {
+      description: "Propose updating or deleting an existing client payment record (RenewalLog). Use 'update' to correct the amount, date, notes, or period of a payment. Use 'delete' to remove a mistaken or duplicate payment. Always call listPaymentHistory first to get the payment ID.",
+      parameters: z.object({
+        operation: z.enum(["update", "delete"]).describe("The operation to perform."),
+        paymentId: z.string().describe("The ID of the RenewalLog record to modify."),
+        amountPaid: z.number().optional().describe("New amount paid (for update)."),
+        paidOn: z.string().optional().describe("New payment date in ISO format (for update)."),
+        notes: z.string().optional().describe("New notes (for update)."),
+        periodStart: z.string().optional().describe("New period start date in ISO format (for update)."),
+        periodEnd: z.string().optional().describe("New period end date in ISO format (for update)."),
+      }),
+      handler: async ({ operation, paymentId, amountPaid, paidOn, notes, periodStart, periodEnd }: any) => {
+        const payment = await prisma.renewalLog.findFirst({
+          where: { id: paymentId, clientSubscription: { subscription: { userId } } },
+          include: {
+            clientSubscription: {
+              include: {
+                client: { select: { name: true } },
+                subscription: { select: { label: true, plan: { select: { platform: { select: { name: true } } } } } },
+              },
+            },
+          },
+        });
+        if (!payment) return { error: "Payment record not found or access denied." };
+
+        const clientName = payment.clientSubscription?.client.name ?? "Unknown";
+        const platform = payment.clientSubscription?.subscription.plan.platform.name ?? "Unknown";
+
+        const previousValues = {
+          id: payment.id,
+          amountPaid: Number(payment.amountPaid),
+          expectedAmount: Number(payment.expectedAmount),
+          paidOn: payment.paidOn.toISOString(),
+          periodStart: payment.periodStart.toISOString(),
+          periodEnd: payment.periodEnd.toISOString(),
+          notes: payment.notes,
+          clientSubscriptionId: payment.clientSubscriptionId,
+        };
+
+        const pendingChanges = { operation, paymentId, amountPaid, paidOn, notes, periodStart, periodEnd };
+        const { token, expiresAt } = await createMutationToken(userId, {
+          toolName: "managePayments",
+          targetId: paymentId,
+          action: operation === "delete" ? "delete" : "update",
+          changes: pendingChanges,
+          previousValues,
+        });
+        await prisma.mutationAuditLog.update({ where: { token }, data: { newValues: pendingChanges } });
+
+        if (operation === "delete") {
+          return {
+            status: "requires_confirmation",
+            __token: token,
+            expiresAt,
+            message: `I am ready to **permanently delete** the payment of €${Number(payment.amountPaid).toFixed(2)} from **${clientName}** (${platform}) paid on ${payment.paidOn.toISOString().split("T")[0]}.`,
+            pendingChanges,
+          };
+        }
+
+        return {
+          status: "requires_confirmation",
+          __token: token,
+          expiresAt,
+          message: `I am ready to update the payment of **${clientName}** (${platform}).`,
+          pendingChanges,
+        };
+      },
+    }),
+
     defineTool("undoMutation", {
       description: "This tool is informational only. Undo is handled directly by the UI via a secure backend endpoint.",
       parameters: z.object({}),

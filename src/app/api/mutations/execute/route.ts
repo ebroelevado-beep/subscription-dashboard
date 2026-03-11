@@ -354,6 +354,71 @@ async function executeMutation(
       return { message: `Subscription(s) ${operation}d.`, result };
     }
 
+    case "managePayments": {
+      const { operation, paymentId, amountPaid, paidOn, notes, periodStart, periodEnd } = pendingChanges;
+      if (!paymentId) throw new Error("Missing paymentId");
+
+      const payment = await prisma.renewalLog.findFirst({
+        where: { id: paymentId as string, clientSubscription: { subscription: { userId } } },
+        include: { clientSubscription: true },
+      });
+      if (!payment) throw new Error("Payment record not found or access denied.");
+
+      if (operation === "delete") {
+        await prisma.$transaction(async (tx) => {
+          await tx.renewalLog.delete({ where: { id: paymentId as string } });
+
+          // If this was the latest payment for this seat, revert activeUntil to periodStart
+          if (payment.clientSubscriptionId) {
+            const laterLogs = await tx.renewalLog.findMany({
+              where: {
+                clientSubscriptionId: payment.clientSubscriptionId,
+                paidOn: { gte: payment.paidOn },
+                id: { not: payment.id },
+              },
+              orderBy: { paidOn: "desc" },
+              take: 1,
+            });
+
+            if (!laterLogs.length) {
+              // No later payments — revert activeUntil back to what it was before this payment
+              await tx.clientSubscription.update({
+                where: { id: payment.clientSubscriptionId },
+                data: { activeUntil: payment.periodStart },
+              });
+            }
+          }
+        });
+
+        await setAuditLogNewValues(auditLogId, { deleted: true, paymentId });
+        return { message: `Payment of €${Number(previousValues.amountPaid).toFixed(2)} deleted successfully.` };
+      }
+
+      // Update operation
+      const updated = await prisma.$transaction(async (tx) => {
+        return tx.renewalLog.update({
+          where: { id: paymentId as string },
+          data: {
+            ...(amountPaid !== undefined ? { amountPaid: amountPaid as number } : {}),
+            ...(paidOn ? { paidOn: new Date(paidOn as string) } : {}),
+            ...(notes !== undefined ? { notes: notes as string } : {}),
+            ...(periodStart ? { periodStart: new Date(periodStart as string) } : {}),
+            ...(periodEnd ? { periodEnd: new Date(periodEnd as string) } : {}),
+          },
+        });
+      });
+
+      await setAuditLogNewValues(auditLogId, {
+        amountPaid: Number(updated.amountPaid),
+        paidOn: updated.paidOn.toISOString(),
+        notes: updated.notes,
+        periodStart: updated.periodStart.toISOString(),
+        periodEnd: updated.periodEnd.toISOString(),
+      });
+
+      return { message: `Payment updated successfully. New amount: €${Number(updated.amountPaid).toFixed(2)}.`, payment: updated };
+    }
+
     default:
       throw new Error(`Unknown tool: ${toolName}`);
   }
