@@ -1059,43 +1059,6 @@ export function createUserScopedTools(
       },
     }),
 
-    // ──────────────────────────────────────────
-    // 15. updateUserConfig — Modifying User Account Settings
-    // ──────────────────────────────────────────
-    defineTool("updateUserConfig", {
-      description: "Update the authenticated user's own account configurations, specifically the currency, discipline strictness (penalty), and the company name. This is a mutation and requires user confirmation.",
-      parameters: z.object({
-        currency: z.enum(['EUR', 'USD', 'GBP', 'CNY']).optional().describe("The base currency for all monetary displays."),
-        disciplinePenalty: z.number().min(0).max(5).optional().describe("The daily monetary penalty charged to clients who pay late."),
-        companyName: z.string().max(100).optional().describe("The name of the user's company or business, used in WhatsApp messages."),
-        whatsappUseCompany: z.boolean().optional().describe("Toggle whether to use company name in WhatsApp messages (true/false)."),
-      }),
-      handler: async (args: any) => {
-        if (!args.currency && args.disciplinePenalty === undefined && !args.companyName && args.whatsappUseCompany === undefined) {
-          return { error: "No configuration fields provided to update." };
-        }
-
-        // We do NOT mutate immediately. Instead we set it up as a pending mutation for the HITL flow.
-        const auditLogId = `userconfig_${Date.now()}`;
-        
-        return {
-          __hitl_required: true,
-          auditLogId,
-          mutations: [
-            {
-              model: "user",
-              action: "update",
-              where: { id: userId },
-              data: args,
-            }
-          ],
-          preview: {
-            message: "You are about to modify your core account settings.",
-            changes: args
-          }
-        };
-      }
-    }),
   ];
 
 
@@ -1115,11 +1078,11 @@ export function createUserScopedTools(
   // ALLOW DESTRUCTIVE MODE ENABLED - Add all mutation tools
   tools.push(
     defineTool("updateUserConfig", {
-      description: "Propose an update to the user's personal configuration (e.g. discipline penalty, currency).",
+      description: "Propose an update to the authenticated user's account settings, including currency, discipline penalty, company name, and WhatsApp signature mode.",
       parameters: z.object({
-        disciplinePenalty: z.number().min(0.1).max(2.0).describe("0.5 to 2.0").optional(),
-        currency: z.string().length(3).describe("ISO code (e.g. EUR)").optional(),
-        companyName: z.string().optional(),
+        currency: z.enum(["EUR", "USD", "GBP", "CNY"]).optional().describe("The base currency for all monetary displays."),
+        disciplinePenalty: z.number().min(0).max(5).optional().describe("The daily monetary penalty charged to clients who pay late."),
+        companyName: z.string().max(100).optional().describe("The name of the user's company or business, used in WhatsApp messages."),
         whatsappSignatureMode: z.enum(["none", "name", "company"]).optional(),
       }),
       handler: async ({ disciplinePenalty, currency, companyName, whatsappSignatureMode }: any) => {
