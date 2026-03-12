@@ -302,7 +302,8 @@
     "masterPassword": "Master Password",
     "owner": "Owner (Client)",
     "noOwner": "No owner",
-    "paymentDueImmediately": "Payment due immediately"
+    "paymentDueImmediately": "Payment due immediately",
+    "averageRevenuePerSeat": "Avg. Revenue/Seat"
   },
   "clients": {
     "title": "Clients",

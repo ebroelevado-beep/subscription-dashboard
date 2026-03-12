@@ -113,6 +113,7 @@ export default function SubscriptionDetailPage({
   const maxSlots = sub.plan.maxSeats ?? 0;
   const occupiedCount = activeSeats.length + pausedSeats.length;
   const occupancy = maxSlots > 0 ? (occupiedCount / maxSlots) * 100 : 0;
+  const arps = activeSeats.length > 0 ? actualRevenue / activeSeats.length : 0;
 
   // Bulk actions
   const handleBulkPause = async () => {
@@ -183,7 +184,7 @@ export default function SubscriptionDetailPage({
       </div>
 
       {/* Key Metrics — responsive grid */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-6">
         {/* Actual Revenue */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -260,6 +261,22 @@ export default function SubscriptionDetailPage({
               {profitMargin >= 0
                 ? tc("margin", { percent: profitMargin.toFixed(0) })
                 : tc("negativeMargin", { ns: "analytics", defaultValue: "Negative margin" })}
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Avg Revenue Per Seat */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              {t("averageRevenuePerSeat")}
+            </CardTitle>
+            <Users className="size-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold">{formatCurrency(arps, currency)}</p>
+            <p className="text-xs text-muted-foreground">
+              {tc("perMonth")}
             </p>
           </CardContent>
         </Card>

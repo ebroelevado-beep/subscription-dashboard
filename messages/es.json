@@ -294,7 +294,8 @@
     "masterPassword": "Contraseña Maestra",
     "owner": "Propietario (Cliente)",
     "noOwner": "Sin propietario",
-    "paymentDueImmediately": "Pago pendiente inmediatamente"
+    "paymentDueImmediately": "Pago pendiente inmediatamente",
+    "averageRevenuePerSeat": "Ingreso medio/asiento"
   },
   "clients": {
     "title": "Clientes",
