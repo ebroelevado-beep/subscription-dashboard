@@ -230,12 +230,6 @@ export default function HistoryPanel({ open, onClose, onLoad, onDelete, currentC
               )}
             </div>
 
-            {/* Footer */}
-            <div className="px-5 py-3 border-t border-border/10">
-              <p className="text-[10px] text-muted-foreground/30 text-center font-medium">
-                {t("chat.storedInR2")}
-              </p>
-            </div>
           </motion.div>
         </>
       )}
