@@ -184,38 +184,26 @@ export default function HistoryPanel({ open, onClose, onLoad, onDelete, currentC
                           handleLoad(conv.id);
                         }
                       }}
-                      whileHover={{ scale: 1.01 }}
-                      whileTap={{ scale: 0.99 }}
-                      className={`w-full group flex items-center gap-3 px-3 py-3 rounded-xl text-left transition-all cursor-pointer
+                      className={`w-full group flex items-center gap-4 px-4 py-3 text-left transition-all cursor-pointer border-b border-border/5 last:border-0
                         ${
                           currentConversationId === conv.id
-                            ? "bg-primary/10 border border-primary/20"
-                            : "hover:bg-muted/40 border border-transparent"
+                            ? "bg-primary/5 text-primary"
+                            : "text-muted-foreground hover:bg-muted/30 hover:text-foreground"
                         }`}
                     >
-                      {/* Icon */}
-                      <div
-                        className={`shrink-0 size-8 rounded-lg flex items-center justify-center text-xs font-bold
-                          ${
-                            currentConversationId === conv.id
-                              ? "bg-primary/20 text-primary"
-                              : "bg-muted/40 text-muted-foreground/50 group-hover:bg-muted/60"
-                          }`}
-                      >
-                        <MessageSquare className="size-3.5" />
-                      </div>
-
                       {/* Content */}
                       <div className="flex-1 min-w-0">
-                        <p className="text-[13px] font-semibold truncate leading-tight">
+                        <p className={`text-[13px] truncate leading-tight transition-colors ${
+                          currentConversationId === conv.id ? "font-bold" : "font-medium"
+                        }`}>
                           {conv.title}
                         </p>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-[10px] text-muted-foreground/50">
+                        <div className="flex items-center gap-2 mt-1 opacity-70">
+                          <span className="text-[10px]">
                             {timeAgo(conv.updatedAt)}
                           </span>
-                          <span className="text-[10px] text-muted-foreground/30">•</span>
-                          <span className="text-[10px] text-muted-foreground/50">
+                          <span className="text-[10px] opacity-30">•</span>
+                          <span className="text-[10px]">
                             {conv.messageCount} msgs
                           </span>
                         </div>
