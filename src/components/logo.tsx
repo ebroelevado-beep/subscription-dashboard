@@ -16,15 +16,14 @@ export function Logo({ size = 32, className = "" }: LogoProps) {
       className={className}
       aria-label="Pearfect S.L. logo"
     >
-      {/* Background: Pure White */}
+      {/* Light mode: dark tile with white mark. Dark mode: light tile with dark mark. */}
       <rect 
         width="48" 
         height="48" 
         rx="12" 
-        className="fill-white shadow-sm"
+        className="fill-zinc-950 shadow-sm dark:fill-white"
       />
-      {/* Precision mark: Pure Black */}
-      <g fill="none" strokeWidth="2.8" strokeLinecap="round" className="stroke-black">
+      <g fill="none" strokeWidth="2.8" strokeLinecap="round" className="stroke-white dark:stroke-zinc-950">
         {/* P stem */}
         <line x1="16" y1="12" x2="16" y2="36" />
         {/* P head */}
@@ -53,9 +52,9 @@ export function LogoMark({ size = 20, className = "" }: LogoProps) {
         width="48" 
         height="48" 
         rx="12" 
-        className="fill-white shadow-sm"
+        className="fill-zinc-950 shadow-sm dark:fill-white"
       />
-      <g fill="none" strokeWidth="2.8" strokeLinecap="round" className="stroke-black">
+      <g fill="none" strokeWidth="2.8" strokeLinecap="round" className="stroke-white dark:stroke-zinc-950">
         <line x1="16" y1="12" x2="16" y2="36" />
         <path d="M16 12 H26 C31 12 31 22 26 22 H16" />
         <line x1="19" y1="27" x2="33" y2="27" opacity="0.6" strokeWidth="2.2" />
