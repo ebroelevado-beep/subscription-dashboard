@@ -9,7 +9,7 @@ export function Logo({ size = 32, className = "" }: LogoProps) {
   return (
     <div
       className={cn(
-        "inline-flex items-center justify-center rounded-xl bg-zinc-950 text-white shadow-sm dark:bg-white dark:text-zinc-950",
+        "inline-flex items-center justify-center rounded-xl bg-black shadow-sm dark:bg-white",
         className
       )}
       style={{ width: size, height: size }}
@@ -21,15 +21,19 @@ export function Logo({ size = 32, className = "" }: LogoProps) {
         viewBox="0 0 48 48"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        className="text-current"
         aria-hidden="true"
       >
-        <g fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round">
-          <line x1="16" y1="12" x2="16" y2="36" />
-          <path d="M16 12 H26 C31 12 31 22 26 22 H16" />
-          <line x1="19" y1="27" x2="33" y2="27" opacity="0.6" strokeWidth="2.2" />
-          <line x1="19" y1="31.5" x2="29" y2="31.5" opacity="0.4" strokeWidth="2.2" />
-          <line x1="19" y1="36" x2="25" y2="36" opacity="0.25" strokeWidth="2.2" />
+        <g fill="none" strokeWidth="2.8" strokeLinecap="round">
+          {/* Main "P" symbol - Always white on black in light mode, black on white in dark mode */}
+          <g className="stroke-white dark:stroke-black">
+            <line x1="16" y1="12" x2="16" y2="36" />
+            <path d="M16 12 H26 C31 12 31 22 26 22 H16" />
+          </g>
+          
+          {/* Metallic lines - consistent shades across themes */}
+          <line x1="19" y1="27" x2="33" y2="27" strokeWidth="2.2" className="stroke-zinc-500" />
+          <line x1="19" y1="31.5" x2="29" y2="31.5" strokeWidth="2.2" className="stroke-zinc-400" />
+          <line x1="19" y1="36" x2="25" y2="36" strokeWidth="2.2" className="stroke-zinc-300" />
         </g>
       </svg>
     </div>
@@ -40,7 +44,7 @@ export function LogoMark({ size = 20, className = "" }: LogoProps) {
   return (
     <div
       className={cn(
-        "inline-flex items-center justify-center rounded-xl bg-zinc-950 text-white shadow-sm dark:bg-white dark:text-zinc-950",
+        "inline-flex items-center justify-center rounded-xl bg-black shadow-sm dark:bg-white",
         className
       )}
       style={{ width: size, height: size }}
@@ -52,15 +56,19 @@ export function LogoMark({ size = 20, className = "" }: LogoProps) {
         viewBox="0 0 48 48"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        className="text-current"
         aria-hidden="true"
       >
-        <g fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round">
-          <line x1="16" y1="12" x2="16" y2="36" />
-          <path d="M16 12 H26 C31 12 31 22 26 22 H16" />
-          <line x1="19" y1="27" x2="33" y2="27" opacity="0.6" strokeWidth="2.2" />
-          <line x1="19" y1="31.5" x2="29" y2="31.5" opacity="0.4" strokeWidth="2.2" />
-          <line x1="19" y1="36" x2="25" y2="36" opacity="0.25" strokeWidth="2.2" />
+        <g fill="none" strokeWidth="2.8" strokeLinecap="round">
+          {/* Main "P" symbol - Always white on black in light mode, black on white in dark mode */}
+          <g className="stroke-white dark:stroke-black">
+            <line x1="16" y1="12" x2="16" y2="36" />
+            <path d="M16 12 H26 C31 12 31 22 26 22 H16" />
+          </g>
+          
+          {/* Metallic lines - consistent shades across themes */}
+          <line x1="19" y1="27" x2="33" y2="27" strokeWidth="2.2" className="stroke-zinc-500" />
+          <line x1="19" y1="31.5" x2="29" y2="31.5" strokeWidth="2.2" className="stroke-zinc-400" />
+          <line x1="19" y1="36" x2="25" y2="36" strokeWidth="2.2" className="stroke-zinc-300" />
         </g>
       </svg>
     </div>
