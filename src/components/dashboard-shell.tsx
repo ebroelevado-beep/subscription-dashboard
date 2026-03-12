@@ -438,7 +438,7 @@ export function DashboardShell({
                   Pearfect S.L.
                 </span>
               </div>
-              <div className="flex-1 overflow-y-auto pt-2 space-y-2">
+              <div className="flex-1 flex flex-col overflow-y-auto pt-2">
                 <div className="px-4 py-2">
                   <MobileNavLinks onNavigate={() => setSheetOpen(false)} />
                 </div>
