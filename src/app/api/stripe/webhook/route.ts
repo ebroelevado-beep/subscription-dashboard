@@ -4,6 +4,12 @@ import Stripe from "stripe";
 import { stripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
 
+function getStripeCurrentPeriodEndDate(subscription: unknown): Date | undefined {
+  const currentPeriodEnd = (subscription as { current_period_end?: unknown }).current_period_end;
+  if (typeof currentPeriodEnd !== "number") return undefined;
+  return new Date(currentPeriodEnd * 1000);
+}
+
 export async function POST(req: Request) {
   const body = await req.text();
   const signature = (await headers()).get("Stripe-Signature");
@@ -63,9 +69,7 @@ export async function POST(req: Request) {
           stripeSubscriptionId: subscription.id,
           stripeCustomerId: typeof subscription.customer === "string" ? subscription.customer : null,
           stripePriceId: subscription.items.data[0]?.price.id,
-          stripeCurrentPeriodEnd: subscription.current_period_end
-            ? new Date(subscription.current_period_end * 1000)
-            : undefined,
+          stripeCurrentPeriodEnd: getStripeCurrentPeriodEndDate(subscription),
           plan: "PREMIUM",
         },
       });
@@ -82,9 +86,7 @@ export async function POST(req: Request) {
           where: { stripeSubscriptionId: subscription.id },
           data: {
             stripePriceId: subscription.items.data[0]?.price.id,
-            stripeCurrentPeriodEnd: subscription.current_period_end
-              ? new Date(subscription.current_period_end * 1000)
-              : undefined,
+            stripeCurrentPeriodEnd: getStripeCurrentPeriodEndDate(subscription),
             plan: "PREMIUM",
           },
         });
@@ -112,9 +114,7 @@ export async function POST(req: Request) {
           data: {
             plan: "PREMIUM",
             stripePriceId: subscription.items.data[0]?.price.id,
-            stripeCurrentPeriodEnd: subscription.current_period_end
-              ? new Date(subscription.current_period_end * 1000)
-              : undefined,
+            stripeCurrentPeriodEnd: getStripeCurrentPeriodEndDate(subscription),
           },
         });
       }
