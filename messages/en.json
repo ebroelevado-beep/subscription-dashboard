@@ -471,6 +471,7 @@
   },
   "settings": {
     "title": "Settings",
+    "subscription": "Subscription",
     "description": "Manage your profile information and account settings.",
     "profile": "Profile",
     "profileImage": "Profile Image",

@@ -781,20 +781,20 @@ export default function SettingsPage() {
   }, [defaultTab]);
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+    <div className="space-y-6 pb-16 md:block">
+      <div className="space-y-0.5">
+        <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
           <Settings className="size-6" />
           {t("title")}
-        </h1>
-        <p className="text-muted-foreground mt-1">
+        </h2>
+        <p className="text-muted-foreground">
           {t("description")}
         </p>
       </div>
-
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <div className="flex justify-center sm:justify-start">
-          <TabsList className="inline-flex h-12 items-center justify-center rounded-xl bg-muted/50 p-1 text-muted-foreground shadow-sm border border-border/40 w-full sm:w-auto">
+      <div className="shrink-0 bg-border h-[1px] w-full" />
+      <div className="flex flex-col space-y-8 lg:flex-row lg:space-x-12 lg:space-y-0">
+        <aside className="-mx-4 lg:w-1/5 overflow-x-auto lg:overflow-visible px-4 lg:px-0">
+          <nav className="flex space-x-2 lg:flex-col lg:space-x-0 lg:space-y-1 pb-4 lg:pb-0">
             {[
               { value: "profile", label: t("profile"), icon: User },
               { value: "appearance", label: t("appearance"), icon: Palette },
@@ -805,57 +805,48 @@ export default function SettingsPage() {
               const isLocked = tab.premium && !isPremiumUser;
 
               const trigger = (
-                <TabsTrigger
+                <button
                   key={tab.value}
-                  value={tab.value}
+                  onClick={() => !isLocked && setActiveTab(tab.value)}
                   disabled={isLocked}
                   className={cn(
-                    "inline-flex items-center justify-center whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 h-full gap-2",
-                    "data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-border/50",
-                    "hover:text-foreground/80 hover:bg-muted/30 transition-colors"
+                    "inline-flex items-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
+                    "h-9 px-4 py-2 w-full justify-start",
+                    activeTab === tab.value
+                      ? "bg-muted hover:bg-muted font-semibold"
+                      : "hover:bg-transparent hover:underline",
+                    "flex gap-2"
                   )}
                 >
-                  <tab.icon className="size-4" />
-                  <span className="hidden sm:inline">{tab.label}</span>
-                  {isLocked && <Sparkles className="size-3 text-gold-gradient animate-sparkle" />}
-                </TabsTrigger>
+                  <tab.icon className="size-4 shrink-0" />
+                  <span>{tab.label}</span>
+                  {isLocked && <Sparkles className="size-3 text-gold-gradient animate-sparkle shrink-0 ml-auto" />}
+                </button>
               );
 
               if (isLocked) {
                 return (
                   <PremiumPopup key={tab.value}>
-                    <button className="flex-1 sm:flex-none h-full focus:outline-none">
+                    <div className="w-full">
                       {trigger}
-                    </button>
+                    </div>
                   </PremiumPopup>
                 );
               }
 
               return trigger;
             })}
-          </TabsList>
+          </nav>
+        </aside>
+
+        <div className="flex-1 lg:max-w-2xl">
+          {activeTab === "profile" && <ProfileTab />}
+          {activeTab === "appearance" && <AppearanceTab />}
+          {activeTab === "assistant" && <AssistantTab />}
+          {activeTab === "data" && <DataTab />}
+          {activeTab === "subscription" && <SubscriptionManager locale={locale} />}
         </div>
-
-        <TabsContent value="profile">
-          <ProfileTab />
-        </TabsContent>
-
-        <TabsContent value="appearance">
-          <AppearanceTab />
-        </TabsContent>
-
-        <TabsContent value="assistant">
-          <AssistantTab />
-        </TabsContent>
-
-        <TabsContent value="data">
-          <DataTab />
-        </TabsContent>
-
-        <TabsContent value="subscription">
-          <SubscriptionManager locale={locale} />
-        </TabsContent>
-      </Tabs>
+      </div>
     </div>
   );
 }

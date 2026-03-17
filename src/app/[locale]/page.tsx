@@ -11,6 +11,7 @@ import {
   Shield,
   BarChart3,
   Zap,
+  Bot,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/logo";
@@ -93,7 +94,7 @@ export default function LandingPage() {
           <Link href="/" className="flex items-center gap-2.5 group">
             <Logo size={32} className="text-primary transition-transform group-hover:scale-105" />
             <span className="text-lg font-semibold tracking-tight hidden sm:inline">
-              Pearfect S.L.
+              pearfect.net
             </span>
           </Link>
           <div className="flex items-center gap-2">
@@ -295,6 +296,86 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ── Pricing ── */}
+      <section className="px-4 sm:px-6 py-16 sm:py-24 bg-muted/10">
+        <div className="mx-auto max-w-5xl">
+          <AnimatedSection className="text-center mb-12">
+            <motion.h2
+              className="text-2xl sm:text-3xl font-bold tracking-tight"
+              initial="hidden"
+              animate="visible"
+              variants={fadeUp}
+              custom={0}
+            >
+              Simple, transparent pricing
+            </motion.h2>
+            <motion.p
+              className="mt-3 text-muted-foreground max-w-xl mx-auto"
+              initial="hidden"
+              animate="visible"
+              variants={fadeUp}
+              custom={1}
+            >
+              Get full access to all features with our Premium plan. No hidden fees.
+            </motion.p>
+          </AnimatedSection>
+          
+          <div className="flex justify-center">
+             <AnimatedSection>
+               <motion.div 
+                  className="rounded-2xl border border-primary/20 bg-background/50 shadow-xl overflow-hidden max-w-md w-full relative"
+                  variants={fadeUp}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true }}
+                  custom={2}
+               >
+                 {/* Top accent */}
+                 <div className="h-1.5 w-full bg-gradient-to-r from-primary via-primary/80 to-primary/60" />
+                 
+                 <div className="p-8 text-center sm:p-10">
+                    <h3 className="text-xl font-bold text-foreground">Premium</h3>
+                    <div className="mt-4 flex items-baseline justify-center text-5xl font-extrabold tracking-tight text-foreground">
+                      $2.99
+                      <span className="ml-1 text-xl font-medium text-muted-foreground">/mo</span>
+                    </div>
+                    <p className="mt-4 text-sm text-muted-foreground">
+                      Everything you need to manage your business.
+                    </p>
+                    
+                    <ul className="mt-8 space-y-3 text-sm leading-6 text-foreground/80 text-left">
+                      <li className="flex gap-x-3 items-center">
+                        <Zap className="size-4 text-primary shrink-0" />
+                        Unlimited Platforms & Subscriptions
+                      </li>
+                      <li className="flex gap-x-3 items-center">
+                        <BarChart3 className="size-4 text-primary shrink-0" />
+                        Advanced Analytics & Profitability
+                      </li>
+                      <li className="flex gap-x-3 items-center">
+                        <Bot className="size-4 text-primary shrink-0" />
+                        Full AI Assistant Access
+                      </li>
+                      <li className="flex gap-x-3 items-center">
+                        <Shield className="size-4 text-primary shrink-0" />
+                        Automated WhatsApp Reminders
+                      </li>
+                    </ul>
+                    
+                    <div className="mt-8">
+                      <Button size="lg" className="w-full shadow-lg shadow-primary/20" asChild>
+                        <Link href="/signup">
+                          Get Premium
+                        </Link>
+                      </Button>
+                    </div>
+                 </div>
+               </motion.div>
+             </AnimatedSection>
+          </div>
+        </div>
+      </section>
+
       {/* ── CTA ── */}
       <section className="px-4 sm:px-6 py-16 sm:py-24">
         <AnimatedSection className="mx-auto max-w-2xl text-center">
@@ -354,7 +435,7 @@ export default function LandingPage() {
         <div className="mx-auto flex max-w-6xl flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
           <div className="flex items-center gap-2">
             <Logo size={18} className="text-muted-foreground/50" />
-            <span>Pearfect S.L.</span>
+            <span>pearfect.net</span>
           </div>
           <span>{tc("allRightsReserved", { year: new Date().getFullYear() })}</span>
         </div>

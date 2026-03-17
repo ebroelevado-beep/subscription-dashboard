@@ -465,6 +465,7 @@
   },
   "settings": {
     "title": "Ajustes",
+    "subscription": "Suscripción",
     "description": "Gestiona tu cuenta y preferencias de la aplicación.",
     "profile": "Perfil",
     "profileImage": "Foto de Perfil",
