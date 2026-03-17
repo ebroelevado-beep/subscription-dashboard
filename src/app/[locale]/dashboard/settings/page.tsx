@@ -781,7 +781,7 @@ export default function SettingsPage() {
   }, [defaultTab]);
 
   return (
-    <div className="space-y-6 pb-16 md:block">
+    <div className="space-y-6 pb-16">
       <div className="space-y-0.5">
         <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
           <Settings className="size-6" />
@@ -791,10 +791,54 @@ export default function SettingsPage() {
           {t("description")}
         </p>
       </div>
-      <div className="shrink-0 bg-border h-[1px] w-full" />
-      <div className="flex flex-col space-y-8 lg:flex-row lg:space-x-12 lg:space-y-0">
-        <aside className="-mx-4 lg:w-1/5 overflow-x-auto lg:overflow-visible px-4 lg:px-0">
-          <nav className="flex space-x-2 lg:flex-col lg:space-x-0 lg:space-y-1 pb-4 lg:pb-0">
+
+      {/* Mobile: Horizontal Icon Tabs */}
+      <div className="lg:hidden flex gap-1 overflow-x-auto pb-4 border-b border-border/50 -mx-4 px-4 scroll-smooth">
+        {[
+          { value: "profile", label: t("profile"), icon: User },
+          { value: "appearance", label: t("appearance"), icon: Palette },
+          { value: "assistant", label: t("assistant"), icon: BrainCircuit, premium: true },
+          { value: "data", label: t("data"), icon: Download },
+          { value: "subscription", label: t("subscription"), icon: CreditCard },
+        ].map((tab) => {
+          const isLocked = tab.premium && !isPremiumUser;
+
+          const trigger = (
+            <button
+              key={tab.value}
+              onClick={() => !isLocked && setActiveTab(tab.value)}
+              disabled={isLocked}
+              title={tab.label}
+              className={cn(
+                "flex items-center justify-center size-10 rounded-lg gap-0 shrink-0 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-50",
+                activeTab === tab.value
+                  ? "bg-primary/10 text-primary"
+                  : "hover:bg-muted text-muted-foreground"
+              )}
+            >
+              <tab.icon className="size-4" />
+              {isLocked && <Sparkles className="absolute size-2 top-1 right-1 text-gold-gradient animate-sparkle" />}
+            </button>
+          );
+
+          if (isLocked) {
+            return (
+              <PremiumPopup key={tab.value}>
+                <div>
+                  {trigger}
+                </div>
+              </PremiumPopup>
+            );
+          }
+
+          return trigger;
+        })}
+      </div>
+
+      {/* Desktop: Vertical Sidebar + Content */}
+      <div className="hidden lg:flex gap-8">
+        <aside className="w-48 shrink-0">
+          <nav className="sticky top-20 flex flex-col gap-1">
             {[
               { value: "profile", label: t("profile"), icon: User },
               { value: "appearance", label: t("appearance"), icon: Palette },
@@ -810,12 +854,10 @@ export default function SettingsPage() {
                   onClick={() => !isLocked && setActiveTab(tab.value)}
                   disabled={isLocked}
                   className={cn(
-                    "inline-flex items-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
-                    "h-9 px-4 py-2 w-full justify-start",
+                    "flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-50",
                     activeTab === tab.value
-                      ? "bg-muted hover:bg-muted font-semibold"
-                      : "hover:bg-transparent hover:underline",
-                    "flex gap-2"
+                      ? "bg-muted text-foreground font-semibold"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                   )}
                 >
                   <tab.icon className="size-4 shrink-0" />
@@ -827,7 +869,7 @@ export default function SettingsPage() {
               if (isLocked) {
                 return (
                   <PremiumPopup key={tab.value}>
-                    <div className="w-full">
+                    <div>
                       {trigger}
                     </div>
                   </PremiumPopup>
@@ -839,13 +881,22 @@ export default function SettingsPage() {
           </nav>
         </aside>
 
-        <div className="flex-1 lg:max-w-2xl">
+        <div className="flex-1 min-w-0">
           {activeTab === "profile" && <ProfileTab />}
           {activeTab === "appearance" && <AppearanceTab />}
           {activeTab === "assistant" && <AssistantTab />}
           {activeTab === "data" && <DataTab />}
           {activeTab === "subscription" && <SubscriptionManager locale={locale} />}
         </div>
+      </div>
+
+      {/* Mobile: Content below tabs */}
+      <div className="lg:hidden">
+        {activeTab === "profile" && <ProfileTab />}
+        {activeTab === "appearance" && <AppearanceTab />}
+        {activeTab === "assistant" && <AssistantTab />}
+        {activeTab === "data" && <DataTab />}
+        {activeTab === "subscription" && <SubscriptionManager locale={locale} />}
       </div>
     </div>
   );
