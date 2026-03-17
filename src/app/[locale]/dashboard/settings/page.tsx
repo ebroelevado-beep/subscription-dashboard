@@ -793,7 +793,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Top Bar Navigation */}
-      <div className="flex flex-col sm:flex-row gap-2 sm:gap-1 border-b border-border/50 pb-4">
+      <div className="flex flex-row gap-1 border-b border-border/50 pb-4 overflow-x-auto sm:overflow-visible">
         {[
           { value: "profile", label: t("profile"), icon: User },
           { value: "appearance", label: t("appearance"), icon: Palette },
@@ -809,11 +809,10 @@ export default function SettingsPage() {
               onClick={() => !isLocked && setActiveTab(tab.value)}
               disabled={isLocked}
               className={cn(
-                "relative flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-50 whitespace-nowrap",
-                "sm:flex-1 justify-center sm:justify-start",
+                "relative flex items-center gap-2 rounded-none px-2 sm:px-4 py-2.5 text-xs sm:text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-50 whitespace-nowrap flex-1 sm:flex-initial justify-center sm:justify-start",
                 activeTab === tab.value
-                  ? "bg-primary/10 text-primary border-b-2 sm:border-b-0 sm:border-l-2 border-primary"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50 sm:hover:bg-transparent"
+                  ? "bg-primary/5 text-primary border-t-2 border-primary"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
               )}
             >
               <tab.icon className="size-4 shrink-0" />
