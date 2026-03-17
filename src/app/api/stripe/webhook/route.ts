@@ -10,6 +10,22 @@ function getStripeCurrentPeriodEndDate(subscription: unknown): Date | undefined 
   return new Date(currentPeriodEnd * 1000);
 }
 
+function getInvoiceSubscriptionId(invoice: unknown): string | null {
+  const legacySubscription = (invoice as { subscription?: unknown }).subscription;
+  if (typeof legacySubscription === "string") return legacySubscription;
+
+  const parent = (invoice as { parent?: unknown }).parent;
+  if (!parent || typeof parent !== "object") return null;
+
+  const subscriptionFromParent = (
+    parent as {
+      subscription_details?: { subscription?: unknown };
+    }
+  ).subscription_details?.subscription;
+
+  return typeof subscriptionFromParent === "string" ? subscriptionFromParent : null;
+}
+
 export async function POST(req: Request) {
   const body = await req.text();
   const signature = (await headers()).get("Stripe-Signature");
@@ -77,7 +93,7 @@ export async function POST(req: Request) {
 
     if (event.type === "invoice.payment_succeeded") {
       const invoice = event.data.object as Stripe.Invoice;
-      const subscriptionId = typeof invoice.subscription === "string" ? invoice.subscription : null;
+      const subscriptionId = getInvoiceSubscriptionId(invoice);
 
       if (subscriptionId) {
         const subscription = await stripe.subscriptions.retrieve(subscriptionId);
