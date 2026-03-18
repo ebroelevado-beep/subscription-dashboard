@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
-import { stripe } from "@/lib/stripe";
+import { getStripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
 
 function getStripeCurrentPeriodEndDate(subscription: unknown): Date | undefined {
@@ -27,6 +27,7 @@ function getInvoiceSubscriptionId(invoice: unknown): string | null {
 }
 
 export async function POST(req: Request) {
+  const stripe = getStripe();
   const body = await req.text();
   const signature = (await headers()).get("Stripe-Signature");
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
