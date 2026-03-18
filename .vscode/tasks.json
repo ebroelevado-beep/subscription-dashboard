@@ -1,0 +1,11 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "git-commit-pago",
+			"type": "shell",
+			"command": "git add -A && git commit -m \"feat: actualizar analytics y configuraciones relacionadas\"",
+			"isBackground": false
+		}
+	]
+}
