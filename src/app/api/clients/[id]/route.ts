@@ -110,7 +110,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
         phone: c.phone || "",
         notes: c.notes || "",
         createdAt: c.createdAt,
-        disciplineScore: c.disciplineScore ? Number(c.disciplineScore) : null,
+      disciplineScore: c.disciplineScore !== null && c.disciplineScore !== undefined ? Number(c.disciplineScore) : null,
         daysOverdue: Number(c.daysOverdue || 0),
         healthStatus: c.healthStatus || "New",
     };

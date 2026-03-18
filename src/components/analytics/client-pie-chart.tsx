@@ -1,12 +1,14 @@
 "use client";
 
+import { useMemo, useState } from "react";
+
 import {
   PieChart,
   Pie,
   Cell,
-  Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { formatCurrency } from "@/lib/currency";
 
 const COLORS = [
   "#22c55e", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6",
@@ -14,25 +16,32 @@ const COLORS = [
 ];
 
 function PieTooltip({
-  active,
-  payload,
+  name,
+  value,
+  amount,
+  fill,
+  currency,
 }: {
-  active?: boolean;
-  payload?: Array<{ name?: string; value?: number; payload?: { fill?: string } }>;
+  name: string;
+  value: number;
+  amount: number;
+  fill: string;
+  currency: string;
 }) {
-  if (!active || !payload?.length) return null;
-  const data = payload[0];
   return (
     <div className="rounded-xl border bg-popover/95 px-3 py-2 text-sm shadow-xl min-w-[150px] backdrop-blur">
       <div className="flex items-center gap-2 mb-1">
         <div
           className="size-3 rounded-full"
-          style={{ backgroundColor: data.payload?.fill }}
+          style={{ backgroundColor: fill }}
         />
-        <span className="font-semibold">{data.name}</span>
+        <span className="font-semibold">{name}</span>
       </div>
       <p className="text-muted-foreground text-xs">
-        Weight: <span className="font-semibold text-foreground">{(data.value ?? 0).toFixed(1)}%</span>
+        Weight: <span className="font-semibold text-foreground">{value.toFixed(1)}%</span>
+      </p>
+      <p className="text-muted-foreground text-xs">
+        Amount: <span className="font-semibold text-foreground">{formatCurrency(amount, currency)}</span>
       </p>
     </div>
   );
@@ -41,24 +50,32 @@ function PieTooltip({
 export interface PieDataPoint {
   name: string;
   value: number;
+  amount: number;
 }
 
-export default function ClientPieChart({ data }: { data: PieDataPoint[] }) {
-  const normalizedData = data
-    .filter((entry) => entry.value > 0)
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 8)
-    .map((entry, index) => ({
-      ...entry,
-      fill: COLORS[index % COLORS.length],
-    }));
+export default function ClientPieChart({ data, currency }: { data: PieDataPoint[]; currency: string }) {
+  const normalizedData = useMemo(
+    () =>
+      data
+        .filter((entry) => entry.value > 0)
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 8)
+        .map((entry, index) => ({
+          ...entry,
+          fill: COLORS[index % COLORS.length],
+        })),
+    [data],
+  );
+
+  const [activeSlice, setActiveSlice] = useState<(PieDataPoint & { fill: string }) | null>(null);
 
   const total = normalizedData.reduce((sum, item) => sum + item.value, 0);
 
   return (
     <div className="space-y-3">
-      <ResponsiveContainer width="100%" height={320}>
-        <PieChart>
+      <div className="relative">
+        <ResponsiveContainer width="100%" height={320}>
+          <PieChart>
           <Pie
             data={normalizedData}
             cx="50%"
@@ -72,12 +89,16 @@ export default function ClientPieChart({ data }: { data: PieDataPoint[] }) {
             strokeWidth={2}
             startAngle={90}
             endAngle={-270}
+            onMouseEnter={(entry) => setActiveSlice(entry as PieDataPoint & { fill: string })}
+            onMouseLeave={() => setActiveSlice(null)}
+            onTouchStart={(entry) => setActiveSlice(entry as PieDataPoint & { fill: string })}
+            onTouchMove={(entry) => setActiveSlice(entry as PieDataPoint & { fill: string })}
+            onTouchEnd={() => setActiveSlice(null)}
           >
             {normalizedData.map((entry) => (
               <Cell key={entry.name} fill={entry.fill} />
             ))}
           </Pie>
-          <Tooltip content={<PieTooltip />} />
           <text x="50%" y="43%" textAnchor="middle" className="fill-muted-foreground text-[11px]">
             Top Clients
           </text>
@@ -87,8 +108,21 @@ export default function ClientPieChart({ data }: { data: PieDataPoint[] }) {
           <text x="50%" y="58%" textAnchor="middle" className="fill-muted-foreground text-[11px]">
             Revenue share
           </text>
-        </PieChart>
-      </ResponsiveContainer>
+          </PieChart>
+        </ResponsiveContainer>
+
+        {activeSlice && (
+          <div className="absolute right-2 top-2 pointer-events-none">
+            <PieTooltip
+              name={activeSlice.name}
+              value={activeSlice.value}
+              amount={activeSlice.amount}
+              fill={activeSlice.fill}
+              currency={currency}
+            />
+          </div>
+        )}
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
         {normalizedData.map((entry) => (
@@ -97,7 +131,10 @@ export default function ClientPieChart({ data }: { data: PieDataPoint[] }) {
               <span className="size-2.5 rounded-full shrink-0" style={{ backgroundColor: entry.fill }} />
               <span className="truncate text-foreground">{entry.name}</span>
             </div>
-            <span className="font-semibold tabular-nums text-muted-foreground">{entry.value.toFixed(1)}%</span>
+            <div className="text-right leading-tight">
+              <div className="font-semibold tabular-nums text-muted-foreground">{entry.value.toFixed(1)}%</div>
+              <div className="font-medium tabular-nums text-foreground">{formatCurrency(entry.amount, currency)}</div>
+            </div>
           </div>
         ))}
       </div>

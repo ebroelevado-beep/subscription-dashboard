@@ -1081,7 +1081,7 @@ export function createUserScopedTools(
       description: "Propose an update to the authenticated user's account settings, including currency, discipline penalty, company name, and WhatsApp signature mode.",
       parameters: z.object({
         currency: z.enum(["EUR", "USD", "GBP", "CNY"]).optional().describe("The base currency for all monetary displays."),
-        disciplinePenalty: z.number().min(0).max(5).optional().describe("The daily monetary penalty charged to clients who pay late."),
+        disciplinePenalty: z.number().min(0).max(5).optional().describe("Daily score deduction applied for each late day."),
         companyName: z.string().max(100).optional().describe("The name of the user's company or business, used in WhatsApp messages."),
         whatsappSignatureMode: z.enum(["none", "name", "company"]).optional(),
       }),

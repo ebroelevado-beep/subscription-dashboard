@@ -438,7 +438,7 @@ function AppearanceTab() {
             <div className="space-y-0.5">
               <h4 className="text-sm font-medium">{t("disciplineStrictness", { fallback: "Discipline Strictness" })}</h4>
               <p className="text-xs text-muted-foreground">
-                {t("disciplineStrictnessDesc", { fallback: "Adjust the daily penalty for late payments (-0.5 by default)." })}
+                {t("disciplineStrictnessDesc", { fallback: "Adjust the score deduction applied per late day (-0.5 by default)." })}
               </p>
             </div>
             <div className="font-mono font-bold text-sm bg-muted px-2 py-1 rounded">

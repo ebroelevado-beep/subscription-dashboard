@@ -24,6 +24,7 @@ export const queryKeys = {
   analyticsHistory: (filters: object) =>
     ["analytics-history", filters] as const,
   analyticsTrends: (scale: string) => ["analytics-trends", scale] as const,
+  analyticsPlatformContribution: ["analytics-platform-contribution"] as const,
   analyticsClients: ["analytics-clients"] as const,
   analyticsBreakEven: ["analytics-break-even"] as const,
   analyticsDiscipline: (filters: object) =>

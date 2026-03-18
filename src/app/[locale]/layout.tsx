@@ -21,7 +21,7 @@ export async function generateMetadata({
   return {
     title: t.title,
     description: t.description,
-    metadataBase: new URL("https://sub.peramato.dev"),
+    metadataBase: new URL("https://pearfect.net"),
     openGraph: {
       title: t.ogTitle,
       description: t.ogDescription,

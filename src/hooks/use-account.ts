@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetchApi } from "@/lib/fetch-api";
 import { signOut } from "next-auth/react";
 import type { UpdateProfileInput } from "@/lib/validations/account";
+import { queryKeys } from "@/lib/query-keys";
 
 // ── Update Profile ──
 export function useUpdateProfile() {
@@ -37,13 +38,17 @@ export function useUpdateSettings() {
       // If discipline penalty changes, we must force a refetch of discipline APIs
       // so the charts and scores reflect the new mathematical formula immediately
       if (variables.disciplinePenalty !== undefined) {
-        queryClient.invalidateQueries({ queryKey: ["clients-discipline"] });
-        queryClient.invalidateQueries({ queryKey: ["discipline"] });
-        queryClient.invalidateQueries({ queryKey: ["analytics"] });
+        queryClient.invalidateQueries({ queryKey: queryKeys.analyticsClientsDiscipline });
+        queryClient.invalidateQueries({ queryKey: ["analytics-discipline"] });
       }
       if (variables.currency !== undefined) {
-        queryClient.invalidateQueries({ queryKey: ["analytics"] });
-        queryClient.invalidateQueries({ queryKey: ["clients"] });
+        queryClient.invalidateQueries({ queryKey: queryKeys.analyticsSummary });
+        queryClient.invalidateQueries({ queryKey: ["analytics-history"] });
+        queryClient.invalidateQueries({ queryKey: ["analytics-trends"] });
+        queryClient.invalidateQueries({ queryKey: queryKeys.analyticsPlatformContribution });
+        queryClient.invalidateQueries({ queryKey: queryKeys.analyticsClients });
+        queryClient.invalidateQueries({ queryKey: queryKeys.analyticsBreakEven });
+        queryClient.invalidateQueries({ queryKey: queryKeys.clients });
       }
     }
   });

@@ -1,22 +1,29 @@
 import { prisma } from "@/lib/prisma";
 
+const DAY_IN_MS = 1000 * 60 * 60 * 24;
+
+function toUtcMidnightTimestamp(value: Date) {
+  return Date.UTC(value.getUTCFullYear(), value.getUTCMonth(), value.getUTCDate());
+}
+
+function diffCalendarDays(later: Date, earlier: Date) {
+  return Math.floor((toUtcMidnightTimestamp(later) - toUtcMidnightTimestamp(earlier)) / DAY_IN_MS);
+}
+
 export async function getDisciplineAnalytics(userId: string, filters?: { clientId?: string; subscriptionId?: string; planId?: string }) {
-  // 1. User penalty modifier
-  let strictnessMultiplier = 1.0;
+  // 1. User-configured daily score deduction for late payments
+  let dailyPenalty = 0.5;
   try {
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: { disciplinePenalty: true }
     });
     if (user?.disciplinePenalty !== undefined) {
-      strictnessMultiplier = user.disciplinePenalty;
+      dailyPenalty = user.disciplinePenalty;
     }
   } catch (e) {
-    console.error("[DisciplineService] Failed to fetch strictnessMultiplier:", e);
+    console.error("[DisciplineService] Failed to fetch dailyPenalty:", e);
   }
-  
-  const BASE_PENALTY_PER_DAY = 0.5;
-  const penaltyPerDay = BASE_PENALTY_PER_DAY * strictnessMultiplier;
 
   // 2. Fetch clients with dynamic filters
   const clients = await prisma.client.findMany({
@@ -57,8 +64,7 @@ export async function getDisciplineAnalytics(userId: string, filters?: { clientI
   const now = new Date();
 
   for (const client of clients) {
-      const clientPenalty = Number((client as any).disciplinePenalty || 1.0);
-      const effectivePenaltyPerDay = BASE_PENALTY_PER_DAY * strictnessMultiplier * clientPenalty;
+      const effectivePenaltyPerDay = dailyPenalty;
 
       if (client.clientSubscriptions.length === 0) continue;
 
@@ -72,16 +78,9 @@ export async function getDisciplineAnalytics(userId: string, filters?: { clientI
       let totalRenewalLogs = 0;
 
       for (const seat of client.clientSubscriptions) {
-          cTotalPayments++;
-          cOnTimeCount++; 
-          
-          global.totalPayments++;
-          global.onTimeCount++;
-
           const expiryDate = new Date(seat.activeUntil);
           if (expiryDate < now && seat.status === "active") {
-              const overdueMs = now.getTime() - expiryDate.getTime();
-              const overdueDays = Math.floor(overdueMs / (1000 * 60 * 60 * 24));
+            const overdueDays = Math.max(0, diffCalendarDays(now, expiryDate));
               if (overdueDays > maxDaysOverdue) maxDaysOverdue = overdueDays;
               pendingAmount += Number(seat.customPrice);
           }
@@ -91,8 +90,7 @@ export async function getDisciplineAnalytics(userId: string, filters?: { clientI
               cTotalPayments++;
               global.totalPayments++;
 
-              const diffMs = new Date(log.paidOn).getTime() - new Date(log.dueOn).getTime();
-              const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+                const diffDays = diffCalendarDays(new Date(log.paidOn), new Date(log.dueOn));
               
               let paymentScore = 10;
               if (diffDays <= 0) {
@@ -116,7 +114,7 @@ export async function getDisciplineAnalytics(userId: string, filters?: { clientI
       const avgDaysLate = cLateCount > 0 ? Math.round((cTotalDaysLate / cLateCount) * 10) / 10 : 0;
       const onTimeRate = cTotalPayments > 0 ? Math.round((cOnTimeCount / cTotalPayments) * 1000) / 10 : 100;
       
-      const totalRenewals = cTotalPayments - client.clientSubscriptions.length; 
+      const totalRenewals = cTotalPayments;
       let finalScore: number | null = null;
       if (totalRenewals > 0) {
           finalScore = cTotalScorePoints / totalRenewals;

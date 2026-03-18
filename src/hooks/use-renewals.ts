@@ -30,6 +30,7 @@ export function useRenewClient() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.allSubscriptions });
       qc.invalidateQueries({ queryKey: queryKeys.dashboardStats });
+      qc.invalidateQueries({ queryKey: queryKeys.analyticsPlatformContribution });
       qc.invalidateQueries({ queryKey: queryKeys.analyticsClientsDiscipline });
       qc.invalidateQueries({ queryKey: queryKeys.analyticsDiscipline({}) });
       toast.success("Client renewed successfully");
@@ -61,6 +62,7 @@ export function useRenewBulkClients() {
     onSuccess: (result, variables) => {
       qc.invalidateQueries({ queryKey: queryKeys.allSubscriptions });
       qc.invalidateQueries({ queryKey: queryKeys.dashboardStats });
+      qc.invalidateQueries({ queryKey: queryKeys.analyticsPlatformContribution });
       qc.invalidateQueries({ queryKey: queryKeys.analyticsClientsDiscipline });
       qc.invalidateQueries({ queryKey: queryKeys.analyticsDiscipline({}) });
       toast.success(
@@ -94,6 +96,7 @@ export function useRenewPlatform() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.allSubscriptions });
       qc.invalidateQueries({ queryKey: queryKeys.dashboardStats });
+      qc.invalidateQueries({ queryKey: queryKeys.analyticsPlatformContribution });
       toast.success("Platform subscription renewed");
     },
     onError: (err: Error) => toast.error(err.message),

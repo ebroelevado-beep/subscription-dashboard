@@ -6,8 +6,9 @@ import {
   useAnalyticsSummary,
   useAnalyticsTrends,
   useAnalyticsClients,
-  useAnalyticsBreakEven,
+  useAnalyticsPlatformContribution,
   useDiscipline,
+  type ContributionMode,
   type TrendScale,
   type DisciplineFilters,
 } from "@/hooks/use-analytics";
@@ -50,6 +51,18 @@ const RevenueChart = dynamic(
 
 const ClientPieChart = dynamic(
   () => import("@/components/analytics/client-pie-chart"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex items-center justify-center py-16">
+        <Loader2 className="size-5 animate-spin text-muted-foreground" />
+      </div>
+    ),
+  },
+);
+
+const PlatformContributionChart = dynamic(
+  () => import("@/components/analytics/platform-contribution-chart"),
   {
     ssr: false,
     loading: () => (
@@ -132,21 +145,16 @@ export default function AnalyticsPage() {
     { value: "daily", label: t("daily"), icon: Calendar },
   ];
 
-  const SCALE_DESCRIPTIONS: Record<TrendScale, string> = {
-    monthly: t("last12Months"),
-    weekly: t("last12Weeks"),
-    daily: t("last30Days"),
-  };
-
   // ── State ──
   const [trendScale, setTrendScale] = useState<TrendScale>("monthly");
+  const [platformMode, setPlatformMode] = useState<ContributionMode>("net");
   const [disciplineFilters, setDisciplineFilters] = useState<DisciplineFilters>({});
 
   // ── Data hooks ──
   const { data: summary, isLoading: summaryLoading } = useAnalyticsSummary();
   const { data: trends, isLoading: trendsLoading } = useAnalyticsTrends(trendScale);
   const { data: clientData, isLoading: clientsLoading } = useAnalyticsClients();
-  const { data: breakEven, isLoading: breakEvenLoading } = useAnalyticsBreakEven();
+  const { data: platformContribution, isLoading: platformContributionLoading } = useAnalyticsPlatformContribution();
   const { data: discipline, isLoading: disciplineLoading } = useDiscipline(disciplineFilters);
 
   // ── Filter dropdown data ──
@@ -154,7 +162,7 @@ export default function AnalyticsPage() {
   const { data: subscriptions } = useSubscriptions();
   const { data: clients } = useClients();
 
-  const isLoading = summaryLoading || clientsLoading || breakEvenLoading;
+  const isLoading = summaryLoading || clientsLoading;
 
   if (isLoading) {
     return (
@@ -171,14 +179,19 @@ export default function AnalyticsPage() {
     const otherWeight = clientData.clients
       .slice(7)
       .reduce((s, c) => s + c.weight, 0);
+    const otherAmount = clientData.clients
+      .slice(7)
+      .reduce((s, c) => s + c.totalPaid, 0);
     const result = top.map((c) => ({
       name: c.clientName,
       value: Math.round(c.weight * 10) / 10,
+      amount: c.totalPaid,
     }));
     if (otherWeight > 0) {
       result.push({
         name: "Others",
         value: Math.round(otherWeight * 10) / 10,
+        amount: otherAmount,
       });
     }
     return result;
@@ -238,10 +251,10 @@ export default function AnalyticsPage() {
       {/* Charts row */}
       <div className="grid gap-6 lg:grid-cols-5">
         {/* Revenue vs Cost Area Chart */}
-        <div className={cn("lg:col-span-3 rounded-xl border bg-card p-5 relative overflow-hidden", premiumHighlight)}>
+        <div className={cn("lg:col-span-3 rounded-xl border bg-card p-5 relative overflow-hidden flex flex-col", premiumHighlight)}>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-base font-semibold">
-              {t("revenueVsCost")} — {SCALE_DESCRIPTIONS[trendScale]}
+              {t("revenueVsCost")}
             </h2>
             <div className="flex items-center rounded-lg border bg-muted/50 p-0.5">
               {SCALE_OPTIONS.map(({ value, label, icon: ScaleIcon }) => (
@@ -261,19 +274,21 @@ export default function AnalyticsPage() {
               ))}
             </div>
           </div>
-          <div className="relative">
+          <div className="relative flex-1 min-h-[380px]">
             {trendsLoading ? (
-              <div className="flex items-center justify-center py-16">
+              <div className="flex items-center justify-center h-full">
                 <Loader2 className="size-5 animate-spin text-muted-foreground" />
               </div>
             ) : trends && trends.length > 0 ? (
-              <div className={cn("transition-all duration-500", isFree && "blur-md select-none pointer-events-none opacity-40")}>
+              <div className={cn("h-full transition-all duration-500", isFree && "blur-md select-none pointer-events-none opacity-40")}>
                 <RevenueChart data={trends} />
               </div>
             ) : (
-              <p className="text-muted-foreground text-sm py-16 text-center">
-                {t("noDataAvailable")}
-              </p>
+              <div className="flex items-center justify-center h-full">
+                <p className="text-muted-foreground text-sm text-center">
+                  {t("noDataAvailable")}
+                </p>
+              </div>
             )}
             
             {isFree && (
@@ -303,7 +318,7 @@ export default function AnalyticsPage() {
           <div className="relative">
             <div className={cn("transition-all duration-500", isFree && "blur-md select-none pointer-events-none opacity-40")}>
               {pieData.length > 0 ? (
-                <ClientPieChart data={pieData} />
+                <ClientPieChart data={pieData} currency={currency} />
               ) : (
                 <p className="text-muted-foreground text-sm py-16 text-center">
                   {t("noDataAvailable")}
@@ -534,130 +549,75 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        {/* LTV Top Clients */}
+        {/* Platform Contribution (Monthly) */}
         <div className={cn("rounded-xl border bg-card p-5 relative overflow-hidden", premiumHighlight)}>
-          <h2 className="text-base font-semibold mb-4">
-            {t("topClients")} — Top 10
-          </h2>
-          
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <div>
+              <h2 className="text-base font-semibold">
+                {t("platformContribution")}
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                {t("platformContributionDesc")}
+              </p>
+            </div>
+
+            <div className="flex items-center rounded-lg border bg-muted/50 p-0.5">
+              <button
+                onClick={() => setPlatformMode("income")}
+                className={cn(
+                  "rounded-md px-3 py-1.5 text-xs font-medium transition-all",
+                  platformMode === "income"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {t("income")}
+              </button>
+              <button
+                onClick={() => setPlatformMode("cost")}
+                className={cn(
+                  "rounded-md px-3 py-1.5 text-xs font-medium transition-all",
+                  platformMode === "cost"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {t("expense")}
+              </button>
+              <button
+                onClick={() => setPlatformMode("net")}
+                className={cn(
+                  "rounded-md px-3 py-1.5 text-xs font-medium transition-all",
+                  platformMode === "net"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {t("netContribution")}
+              </button>
+            </div>
+          </div>
+
           <div className="relative">
             <div className={cn("transition-all duration-500", isFree && "blur-md select-none pointer-events-none opacity-40")}>
-              {clientData && clientData.clients.length > 0 ? (
-                <div className="space-y-2">
-                  {clientData.clients.slice(0, 10).map((c, idx) => (
-                    <div
-                      key={c.clientId}
-                      className="flex items-center justify-between rounded-lg px-3 py-2 hover:bg-muted/50 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className="text-xs font-bold tabular-nums text-muted-foreground w-5">
-                          #{idx + 1}
-                        </span>
-                        <span className="font-medium text-sm">{c.clientName}</span>
-                      </div>
-                      <div className="text-right">
-                        <span className="font-semibold text-sm tabular-nums">
-                          {formatCurrency(c.totalPaid, currency)}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-muted-foreground text-sm py-8 text-center">
-                  {t("noDataAvailable")}
-                </p>
-              )}
+              {platformContributionLoading ? (
+            <div className="flex items-center justify-center py-14">
+              <Loader2 className="size-5 animate-spin text-muted-foreground" />
             </div>
-
-            {isFree && (
-               <PremiumPopup>
-                 <button className="absolute inset-0 z-10 flex flex-col items-center justify-center p-4 group focus:outline-none">
-                   <div className="bg-background/95 backdrop-blur-md border border-gold-gradient/20 rounded-2xl p-4 shadow-xl text-center group-hover:scale-105 transition-transform outline outline-1 outline-gold-gradient/5">
-                      <Users className="size-5 text-gold-gradient mx-auto mb-2" />
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-gold-gradient">{t("topPremiumUsers") || "PREMIUM FEATURE"}</p>
-                   </div>
-                 </button>
-               </PremiumPopup>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Break-Even Analysis */}
-      <div className="relative">
-        <div className={cn("rounded-xl border bg-card p-5 transition-all duration-500", premiumHighlight, isFree && "blur-lg select-none pointer-events-none opacity-40")}>
-          <h2 className="text-base font-semibold mb-4">
-            {t("breakEvenAnalysis")}
-          </h2>
-          {breakEven && breakEven.length > 0 ? (
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {breakEven.map((sub) => (
-                <div
-                  key={sub.subscriptionId}
-                  className={cn(
-                    "rounded-xl border p-4 transition-colors",
-                    sub.profitable
-                      ? "border-emerald-200 bg-emerald-50/50 dark:border-emerald-800 dark:bg-emerald-950/20"
-                      : "border-red-200 bg-red-50/50 dark:border-red-800 dark:bg-red-950/20"
-                  )}
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <div>
-                      <p className="font-semibold text-sm">{sub.label}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {sub.platform} · {sub.plan}
-                      </p>
-                    </div>
-                    <span
-                      className={cn(
-                        "rounded-full px-2 py-0.5 text-[11px] font-semibold",
-                        sub.profitable
-                          ? "bg-emerald-200 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300"
-                          : "bg-red-200 text-red-800 dark:bg-red-900 dark:text-red-300"
-                      )}
-                    >
-                      {sub.profitable ? "✓" : "✗"}
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2 text-center">
-                    <div>
-                      <p className="text-xs text-muted-foreground">{t("revenueLabel")}</p>
-                      <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 tabular-nums">
-                        {formatCurrency(sub.revenue, currency)}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">{t("costLabel")}</p>
-                      <p className="text-sm font-semibold text-red-600 dark:text-red-400 tabular-nums">
-                        {formatCurrency(sub.cost, currency)}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">{t("profitLabel")}</p>
-                      <p
-                        className={cn(
-                          "text-sm font-bold tabular-nums",
-                          sub.net >= 0
-                            ? "text-emerald-600 dark:text-emerald-400"
-                            : "text-red-600 dark:text-red-400"
-                        )}
-                      >
-                        {formatCurrency(sub.net, currency)}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+          ) : platformContribution && platformContribution.rows.length > 0 ? (
+            <PlatformContributionChart
+              data={platformContribution.rows}
+              mode={platformMode}
+              currency={currency}
+            />
           ) : (
             <p className="text-muted-foreground text-sm py-8 text-center">
               {t("noDataAvailable")}
             </p>
           )}
-        </div>
-        
-        {isFree && (
+            </div>
+
+            {isFree && (
                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center p-12 text-center">
                   <div className="bg-background/98 border-2 border-gold-gradient/20 rounded-[32px] p-10 shadow-[0_20px_50px_rgba(189,147,84,0.15)] max-w-md animate-in fade-in zoom-in-95 duration-700 outline outline-1 outline-gold-gradient/10">
                      <div className="size-16 rounded-2xl bg-gold-gradient flex items-center justify-center mx-auto mb-6 shadow-lg">
@@ -665,7 +625,7 @@ export default function AnalyticsPage() {
                      </div>
                      <h3 className="text-2xl font-black tracking-tight mb-3 text-gold-gradient">{t("breakEvenTitle")}</h3>
                      <p className="text-sm text-muted-foreground leading-relaxed mb-8">
-                        {t("breakEvenDesc")}
+                      {t("platformContributionPremiumDesc")}
                      </p>
                      <PremiumPopup>
                         <Button className="w-full bg-gold-gradient hover:opacity-90 text-black font-black py-7 h-auto rounded-2xl text-lg shadow-xl border-none active:scale-[0.98] transition-all">
@@ -676,7 +636,9 @@ export default function AnalyticsPage() {
                   </div>
                </div>
             )}
+          </div>
       </div>
+    </div>
     </div>
   );
 }

@@ -74,6 +74,22 @@ export interface BreakEvenEntry {
   activeSeats: number;
 }
 
+export type ContributionMode = "income" | "cost" | "net";
+
+export interface PlatformContributionRow {
+  platformId: string;
+  platform: string;
+  revenue: number;
+  cost: number;
+  net: number;
+}
+
+export interface PlatformContributionResponse {
+  from: string;
+  to: string;
+  rows: PlatformContributionRow[];
+}
+
 export interface DisciplineFilters {
   planId?: string;
   subscriptionId?: string;
@@ -162,6 +178,15 @@ export function useAnalyticsBreakEven() {
   });
 }
 
+export function useAnalyticsPlatformContribution() {
+  return useQuery<PlatformContributionResponse>({
+    queryKey: queryKeys.analyticsPlatformContribution,
+    queryFn: () =>
+      fetchApi<PlatformContributionResponse>("/api/analytics/platform-contribution"),
+    staleTime: ANALYTICS_STALE,
+  });
+}
+
 export function useDiscipline(filters: DisciplineFilters = {}) {
   const params = new URLSearchParams();
   if (filters.planId) params.set("planId", filters.planId);
@@ -195,7 +220,14 @@ export interface ClientDisciplineEntry {
 
 export interface ClientsDisciplineResponse {
   perClient: Record<string, ClientDisciplineEntry>;
-  globalAvgDaysLate: number;
+  global: {
+    avgDaysLate: number;
+    onTimeRate: number;
+    score: number;
+    totalPayments: number;
+    onTimeCount: number;
+    lateCount: number;
+  };
 }
 
 export function useClientsDiscipline() {

@@ -20,7 +20,7 @@ export async function PATCH(req: Request) {
   }
 
   if (typeof disciplinePenalty === 'number') {
-    if (disciplinePenalty < 0 || disciplinePenalty > 5) {
+    if (!Number.isFinite(disciplinePenalty) || disciplinePenalty < 0 || disciplinePenalty > 5) {
        return NextResponse.json({ error: "Invalid discipline penalty range" }, { status: 400 });
     }
     data.disciplinePenalty = disciplinePenalty;

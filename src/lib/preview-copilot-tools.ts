@@ -693,7 +693,7 @@ export function createUserScopedTools(
             description:
                 "Update the user's personal configuration/settings (e.g. discipline penalty, currency). CRITICAL: This tool requires a second call with confirm:true to actually execute the change.",
             parameters: z.object({
-                disciplinePenalty: z.number().min(0.1).max(2.0).describe("0.5 to 2.0").optional(),
+                disciplinePenalty: z.number().min(0).max(5).describe("Daily score deduction per late day (default 0.5)").optional(),
                 currency: z.string().length(3).describe("ISO code (e.g. EUR)").optional(),
                 __safe_user_approval_ui_only: z.boolean().default(false).describe("SYSTEM-ONLY: Do not use. The UI will set this when the user clicks confirm."),
             }),
